@@ -10,5 +10,5 @@ here is the documentation site for searching classes, methods, etc
 https://first.wpi.edu/FRC/roborio/release/docs/java/
 
 In visual studio code there are tutorials, the following 2 are useful to help you learn
-Java in VS Code Tutorial
-Debugging Tutorial
+<b>Java in VS Code Tutorial
+<b>Debugging Tutorial
