@@ -10,11 +10,12 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-//import com.kauailabs.navx.frc.AHRS;
+import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.PWMTalonSRX;
+import edu.wpi.first.wpilibj.I2C;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -29,7 +30,7 @@ public class Robot extends TimedRobot
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
-  //private AHRS navx;
+  private AHRS navx;
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
   private Spark BackRight, FrontRight, BackLeft, FrontLeft, Intake, Belt1, Belt2, Belt3, Belt4, Loader;
@@ -47,7 +48,7 @@ public class Robot extends TimedRobot
     SmartDashboard.putData("Auto choices", m_chooser);
 
     // NavX sensor
-    //navx = new AHRS(I2C.Port);
+    navx = new AHRS(I2C.Port.kMXP);
 
     // Magazine sensors
     ballbeam1 = new AnalogInput(0);
