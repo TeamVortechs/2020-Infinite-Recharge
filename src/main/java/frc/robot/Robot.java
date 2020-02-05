@@ -10,6 +10,11 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+//import com.kauailabs.navx.frc.AHRS;
+import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.Spark;
+import edu.wpi.first.wpilibj.PWMTalonSRX;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -24,6 +29,11 @@ public class Robot extends TimedRobot
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
+  //private AHRS navx;
+  private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
+  private XboxController controllerdriver, controlleroperator;
+  private Spark BackRight, FrontRight, BackLeft, FrontLeft, Intake, Belt1, Belt2, Belt3, Belt4, Loader;
+  private PWMTalonSRX Arm;
 
   /**
    * This function is run when the robot is first started up and should be
@@ -35,6 +45,44 @@ public class Robot extends TimedRobot
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
+
+    // NavX sensor
+    //navx = new AHRS(I2C.Port);
+
+    // Magazine sensors
+    ballbeam1 = new AnalogInput(0);
+    ballbeam2 = new AnalogInput(1);
+    ballbeam3 = new AnalogInput(2);
+    ballbeam4 = new AnalogInput(3);
+    ballbeam5 = new AnalogInput(4);
+    ballbeam6 = new AnalogInput(5);
+    ballbeam7 = new AnalogInput(6);
+    ballbeam8 = new AnalogInput(7);
+    ballbeam9 = new AnalogInput(8);
+    ballbeam10 = new AnalogInput(9);
+
+    // Xbox Controllers
+    controllerdriver = new XboxController(0);
+    controlleroperator = new XboxController(1);
+
+    // Drive motors
+    BackRight = new Spark(0);
+    FrontRight = new Spark(1);
+    BackLeft = new Spark(2);
+    FrontLeft = new Spark(3);
+
+    // Intake motors
+    Intake = new Spark(4);
+
+    // Belt motors in the magazine
+    Belt1 = new Spark(5);
+    Belt2 = new Spark(6);
+    Belt3 = new Spark(7);
+    Belt4 = new Spark(8);
+    Loader = new Spark(9);
+
+    // Arm motor
+    Arm = new PWMTalonSRX(0);
   }
 
   /**
@@ -68,6 +116,8 @@ public class Robot extends TimedRobot
     m_autoSelected = m_chooser.getSelected();
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
+
+
   }
 
   /**
@@ -104,55 +154,11 @@ public class Robot extends TimedRobot
   {
 
   }
+
 }
 
-/**
- * This class initializes the controllers our robot uses
- */
-private class ControllerPorts
-{
-    controllerdriver = new XboxController(0);
-    controlleroperator = new XboxController(1);
-}
 
-/**
- *  This class initializes the sensors our robot uses
- */
-private class SensorPorts
-{
-    navx = new AHRS(I2C.Port 1);
 
-    ballbeam1 = new AnalogInput(0);
-    ballbeam2 = new AnalogInput(1);
-    ballbeam3 = new AnalogInput(2);
-    ballbeam4 = new AnalogInput(3);
-    ballbeam5 = new AnalogInput(4);
-    ballbeam6 = new AnalogInput(5);
-    ballbeam7 = new AnalogInput(6);
-    ballbeam8 = new AnalogInput(7);
-    ballbeam9 = new AnalogInput(8);
-    ballbeam10 = new AnalogInput(9);
-}
 
-/**
- * This class initializes the motors our robot uses
- */
-private class MotorPorts
-{
-    BackRight = new Spark(0);
-    FrontRight = new Spark(1);
-    BackLeft = new Spark(2);
-    FrontLeft = new Spark(3);
-
-    Intake = new Spark(4);
-
-    Belt1 = new Spark(5);
-    Belt2 = new Spark(6);
-    Belt3 = new Spark(7);
-    Belt4 = new Spark(8);
-    Loader = new Spark(9);
-
-    Arm = new PWMTalonSRX(0);
-}
 
 
