@@ -3,10 +3,11 @@
     "",
     "\\src",
     "\\src\\main",
+    "\\src\\main\\deploy",
     "\\src\\main\\java",
     "\\src\\main\\java\\frc",
     "\\src\\main\\java\\frc\\robot"
   ],
-  "SelectedNode": "\\src\\main\\java\\frc\\robot\\Main.java",
+  "SelectedNode": "\\src\\main\\deploy\\example.txt",
   "PreviewInSolutionExplorer": false
 }
