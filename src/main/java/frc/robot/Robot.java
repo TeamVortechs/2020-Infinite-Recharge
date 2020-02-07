@@ -155,6 +155,9 @@ public class Robot extends TimedRobot
   {
     double speed = Math.pow(controllerdriver.getY(GenericHID.Hand.kLeft), 3);
     double direction = controllerdriver.getX(GenericHID.Hand.kRight) * 0.66;
+    int pov = controllerdriver.getPOV(0);
+
+    System.out.println(pov);
 
     setDriveWheels(speed - direction, speed + direction);
   }
