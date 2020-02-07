@@ -91,8 +91,8 @@ public class Robot extends TimedRobot
   {
     backLeft.set(left);
     frontLeft.set(left);
-    backRight.set(right);
-    frontRight.set(right);
+    backRight.set(-right);
+    frontRight.set(-right);
   }
 
   /**
@@ -153,8 +153,8 @@ public class Robot extends TimedRobot
   @Override
   public void teleopPeriodic() 
   {
-    double speed = controllerdriver.getY(GenericHID.Hand.kLeft);
-    double direction = controllerdriver.getX(GenericHID.Hand.kRight);
+    double speed = Math.pow(controllerdriver.getY(GenericHID.Hand.kLeft), 3);
+    double direction = controllerdriver.getX(GenericHID.Hand.kRight) * 0.66;
 
     setDriveWheels(speed - direction, speed + direction);
   }
