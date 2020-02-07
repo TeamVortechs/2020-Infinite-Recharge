@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.PWMTalonSRX;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.Encoder;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -39,6 +40,7 @@ public class Robot extends TimedRobot
   private Spark backRight, frontRight, backLeft, frontLeft, intake, belt1, belt2, belt3, belt4, loader;
   private SpeedControllerGroup leftMotors, rightMotors;
   private DifferentialDrive drive;
+  private Encoder leftEncoder, rightEncoder;
   private PWMTalonSRX arm;
 
   /**
@@ -81,6 +83,11 @@ public class Robot extends TimedRobot
     rightMotors = new SpeedControllerGroup(backRight, frontRight);
 
     drive = new DifferentialDrive(leftMotors, rightMotors);
+
+    leftEncoder = new Encoder(5, 6, false, Encoder.EncodingType.k2X);
+    rightEncoder = new Encoder(3, 4, true, Encoder.EncodingType.k2X);
+    leftEncoder.setDistancePerPulse(1.0/256);
+    rightEncoder.setDistancePerPulse(1.0/256);
 
     // Intake motors
     //intake = new Spark(4);
@@ -169,6 +176,7 @@ public class Robot extends TimedRobot
     //int pov = controllerdriver.getPOV(0);
 
     drive.arcadeDrive(speed, direction, true);
+    System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
     // setDriveWheels(speed - direction, speed + direction);
   }
 
