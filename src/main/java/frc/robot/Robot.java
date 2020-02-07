@@ -58,10 +58,10 @@ public class Robot extends TimedRobot
     // ballbeam4 = new AnalogInput(3);
     // ballbeam5 = new AnalogInput(4);
     // ballbeam6 = new AnalogInput(5);
-    ballbeam7 = new AnalogInput(6);
-    ballbeam8 = new AnalogInput(7);
-    ballbeam9 = new AnalogInput(8);
-    ballbeam10 = new AnalogInput(9);
+    // ballbeam7 = new AnalogInput(6);
+    // ballbeam8 = new AnalogInput(7);
+    // ballbeam9 = new AnalogInput(8);
+    // ballbeam10 = new AnalogInput(9);
 
     // Xbox Controllers
     controllerdriver = new XboxController(0);
