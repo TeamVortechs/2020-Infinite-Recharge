@@ -20,6 +20,9 @@ import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -41,6 +44,7 @@ public class Robot extends TimedRobot
   private SpeedControllerGroup leftMotors, rightMotors;
   private DifferentialDrive drive;
   private Encoder leftEncoder, rightEncoder;
+  private NetworkTable table;
   private PWMTalonSRX arm;
 
   /**
@@ -88,6 +92,8 @@ public class Robot extends TimedRobot
     rightEncoder = new Encoder(3, 4, true, Encoder.EncodingType.k2X);
     leftEncoder.setDistancePerPulse(1.0/256);
     rightEncoder.setDistancePerPulse(1.0/256);
+
+    table = NetworkTableInstance.getDefault().getTable("limelight");
 
     // Intake motors
     //intake = new Spark(4);
@@ -178,6 +184,9 @@ public class Robot extends TimedRobot
     drive.arcadeDrive(speed, direction, true);
     System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
     // setDriveWheels(speed - direction, speed + direction);
+
+    NetworkTableEntry tx = table.getEntry("tx");
+    System.out.println("Limelight: " + tx);
   }
 
   /**
