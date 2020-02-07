@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.PWMTalonSRX;
 import edu.wpi.first.wpilibj.I2C;
+import edu.wpi.first.wpilibj.GenericHID;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -33,8 +34,8 @@ public class Robot extends TimedRobot
   private AHRS navx;
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
-  private Spark BackRight, FrontRight, BackLeft, FrontLeft, Intake, Belt1, Belt2, Belt3, Belt4, Loader;
-  private PWMTalonSRX Arm;
+  private Spark backRight, frontRight, backLeft, frontLeft, intake, belt1, belt2, belt3, belt4, loader;
+  private PWMTalonSRX arm;
 
   /**
    * This function is run when the robot is first started up and should be
@@ -51,12 +52,12 @@ public class Robot extends TimedRobot
     navx = new AHRS(I2C.Port.kMXP);
 
     // Magazine sensors
-    ballbeam1 = new AnalogInput(0);
-    ballbeam2 = new AnalogInput(1);
-    ballbeam3 = new AnalogInput(2);
-    ballbeam4 = new AnalogInput(3);
-    ballbeam5 = new AnalogInput(4);
-    ballbeam6 = new AnalogInput(5);
+    // ballbeam1 = new AnalogInput(0);
+    // ballbeam2 = new AnalogInput(1);
+    // ballbeam3 = new AnalogInput(2);
+    // ballbeam4 = new AnalogInput(3);
+    // ballbeam5 = new AnalogInput(4);
+    // ballbeam6 = new AnalogInput(5);
     ballbeam7 = new AnalogInput(6);
     ballbeam8 = new AnalogInput(7);
     ballbeam9 = new AnalogInput(8);
@@ -67,23 +68,31 @@ public class Robot extends TimedRobot
     controlleroperator = new XboxController(1);
 
     // Drive motors
-    BackRight = new Spark(0);
-    FrontRight = new Spark(1);
-    BackLeft = new Spark(2);
-    FrontLeft = new Spark(3);
+    backRight = new Spark(0);
+    frontRight = new Spark(1);
+    backLeft = new Spark(2);
+    frontLeft = new Spark(3);
 
     // Intake motors
-    Intake = new Spark(4);
+    //intake = new Spark(4);
 
     // Belt motors in the magazine
-    Belt1 = new Spark(5);
-    Belt2 = new Spark(6);
-    Belt3 = new Spark(7);
-    Belt4 = new Spark(8);
-    Loader = new Spark(9);
+    // belt1 = new Spark(5);
+    // belt2 = new Spark(6);
+    // belt3 = new Spark(7);
+    // belt4 = new Spark(8);
+    // loader = new Spark(9);
 
     // Arm motor
-    Arm = new PWMTalonSRX(0);
+    // arm = new PWMTalonSRX(0);
+  }
+
+  public void setDriveWheels(double left, double right)
+  {
+    backLeft.set(left);
+    frontLeft.set(left);
+    backRight.set(right);
+    frontRight.set(right);
   }
 
   /**
@@ -144,7 +153,10 @@ public class Robot extends TimedRobot
   @Override
   public void teleopPeriodic() 
   {
+    double speed = controllerdriver.getY(GenericHID.Hand.kLeft);
+    double direction = controllerdriver.getX(GenericHID.Hand.kRight);
 
+    setDriveWheels(speed - direction, speed + direction);
   }
 
   /**
