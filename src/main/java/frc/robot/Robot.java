@@ -14,9 +14,11 @@ import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.Spark;
+import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.PWMTalonSRX;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -35,6 +37,8 @@ public class Robot extends TimedRobot
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
   private Spark backRight, frontRight, backLeft, frontLeft, intake, belt1, belt2, belt3, belt4, loader;
+  private SpeedControllerGroup leftMotors, rightMotors;
+  private DifferentialDrive drive;
   private PWMTalonSRX arm;
 
   /**
@@ -73,6 +77,11 @@ public class Robot extends TimedRobot
     backLeft = new Spark(2);
     frontLeft = new Spark(3);
 
+    leftMotors = new SpeedControllerGroup(backLeft, frontLeft);
+    rightMotors = new SpeedControllerGroup(backRight, frontRight);
+
+    drive = new DifferentialDrive(leftMotors, rightMotors);
+
     // Intake motors
     //intake = new Spark(4);
 
@@ -89,10 +98,10 @@ public class Robot extends TimedRobot
 
   public void setDriveWheels(double left, double right)
   {
-    backLeft.set(left);
-    frontLeft.set(left);
-    backRight.set(-right);
-    frontRight.set(-right);
+    // backLeft.set(left);
+    // frontLeft.set(left);
+    // backRight.set(-right);
+    // frontRight.set(-right);
   }
 
   /**
@@ -153,13 +162,14 @@ public class Robot extends TimedRobot
   @Override
   public void teleopPeriodic() 
   {
-    double speed = Math.pow(controllerdriver.getY(GenericHID.Hand.kLeft), 3);
-    double direction = controllerdriver.getX(GenericHID.Hand.kRight) * 0.66;
-    int pov = controllerdriver.getPOV(0);
+    // double speed = Math.pow(controllerdriver.getY(GenericHID.Hand.kLeft), 3);
+    // double direction = controllerdriver.getX(GenericHID.Hand.kRight) * 0.66;
+    double speed = controllerdriver.getY(GenericHID.Hand.kLeft);
+    double direction = controllerdriver.getX(GenericHID.Hand.kRight);
+    //int pov = controllerdriver.getPOV(0);
 
-    System.out.println(pov);
-
-    setDriveWheels(speed - direction, speed + direction);
+    drive.arcadeDrive(speed, direction, true);
+    // setDriveWheels(speed - direction, speed + direction);
   }
 
   /**
