@@ -36,6 +36,7 @@ public class Robot extends TimedRobot
   private static final String kDefaultAuto = "Default";
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
+  private Boolean activated = false;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private AHRS navx;
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
@@ -96,7 +97,7 @@ public class Robot extends TimedRobot
     table = NetworkTableInstance.getDefault().getTable("limelight");
 
     // Intake motors
-    //intake = new Spark(4);
+    intake = new Spark(4);
 
     // Belt motors in the magazine
     // belt1 = new Spark(5);
@@ -115,6 +116,11 @@ public class Robot extends TimedRobot
     // frontLeft.set(left);
     // backRight.set(-right);
     // frontRight.set(-right);
+  }
+
+  public void setIntake(double intakeSpeed)
+  {
+    intake.set(intakeSpeed);
   }
 
   /**
@@ -175,18 +181,35 @@ public class Robot extends TimedRobot
   @Override
   public void teleopPeriodic() 
   {
-    // double speed = Math.pow(controllerdriver.getY(GenericHID.Hand.kLeft), 3);
+    // double driveSpeed = Math.pow(controllerdriver.getY(GenericHID.Hand.kLeft), 3);
     // double direction = controllerdriver.getX(GenericHID.Hand.kRight) * 0.66;
-    double speed = controllerdriver.getY(GenericHID.Hand.kLeft);
+    double driveSpeed = controllerdriver.getY(GenericHID.Hand.kLeft);
     double direction = controllerdriver.getX(GenericHID.Hand.kRight);
     //int pov = controllerdriver.getPOV(0);
 
-    drive.arcadeDrive(speed, direction, true);
+    drive.arcadeDrive(driveSpeed, direction, true);
     System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
-    // setDriveWheels(speed - direction, speed + direction);
+    // setDriveWheels(driveSpeed - direction, driveSpeed + direction);
 
     NetworkTableEntry tx = table.getEntry("tx");
     System.out.println("Limelight: " + tx);
+
+    if (activated = false)
+    {
+      if (controllerdriver.getYButton())
+      {
+        intake.set(1);
+        activated = true;
+      } 
+    }
+    else if (activated = true)
+    {
+      if (controllerdriver.getYButton())
+      {
+        intake.set(0);
+        activated = false;
+      }
+    }
   }
 
   /**
