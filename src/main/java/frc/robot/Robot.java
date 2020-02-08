@@ -16,10 +16,13 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.PWMTalonSRX;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -46,6 +49,8 @@ public class Robot extends TimedRobot
   private Encoder leftEncoder, rightEncoder;
   private NetworkTable table;
   private PWMTalonSRX arm;
+  private Timer timer;
+  private ADXRS450_Gyro gyro;
 
   /**
    * This function is run when the robot is first started up and should be
@@ -88,10 +93,10 @@ public class Robot extends TimedRobot
 
     drive = new DifferentialDrive(leftMotors, rightMotors);
 
-    leftEncoder = new Encoder(5, 6, false, Encoder.EncodingType.k2X);
-    rightEncoder = new Encoder(3, 4, true, Encoder.EncodingType.k2X);
-    leftEncoder.setDistancePerPulse(1.0/256);
-    rightEncoder.setDistancePerPulse(1.0/256);
+    leftEncoder = new Encoder(5, 6, true, Encoder.EncodingType.k2X);
+    rightEncoder = new Encoder(3, 4, false, Encoder.EncodingType.k2X);
+    leftEncoder.setDistancePerPulse(5.3/256);
+    rightEncoder.setDistancePerPulse(5.3/256);
 
     table = NetworkTableInstance.getDefault().getTable("limelight");
 
@@ -107,14 +112,19 @@ public class Robot extends TimedRobot
 
     // Arm motor
     // arm = new PWMTalonSRX(0);
+
+    //Timer
+    timer = new Timer();
+
+    gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
   }
 
   public void setDriveWheels(double left, double right)
   {
-    // backLeft.set(left);
-    // frontLeft.set(left);
-    // backRight.set(-right);
-    // frontRight.set(-right);
+    backLeft.set(-left);
+    frontLeft.set(-left);
+    backRight.set(right);
+    frontRight.set(right);
   }
 
   /**
@@ -148,8 +158,9 @@ public class Robot extends TimedRobot
     m_autoSelected = m_chooser.getSelected();
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
-
-
+    timer.reset();
+    timer.start();
+    gyro.reset();
   }
 
   /**
@@ -158,17 +169,40 @@ public class Robot extends TimedRobot
   @Override
   public void autonomousPeriodic() 
   {
-    switch (m_autoSelected) {
-      case kCustomAuto:
-        // Put custom auto code here
-        break;
-      case kDefaultAuto:
-      default:
-        // Put default auto code here
-        break;
-    }
-  }
+    // switch (m_autoSelected) {
+    //   case kCustomAuto:
+    //     // Put custom auto code here
+    //     break;
+    //   case kDefaultAuto:
+    //   default:
+    //     // Put default auto code here
+    //     break;
+    // }
 
+    // if (timer.get() < 2.0)
+    //   setDriveWheels(0.5, 0.5);
+    // else
+    //   setDriveWheels(0, 0);
+
+
+    // System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
+
+    // if (leftEncoder.getDistance() < 48)
+    //   setDriveWheels(0.3, 0.3);
+    // else
+    //   setDriveWheels(0, 0);
+
+    // if (controllerdriver.getAButtonPressed())
+    //   {
+    //     leftEncoder.reset();
+    //     rightEncoder.reset();
+    //   }
+    if (gyro.getAngle() < 90)
+      setDriveWheels(0.5, -0.5);
+    else
+      setDriveWheels(0, 0);
+    System.out.println(gyro.getAngle());
+  }
   /**
    * This function is called periodically during operator control.
    */
