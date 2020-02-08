@@ -35,8 +35,9 @@ public class Robot extends TimedRobot
 {
   private static final String kDefaultAuto = "Default";
   private static final String kCustomAuto = "My Auto";
+  private int ballCount;
   private String m_autoSelected;
-  private Boolean activated = false;
+  private Boolean activated;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private AHRS navx;
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
@@ -63,16 +64,17 @@ public class Robot extends TimedRobot
     navx = new AHRS(I2C.Port.kMXP);
 
     // Magazine sensors
-    // ballbeam1 = new AnalogInput(0);
-    // ballbeam2 = new AnalogInput(1);
-    // ballbeam3 = new AnalogInput(2);
-    // ballbeam4 = new AnalogInput(3);
-    // ballbeam5 = new AnalogInput(4);
-    // ballbeam6 = new AnalogInput(5);
-    // ballbeam7 = new AnalogInput(6);
-    // ballbeam8 = new AnalogInput(7);
-    // ballbeam9 = new AnalogInput(8);
-    // ballbeam10 = new AnalogInput(9);
+    ballCount = 0;
+    ballbeam1 = new AnalogInput(0);
+    ballbeam2 = new AnalogInput(1);
+    ballbeam3 = new AnalogInput(2);
+    ballbeam4 = new AnalogInput(3);
+    ballbeam5 = new AnalogInput(4);
+    ballbeam6 = new AnalogInput(5);
+    ballbeam7 = new AnalogInput(6);
+    ballbeam8 = new AnalogInput(7);
+    ballbeam9 = new AnalogInput(8);
+    ballbeam10 = new AnalogInput(9);
 
     // Xbox Controllers
     controllerdriver = new XboxController(0);
@@ -98,13 +100,14 @@ public class Robot extends TimedRobot
 
     // Intake motors
     intake = new Spark(4);
+    activated = false;
 
     // Belt motors in the magazine
-    // belt1 = new Spark(5);
-    // belt2 = new Spark(6);
-    // belt3 = new Spark(7);
-    // belt4 = new Spark(8);
-    // loader = new Spark(9);
+     belt1 = new Spark(5);
+     belt2 = new Spark(6);
+     belt3 = new Spark(7);
+     belt4 = new Spark(8);
+     loader = new Spark(9);
 
     // Arm motor
     // arm = new PWMTalonSRX(0);
@@ -121,6 +124,15 @@ public class Robot extends TimedRobot
   public void setIntake(double intakeSpeed)
   {
     intake.set(intakeSpeed);
+  }
+
+  public void setMagazineBelts(double magazineSpeed)
+  {
+    belt1.set(magazineSpeed);
+    belt2.set(magazineSpeed);
+    belt3.set(magazineSpeed);
+    belt4.set(magazineSpeed);
+    loader.set(magazineSpeed);
   }
 
   /**
@@ -209,6 +221,11 @@ public class Robot extends TimedRobot
         intake.set(0);
         activated = false;
       }
+    }
+
+    if (ballCount == 0)
+    {
+
     }
   }
 
