@@ -11,8 +11,11 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import com.kauailabs.navx.frc.AHRS;
+import com.kauailabs.navx.frc.AHRS.SerialDataType;
+
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.SPI.Port;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.PWMTalonSRX;
@@ -156,11 +159,33 @@ public class Robot extends TimedRobot
   public void autonomousInit() 
   {
     m_autoSelected = m_chooser.getSelected();
-    // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
+    //m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
+
     timer.reset();
     timer.start();
-    gyro.reset();
+    navx.reset();
+  }
+
+  public void turn90()
+  {
+    System.out.println(navx.getAngle());
+
+    if (navx.getAngle() < 75)         //Until 75 degrees, the robot turns at half power 
+      setDriveWheels(0.5, -0.5);
+    else if (navx.getAngle() < 90)    // For the last 15 degrees, the robot turns at third power
+      setDriveWheels(0.3, 0.3);
+    else
+      setDriveWheels(0, 0);
+  }
+
+  public void go4Feet()
+  {
+    System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
+    if (leftEncoder.getDistance() < 48)
+      setDriveWheels(0.3, 0.3);
+    else
+      setDriveWheels(0, 0);
   }
 
   /**
@@ -169,15 +194,15 @@ public class Robot extends TimedRobot
   @Override
   public void autonomousPeriodic() 
   {
-    // switch (m_autoSelected) {
-    //   case kCustomAuto:
-    //     // Put custom auto code here
-    //     break;
-    //   case kDefaultAuto:
-    //   default:
-    //     // Put default auto code here
-    //     break;
-    // }
+    switch (m_autoSelected) {
+      case kCustomAuto:
+        turn90();
+        break;
+      case kDefaultAuto:
+      default:
+        go4Feet();
+        break;
+    }
 
     // if (timer.get() < 2.0)
     //   setDriveWheels(0.5, 0.5);
@@ -185,23 +210,7 @@ public class Robot extends TimedRobot
     //   setDriveWheels(0, 0);
 
 
-    // System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
 
-    // if (leftEncoder.getDistance() < 48)
-    //   setDriveWheels(0.3, 0.3);
-    // else
-    //   setDriveWheels(0, 0);
-
-    // if (controllerdriver.getAButtonPressed())
-    //   {
-    //     leftEncoder.reset();
-    //     rightEncoder.reset();
-    //   }
-    if (gyro.getAngle() < 90)
-      setDriveWheels(0.5, -0.5);
-    else
-      setDriveWheels(0, 0);
-    System.out.println(gyro.getAngle());
   }
   /**
    * This function is called periodically during operator control.
@@ -221,6 +230,11 @@ public class Robot extends TimedRobot
 
     NetworkTableEntry tx = table.getEntry("tx");
     System.out.println("Limelight: " + tx);
+
+    double shooterSpeed = controlleroperator.getY(GenericHID.Hand.kLeft);
+
+
+
   }
 
   /**
