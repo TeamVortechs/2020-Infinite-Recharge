@@ -43,8 +43,12 @@ public class Robot extends TimedRobot
   private static final String autoGo4Feet = "autoGo4Feet";
   private static final String autoTurn90 = "autoTurn90";
 
+  private static final double shootDistance = 30.0;
+  private static final double shootSpeed = 0.5;
+
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
+  private boolean align, approach, shoot;
   private AHRS navx;
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
@@ -105,6 +109,10 @@ public class Robot extends TimedRobot
 
     table = NetworkTableInstance.getDefault().getTable("limelight");
 
+    align = false;
+    approach = false;
+    shoot = false;
+
     // Intake motors
     //intake = new Spark(4);
 
@@ -130,6 +138,35 @@ public class Robot extends TimedRobot
     frontLeft.set(-left);
     backRight.set(right);
     frontRight.set(right);
+  }
+
+  public double directionToTarget()
+  {
+    NetworkTableEntry tx = table.getEntry("tx");
+    double x = tx.getDouble(0.0);
+    if(x > -3 && x < 3){ // Dead Zone
+      return 0.0;
+    }else if(x > -15 && x < -3){ // Move from left to center
+      return -0.2;
+    }else if(x < -15){
+      return -0.4;
+    }else if(x > 3 && x < 15){ // Move from right to center
+      return 0.2;
+    }else if(x > 15){
+      return 0.4;
+    }else{ // If it finds nothing it won't change direction
+      return 0.0;
+    }
+  }
+
+  public void approach()
+  {
+    // Do later bc no sensor :(
+  }
+
+  public void shoot()
+  {
+
   }
 
   /**
@@ -222,20 +259,33 @@ public class Robot extends TimedRobot
   {
     // double speed = Math.pow(controllerdriver.getY(GenericHID.Hand.kLeft), 3);
     // double direction = controllerdriver.getX(GenericHID.Hand.kRight) * 0.66;
-    double speed = controllerdriver.getY(GenericHID.Hand.kLeft);
-    double direction = controllerdriver.getX(GenericHID.Hand.kRight);
+    double driveSpeed = controllerdriver.getY(GenericHID.Hand.kLeft);
+    double driveDirection = controllerdriver.getX(GenericHID.Hand.kRight);
     //int pov = controllerdriver.getPOV(0);
 
-    drive.arcadeDrive(speed, direction, true);
+    drive.arcadeDrive(driveSpeed, driveDirection, true);
     System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
     // setDriveWheels(speed - direction, speed + direction);
 
-    NetworkTableEntry tx = table.getEntry("tx");
-    System.out.println("Limelight: " + tx);
-
-    double shooterSpeed = controlleroperator.getY(GenericHID.Hand.kLeft);
-
-
+    if(controllerdriver.getAButtonPressed()){
+      align = !align;
+    }
+    if(controllerdriver.getXButtonPressed()){
+      approach = !approach;
+    }
+    if(controllerdriver.getYButtonPressed()){
+      shoot = !shoot;
+    }
+    if(align){
+      double autoDirection = directionToTarget();
+      setDriveWheels(-autoDirection, autoDirection);
+    }
+    if(approach){
+      approach();
+    }
+    if(shoot){
+      shoot();
+    }
 
   }
 
