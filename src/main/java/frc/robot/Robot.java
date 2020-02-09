@@ -39,8 +39,10 @@ import edu.wpi.first.networktables.NetworkTableInstance;
  */
 public class Robot extends TimedRobot 
 {
-  private static final String kDefaultAuto = "Default";
-  private static final String kCustomAuto = "My Auto";
+
+  private static final String autoGo4Feet = "autoGo4Feet";
+  private static final String autoTurn90 = "autoTurn90";
+
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private AHRS navx;
@@ -62,8 +64,8 @@ public class Robot extends TimedRobot
   @Override
   public void robotInit() 
   {
-    m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
-    m_chooser.addOption("My Auto", kCustomAuto);
+    m_chooser.setDefaultOption("Turn 90", autoTurn90);
+    m_chooser.addOption("Go 4 feet", autoGo4Feet);
     SmartDashboard.putData("Auto choices", m_chooser);
 
     // NavX sensor
@@ -195,10 +197,10 @@ public class Robot extends TimedRobot
   public void autonomousPeriodic() 
   {
     switch (m_autoSelected) {
-      case kCustomAuto:
+      case autoTurn90:
         turn90();
         break;
-      case kDefaultAuto:
+      case autoGo4Feet:
       default:
         go4Feet();
         break;
