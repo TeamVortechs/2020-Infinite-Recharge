@@ -102,19 +102,19 @@ public class Robot extends TimedRobot
 
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
-      backRightT = new PWMTalonSRX(0);
-      frontRightT = new PWMTalonSRX(1);
-      backLeftT = new PWMTalonSRX(2);
-      frontLeftT = new PWMTalonSRX(3);
-      leftMotors = new SpeedControllerGroup(backLeftT, frontLeftT);
-      rightMotors = new SpeedControllerGroup(backRightT, frontRightT);
+    backRightT = new PWMTalonSRX(0);
+    frontRightT = new PWMTalonSRX(1);
+    backLeftT = new PWMTalonSRX(2);
+    frontLeftT = new PWMTalonSRX(3);
+    leftMotors = new SpeedControllerGroup(backLeftT, frontLeftT);
+    rightMotors = new SpeedControllerGroup(backRightT, frontRightT);
     }else{
-      backRight = new Spark(0);
-      frontRight = new Spark(1);
-      backLeft = new Spark(2);
-      frontLeft = new Spark(3);
-      leftMotors = new SpeedControllerGroup(backLeft, frontLeft);
-      rightMotors = new SpeedControllerGroup(backRight, frontRight);
+    backRight = new Spark(0);
+    frontRight = new Spark(1);
+    backLeft = new Spark(2);
+    frontLeft = new Spark(3);
+    leftMotors = new SpeedControllerGroup(backLeft, frontLeft);
+    rightMotors = new SpeedControllerGroup(backRight, frontRight);
     }
 
     drive = new DifferentialDrive(leftMotors, rightMotors);
