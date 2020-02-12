@@ -11,11 +11,26 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import com.kauailabs.navx.frc.AHRS;
+import com.kauailabs.navx.frc.AHRS.SerialDataType;
+import com.revrobotics.ColorSensorV3;
+
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.SPI.Port;
 import edu.wpi.first.wpilibj.Spark;
+import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.PWMTalonSRX;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.I2C;
+import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.util.Color;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -26,15 +41,29 @@ import edu.wpi.first.wpilibj.I2C;
  */
 public class Robot extends TimedRobot 
 {
-  private static final String kDefaultAuto = "Default";
-  private static final String kCustomAuto = "My Auto";
+
+  private static final String autoGo4Feet = "autoGo4Feet";
+  private static final String autoOutAndBack = "autoOutAndBack";
+  private static final String autoTurn90 = "autoTurn90";
+
+  private static final double shootDistance = 30.0;
+  private static final double shootSpeed = 0.5;
+
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
+  private boolean align, approach, shoot;
   private AHRS navx;
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
-  private Spark BackRight, FrontRight, BackLeft, FrontLeft, Intake, Belt1, Belt2, Belt3, Belt4, Loader;
-  private PWMTalonSRX Arm;
+  private Spark backRight, frontRight, backLeft, frontLeft, intake, belt1, belt2, belt3, belt4, loader;
+  private SpeedControllerGroup leftMotors, rightMotors;
+  private DifferentialDrive drive;
+  private Encoder leftEncoder, rightEncoder;
+  private NetworkTable table;
+  private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT;
+  private Timer timer;
+  private ADXRS450_Gyro gyro;
+  private int state;
 
   /**
    * This function is run when the robot is first started up and should be
@@ -43,47 +72,116 @@ public class Robot extends TimedRobot
   @Override
   public void robotInit() 
   {
-    m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
-    m_chooser.addOption("My Auto", kCustomAuto);
+    m_chooser.setDefaultOption("Turn 90", autoTurn90);
+    m_chooser.addOption("Out and back", autoOutAndBack);
+    m_chooser.addOption("Go 4 feet", autoGo4Feet);
     SmartDashboard.putData("Auto choices", m_chooser);
 
     // NavX sensor
     navx = new AHRS(I2C.Port.kMXP);
 
     // Magazine sensors
-    ballbeam1 = new AnalogInput(0);
-    ballbeam2 = new AnalogInput(1);
-    ballbeam3 = new AnalogInput(2);
-    ballbeam4 = new AnalogInput(3);
-    ballbeam5 = new AnalogInput(4);
-    ballbeam6 = new AnalogInput(5);
-    ballbeam7 = new AnalogInput(6);
-    ballbeam8 = new AnalogInput(7);
-    ballbeam9 = new AnalogInput(8);
-    ballbeam10 = new AnalogInput(9);
+    // ballbeam1 = new AnalogInput(0);
+    // ballbeam2 = new AnalogInput(1);
+    // ballbeam3 = new AnalogInput(2);
+    // ballbeam4 = new AnalogInput(3);
+    // ballbeam5 = new AnalogInput(4);
+    // ballbeam6 = new AnalogInput(5);
+    // ballbeam7 = new AnalogInput(6);
+    // ballbeam8 = new AnalogInput(7);
+    // ballbeam9 = new AnalogInput(8);
+    // ballbeam10 = new AnalogInput(9);
 
     // Xbox Controllers
     controllerdriver = new XboxController(0);
     controlleroperator = new XboxController(1);
 
+    final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off sparks
+
     // Drive motors
-    BackRight = new Spark(0);
-    FrontRight = new Spark(1);
-    BackLeft = new Spark(2);
-    FrontLeft = new Spark(3);
+    if(driveWheelsAreTalonsAndNotSparks){
+    backRightT = new PWMTalonSRX(0);
+    frontRightT = new PWMTalonSRX(1);
+    backLeftT = new PWMTalonSRX(2);
+    frontLeftT = new PWMTalonSRX(3);
+    leftMotors = new SpeedControllerGroup(backLeftT, frontLeftT);
+    rightMotors = new SpeedControllerGroup(backRightT, frontRightT);
+    }else{
+    backRight = new Spark(0);
+    frontRight = new Spark(1);
+    backLeft = new Spark(2);
+    frontLeft = new Spark(3);
+    leftMotors = new SpeedControllerGroup(backLeft, frontLeft);
+    rightMotors = new SpeedControllerGroup(backRight, frontRight);
+    }
+
+    drive = new DifferentialDrive(leftMotors, rightMotors);
+
+    leftEncoder = new Encoder(5, 6, true, Encoder.EncodingType.k2X);
+    rightEncoder = new Encoder(3, 4, false, Encoder.EncodingType.k2X);
+    leftEncoder.setDistancePerPulse(5.3/256);
+    rightEncoder.setDistancePerPulse(5.3/256);
+
+    table = NetworkTableInstance.getDefault().getTable("limelight");
+
+    align = false;
+    approach = false;
+    shoot = false;
 
     // Intake motors
-    Intake = new Spark(4);
+    //intake = new Spark(4);
 
     // Belt motors in the magazine
-    Belt1 = new Spark(5);
-    Belt2 = new Spark(6);
-    Belt3 = new Spark(7);
-    Belt4 = new Spark(8);
-    Loader = new Spark(9);
+    // belt1 = new Spark(5);
+    // belt2 = new Spark(6);
+    // belt3 = new Spark(7);
+    // belt4 = new Spark(8);
+    // loader = new Spark(9);
 
     // Arm motor
-    Arm = new PWMTalonSRX(0);
+    // arm = new PWMTalonSRX(0);
+
+    //Timer
+    timer = new Timer();
+
+    gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
+  }
+
+  public void setDriveWheels(double left, double right)
+  {
+    backLeft.set(-left);
+    frontLeft.set(-left);
+    backRight.set(right);
+    frontRight.set(right);
+  }
+
+  public double directionToTarget()
+  {
+    NetworkTableEntry tx = table.getEntry("tx");
+    double x = tx.getDouble(0.0);
+    if(x > -3 && x < 3){ // Dead Zone
+      return 0.0;
+    }else if(x > -15 && x < -3){ // Move from left to center
+      return -0.2;
+    }else if(x < -15){
+      return -0.4;
+    }else if(x > 3 && x < 15){ // Move from right to center
+      return 0.2;
+    }else if(x > 15){
+      return 0.4;
+    }else{ // If it finds nothing it won't change direction
+      return 0.0;
+    }
+  }
+
+  public void approach()
+  {
+    // Do later bc no sensor :(
+  }
+
+  public void shoot()
+  {
+
   }
 
   /**
@@ -115,10 +213,78 @@ public class Robot extends TimedRobot
   public void autonomousInit() 
   {
     m_autoSelected = m_chooser.getSelected();
-    // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
+    //m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
 
+    timer.reset();
+    timer.start();
+    navx.reset();
 
+    state = 1;
+  }
+
+  public void turn90()
+  {
+    System.out.println(navx.getAngle());
+
+    if (navx.getAngle() < 75)         //Until 75 degrees, the robot turns at half power 
+      setDriveWheels(0.5, -0.5);
+    else if (navx.getAngle() < 90)    // For the last 15 degrees, the robot turns at third power
+      setDriveWheels(0.3, 0.3);
+    else
+      setDriveWheels(0, 0);
+  }
+
+  public void outAndBack()
+  {
+     switch (state) {
+       case 1:
+         // Go forward 36"
+         setDriveWheels(0.5, 0.5);
+         if (leftEncoder.getDistance() >= 36)
+           state++;
+         break;
+ 
+       case 2:
+         // Turn 180 degrees
+         setDriveWheels(0.5, -0.5);
+         if (navx.getAngle() >= 180) {
+           leftEncoder.reset();
+           rightEncoder.reset();
+           state++;
+         }
+         break;
+ 
+       case 3:
+         // Go forward 36" again (return)
+         setDriveWheels(0.5, 0.5);
+         if (leftEncoder.getDistance() >= 36) {
+           navx.reset();
+           state++;
+         }
+         break;
+ 
+       case 4:
+         // Turns itself 180 degrees
+         setDriveWheels(0.5, -0.5);
+         if (navx.getAngle() >= 180)
+           state++;
+           break;
+ 
+       case 5:
+         // Stops the robot
+         setDriveWheels(0, 0);
+         break;
+    }
+  }
+
+  public void go4Feet()
+  {
+    System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
+    if (leftEncoder.getDistance() < 48)
+      setDriveWheels(0.3, 0.3);
+    else
+      setDriveWheels(0, 0);
   }
 
   /**
@@ -128,22 +294,58 @@ public class Robot extends TimedRobot
   public void autonomousPeriodic() 
   {
     switch (m_autoSelected) {
-      case kCustomAuto:
-        // Put custom auto code here
+      case autoTurn90:
+        turn90();
         break;
-      case kDefaultAuto:
+      case autoGo4Feet:
       default:
-        // Put default auto code here
+        go4Feet();
         break;
     }
-  }
 
+    // if (timer.get() < 2.0)
+    //   setDriveWheels(0.5, 0.5);
+    // else
+    //   setDriveWheels(0, 0);
+
+
+
+  }
   /**
    * This function is called periodically during operator control.
    */
   @Override
   public void teleopPeriodic() 
   {
+    // double speed = Math.pow(controllerdriver.getY(GenericHID.Hand.kLeft), 3);
+    // double direction = controllerdriver.getX(GenericHID.Hand.kRight) * 0.66;
+    double driveSpeed = controllerdriver.getY(GenericHID.Hand.kLeft);
+    double driveDirection = controllerdriver.getX(GenericHID.Hand.kRight);
+    //int pov = controllerdriver.getPOV(0);
+
+    drive.arcadeDrive(driveSpeed, driveDirection, true);
+    System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
+    // setDriveWheels(speed - direction, speed + direction);
+
+    if(controllerdriver.getAButtonPressed()){
+      align = !align;
+    }
+    if(controllerdriver.getXButtonPressed()){
+      approach = !approach;
+    }
+    if(controllerdriver.getYButtonPressed()){
+      shoot = !shoot;
+    }
+    if(align){
+      double autoDirection = directionToTarget();
+      setDriveWheels(-autoDirection, autoDirection);
+    }
+    if(approach){
+      approach();
+    }
+    if(shoot){
+      shoot();
+    }
 
   }
 
