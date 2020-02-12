@@ -163,9 +163,9 @@ public class Robot extends TimedRobot
 
     gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
 
-    isSpinningMult = true;
+    isSpinningMult = false;
     isSpinningToSpecific = false;
-    isCheckingColor = true;
+    isCheckingColor = false;
     hasSeenColor = false;
     requiredColor = "Blue";
     totalSpins = 0;
