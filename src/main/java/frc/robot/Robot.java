@@ -41,6 +41,7 @@ public class Robot extends TimedRobot
 {
 
   private static final String autoGo4Feet = "autoGo4Feet";
+  private static final String autoOutAndBack = "autoOutAndBack";
   private static final String autoTurn90 = "autoTurn90";
 
   private static final double shootDistance = 30.0;
@@ -60,6 +61,7 @@ public class Robot extends TimedRobot
   private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT;
   private Timer timer;
   private ADXRS450_Gyro gyro;
+  private int state;
 
   /**
    * This function is run when the robot is first started up and should be
@@ -69,6 +71,7 @@ public class Robot extends TimedRobot
   public void robotInit() 
   {
     m_chooser.setDefaultOption("Turn 90", autoTurn90);
+    m_chooser.addOption("Out and back", autoOutAndBack);
     m_chooser.addOption("Go 4 feet", autoGo4Feet);
     SmartDashboard.putData("Auto choices", m_chooser);
 
@@ -214,6 +217,8 @@ public class Robot extends TimedRobot
     timer.reset();
     timer.start();
     navx.reset();
+
+    state = 1;
   }
 
   public void turn90()
@@ -226,6 +231,49 @@ public class Robot extends TimedRobot
       setDriveWheels(0.3, 0.3);
     else
       setDriveWheels(0, 0);
+  }
+
+  public void outAndBack()
+  {
+     switch (state) {
+       case 1:
+         // Go forward 36"
+         setDriveWheels(0.5, 0.5);
+         if (leftEncoder.getDistance() >= 36)
+           state++;
+         break;
+ 
+       case 2:
+         // Turn 180 degrees
+         setDriveWheels(0.5, -0.5);
+         if (navx.getAngle() >= 180) {
+           leftEncoder.reset();
+           rightEncoder.reset();
+           state++;
+         }
+         break;
+ 
+       case 3:
+         // Go forward 36" again (return)
+         setDriveWheels(0.5, 0.5);
+         if (leftEncoder.getDistance() >= 36) {
+           navx.reset();
+           state++;
+         }
+         break;
+ 
+       case 4:
+         // Turns itself 180 degrees
+         setDriveWheels(0.5, -0.5);
+         if (navx.getAngle() >= 180)
+           state++;
+           break;
+ 
+       case 5:
+         // Stops the robot
+         setDriveWheels(0, 0);
+         break;
+    }
   }
 
   public void go4Feet()
