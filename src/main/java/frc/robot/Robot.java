@@ -94,7 +94,7 @@ public class Robot extends TimedRobot
     controllerdriver = new XboxController(0);
     controlleroperator = new XboxController(1);
 
-    final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off sparks
+    final boolean driveWheelsAreTalonsAndNotSparks = false; // If you change this to false it will try to run the wheels off sparks
 
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
@@ -142,7 +142,7 @@ public class Robot extends TimedRobot
     //Timer
     timer = new Timer();
 
-    gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
+    //gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
   }
 
   public void setDriveWheels(double left, double right)
@@ -151,6 +151,11 @@ public class Robot extends TimedRobot
     frontLeft.set(-left);
     backRight.set(right);
     frontRight.set(right);
+  }
+
+  public void goStraight(double power)
+  {
+    setDriveWheels(power*0.85, power);
   }
 
   public double directionToTarget()
@@ -218,6 +223,8 @@ public class Robot extends TimedRobot
     timer.start();
     navx.reset();
 
+    rightEncoder.reset();
+    leftEncoder.reset();
     state = 1;
   }
 
@@ -238,7 +245,7 @@ public class Robot extends TimedRobot
      switch (state) {
        case 1:
          // Go forward 36"
-         setDriveWheels(0.5, 0.5);
+         goStraight(0.5);
          if (leftEncoder.getDistance() >= 36)
            state++;
          break;
@@ -246,7 +253,7 @@ public class Robot extends TimedRobot
        case 2:
          // Turn 180 degrees
          setDriveWheels(0.5, -0.5);
-         if (navx.getAngle() >= 180) {
+         if (navx.getAngle() >= 170) {
            leftEncoder.reset();
            rightEncoder.reset();
            state++;
@@ -255,7 +262,7 @@ public class Robot extends TimedRobot
  
        case 3:
          // Go forward 36" again (return)
-         setDriveWheels(0.5, 0.5);
+         goStraight(0.5);
          if (leftEncoder.getDistance() >= 36) {
            navx.reset();
            state++;
@@ -265,7 +272,7 @@ public class Robot extends TimedRobot
        case 4:
          // Turns itself 180 degrees
          setDriveWheels(0.5, -0.5);
-         if (navx.getAngle() >= 180)
+         if (navx.getAngle() >= 170)
            state++;
            break;
  
@@ -294,6 +301,9 @@ public class Robot extends TimedRobot
     switch (m_autoSelected) {
       case autoTurn90:
         turn90();
+        break;
+      case autoOutAndBack:
+        outAndBack();
         break;
       case autoGo4Feet:
       default:
