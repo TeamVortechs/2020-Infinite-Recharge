@@ -65,6 +65,8 @@ public class Robot extends TimedRobot
   private ADXRS450_Gyro gyro;
   private int state;
 
+  private pulsedLightLIDAR lidar;
+
   /**
    * This function is run when the robot is first started up and should be
    * used for any initialization code.
@@ -123,6 +125,9 @@ public class Robot extends TimedRobot
     rightEncoder.setDistancePerPulse(5.3/256);
 
     table = NetworkTableInstance.getDefault().getTable("limelight");
+
+    lidar = new pulsedLightLIDAR();
+    lidar.start();
 
     align = false;
     approach = false;
@@ -346,6 +351,9 @@ public class Robot extends TimedRobot
     if(shoot){
       shoot();
     }
+
+    double lidarDist = lidar.getDistanceIn();
+    System.out.println("Cool lidar stuff: " + lidarDist);
 
   }
 
