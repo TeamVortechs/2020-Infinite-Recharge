@@ -126,7 +126,7 @@ public class Robot extends TimedRobot
     controllerdriver = new XboxController(0);
     controlleroperator = new XboxController(1);
 
-    final boolean driveWheelsAreTalonsAndNotSparks = false; // If you change this to false it will try to run the wheels off sparks
+    final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off sparks
 
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
