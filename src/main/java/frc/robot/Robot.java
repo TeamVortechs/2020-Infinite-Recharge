@@ -57,7 +57,7 @@ public class Robot extends TimedRobot
   private DifferentialDrive drive;
   private Encoder leftEncoder, rightEncoder;
   private NetworkTable table;
-  private PWMTalonSRX arm;
+  private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT;
   private Timer timer;
   private ADXRS450_Gyro gyro;
 
@@ -91,14 +91,24 @@ public class Robot extends TimedRobot
     controllerdriver = new XboxController(0);
     controlleroperator = new XboxController(1);
 
+    final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off sparks
+
     // Drive motors
+    if(driveWheelsAreTalonsAndNotSparks){
+    backRightT = new PWMTalonSRX(0);
+    frontRightT = new PWMTalonSRX(1);
+    backLeftT = new PWMTalonSRX(2);
+    frontLeftT = new PWMTalonSRX(3);
+    leftMotors = new SpeedControllerGroup(backLeftT, frontLeftT);
+    rightMotors = new SpeedControllerGroup(backRightT, frontRightT);
+    }else{
     backRight = new Spark(0);
     frontRight = new Spark(1);
     backLeft = new Spark(2);
     frontLeft = new Spark(3);
-
     leftMotors = new SpeedControllerGroup(backLeft, frontLeft);
     rightMotors = new SpeedControllerGroup(backRight, frontRight);
+    }
 
     drive = new DifferentialDrive(leftMotors, rightMotors);
 
