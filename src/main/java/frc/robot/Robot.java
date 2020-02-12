@@ -13,6 +13,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import com.kauailabs.navx.frc.AHRS;
 import com.kauailabs.navx.frc.AHRS.SerialDataType;
 import com.revrobotics.ColorSensorV3;
+import com.revrobotics.ColorMatchResult;
+import com.revrobotics.ColorMatch;
 
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.XboxController;
@@ -55,7 +57,7 @@ public class Robot extends TimedRobot
   private AHRS navx;
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
-  private Spark backRight, frontRight, backLeft, frontLeft, intake, belt1, belt2, belt3, belt4, loader;
+  private Spark backRight, frontRight, backLeft, frontLeft, intake, belt1, belt2, belt3, belt4, loader, colorMotor;
   private SpeedControllerGroup leftMotors, rightMotors;
   private DifferentialDrive drive;
   private Encoder leftEncoder, rightEncoder;
@@ -64,6 +66,16 @@ public class Robot extends TimedRobot
   private Timer timer;
   private ADXRS450_Gyro gyro;
   private int state;
+  private final I2C.Port i2cPort = I2C.Port.kOnboard; //this is the i2c port
+  private final ColorSensorV3 m_colorSensor = new ColorSensorV3(i2cPort); //uses the i2c parameter
+  private final ColorMatch m_colorMatcher = new ColorMatch(); //detects out of predetermained colors
+  private final Color kBlueTarget = ColorMatch.makeColor(0.143, 0.427, 0.429); // these targets can be configured
+  private final Color kGreenTarget = ColorMatch.makeColor(0.197, 0.561, 0.240);
+  private final Color kRedTarget = ColorMatch.makeColor(0.561, 0.232, 0.114);
+  private final Color kYellowTarget = ColorMatch.makeColor(0.361, 0.524, 0.113);
+  private boolean isCheckingColor, isSpinningToSpecific, isSpinningMult, hasSeenColor; //color logic
+  private int totalSpins;
+  private String requiredColor;
 
   private pulsedLightLIDAR lidar;
 
@@ -150,6 +162,18 @@ public class Robot extends TimedRobot
     timer = new Timer();
 
     gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
+
+    isSpinningMult = true;
+    isSpinningToSpecific = false;
+    isCheckingColor = true;
+    hasSeenColor = false;
+    requiredColor = "Blue";
+    totalSpins = 0;
+    m_colorMatcher.addColorMatch(kBlueTarget);
+    m_colorMatcher.addColorMatch(kGreenTarget);
+    m_colorMatcher.addColorMatch(kRedTarget);
+    m_colorMatcher.addColorMatch(kYellowTarget);
+    colorMotor = new Spark(4); //defining motor with spark
   }
 
   public void setDriveWheels(double left, double right)
@@ -200,7 +224,79 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
+    if(isCheckingColor) 
+    {
+      colorCheck();
+    }
+  }
 
+  public void colorCheck() 
+  {
+    Color detectedColor = m_colorSensor.getColor(); // the color that was detected from the sensor
+
+    //checks if the color seen matches the colors
+    String colorString, requiredColorActual; 
+    ColorMatchResult match = m_colorMatcher.matchClosestColor(detectedColor);
+    if (match.color == kBlueTarget) {
+      colorString = "Blue";
+    } else if (match.color == kRedTarget) {
+      colorString = "Red";
+    } else if (match.color == kGreenTarget) {
+      colorString = "Green";
+    } else if (match.color == kYellowTarget) {
+      colorString = "Yellow";
+    } else {
+      colorString = "Unknown";
+    }
+
+    SmartDashboard.putNumber("Red", detectedColor.red); //results pasted into shuffleboard & smart dash
+    SmartDashboard.putNumber("Green", detectedColor.green);
+    SmartDashboard.putNumber("Blue", detectedColor.blue);
+    SmartDashboard.putNumber("Confidence", match.confidence);
+    SmartDashboard.putString("Detected Color", colorString);
+
+    if(isSpinningToSpecific) 
+    {
+      colorMotor.set(0.05);
+      if(requiredColor == "Blue") {
+        requiredColorActual = "Red";
+      } else if (requiredColor == "Yellow") {
+        requiredColorActual = "Green";
+      } else if(requiredColor == "Red") {
+        requiredColorActual = "Blue";
+      } else if(requiredColor == "Green") {
+        requiredColorActual = "Yellow";
+      } else {
+        requiredColorActual = "Unknown";
+      } //translates the color we need to the color the sensor needs to stop on
+
+      if(colorString == requiredColorActual) 
+      {
+        //stops checking colors after required color found
+        isSpinningToSpecific = false;
+        isCheckingColor = false;
+        colorMotor.set(0);
+      }
+    } else if (isSpinningMult) 
+    {
+      colorMotor.set(0.05);
+      //spins around the disk a total of 3.5 to 4 spins
+      if(colorString == "Yellow" && !hasSeenColor) 
+      {
+        hasSeenColor = true;
+        totalSpins++;
+      } else {
+        hasSeenColor = false;
+      }
+      
+      if(totalSpins >= 7) {
+        //stops checking colors after spins
+        isSpinningMult = false;
+        isCheckingColor = false;
+        totalSpins = 0;
+        colorMotor.set(0);
+      }
+    }
   }
 
   /**
