@@ -101,6 +101,7 @@ public class Robot extends TimedRobot
   @Override
   public void robotInit() 
   {
+    playMusic();
     m_chooser.setDefaultOption("Turn 90", autoTurn90);
     m_chooser.addOption("Out and back", autoOutAndBack);
     m_chooser.addOption("Go 4 feet", autoGo4Feet);
