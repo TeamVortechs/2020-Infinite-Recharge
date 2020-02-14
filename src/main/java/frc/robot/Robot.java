@@ -1,10 +1,3 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
-
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -15,7 +8,6 @@ import com.kauailabs.navx.frc.AHRS.SerialDataType;
 import com.revrobotics.ColorSensorV3;
 import com.revrobotics.ColorMatchResult;
 import com.revrobotics.ColorMatch;
-
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.SPI.Port;
@@ -28,7 +20,6 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -49,6 +40,7 @@ public class Robot extends TimedRobot
 
   private static final String autoGo4Feet = "autoGo4Feet";
   private static final String autoOutAndBack = "autoOutAndBack";
+  private static final String autoBackAndAround = "autoBackAndAround";
   private static final String autoTurn90 = "autoTurn90";
   private static final String autoGoAround = "autoGoAround";
 
@@ -68,7 +60,6 @@ public class Robot extends TimedRobot
   private NetworkTable table;
   private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT;
   private Timer timer;
-  private ADXRS450_Gyro gyro;
   private int state;
 
   private final I2C.Port i2cPort = I2C.Port.kOnboard; //this is the i2c port
@@ -85,6 +76,7 @@ public class Robot extends TimedRobot
   private boolean getTopSpeed = true, tracON = true;
 
   private pulsedLightLIDAR lidar;
+
     /* The orchestra object that holds all the instruments */
   private Orchestra _orchestra;
     /* Talon FXs to play music through.  
@@ -104,9 +96,9 @@ public class Robot extends TimedRobot
   @Override
   public void robotInit() 
   {
-    playMusic();
     m_chooser.setDefaultOption("Turn 90", autoTurn90);
     m_chooser.addOption("Out and back", autoOutAndBack);
+    m_chooser.addOption("Back and around", autoBackAndAround);
     m_chooser.addOption("Go 4 feet", autoGo4Feet);
     m_chooser.addOption("Go Around", autoGoAround);
     SmartDashboard.putData("Auto choices", m_chooser);
@@ -166,14 +158,14 @@ public class Robot extends TimedRobot
     shoot = false;
 
     // Intake motors
-    //intake = new Spark(4);
+    intake = new Spark(4);
 
     // Belt motors in the magazine
-    // belt1 = new Spark(5);
-    // belt2 = new Spark(6);
-    // belt3 = new Spark(7);
-    // belt4 = new Spark(8);
-    // loader = new Spark(9);
+    //  belt1 = new Spark(5);
+    //  belt2 = new Spark(6);
+    //  belt3 = new Spark(7);
+    //  belt4 = new Spark(8);
+    //  loader = new Spark(9);
 
     // Arm motor
     // arm = new PWMTalonSRX(0);
@@ -181,31 +173,24 @@ public class Robot extends TimedRobot
     //Timer
     timer = new Timer();
 
-    //gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
-
-    isSpinningMult = false;
-    isSpinningToSpecific = false;
-    isCheckingColor = false;
-    hasSeenColor = false;
-    requiredColor = "Blue";
-    totalSpins = 0;
-    m_colorMatcher.addColorMatch(kBlueTarget);
-    m_colorMatcher.addColorMatch(kGreenTarget);
-    m_colorMatcher.addColorMatch(kRedTarget);
-    m_colorMatcher.addColorMatch(kYellowTarget);
-    colorMotor = new Spark(4); //defining motor with spark
+    // isSpinningMult = false;
+    // isSpinningToSpecific = false;
+    // isCheckingColor = false;
+    // hasSeenColor = false;
+    // requiredColor = "Blue";
+    // totalSpins = 0;
+    // m_colorMatcher.addColorMatch(kBlueTarget);
+    // m_colorMatcher.addColorMatch(kGreenTarget);
+    // m_colorMatcher.addColorMatch(kRedTarget);
+    // m_colorMatcher.addColorMatch(kYellowTarget);
+    // colorMotor = new Spark(4); //defining motor with spark
 
     /* Initialize the TalonFX's to be used */
   for (int i = 0; i < _fxes.length; ++i) {
     _instruments.add(_fxes[i]);
   }
   /* Create the orchestra with the TalonFX instruments */
-  _orchestra = new Orchestra(_instruments);
-  
-  
-  
-
-  }
+  _orchestra = new Orchestra(_instruments);}
 
   public void setDriveWheels(double left, double right)
   {
@@ -248,7 +233,7 @@ public class Robot extends TimedRobot
   {
 
   }
-
+  
   /**
    * This function is called every robot packet, no matter the mode. Use
    * this for items like diagnostics that you want ran during disabled,
@@ -260,92 +245,92 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
-    if(isCheckingColor) 
-    {
-      colorCheck();
-    }
+    // if(isCheckingColor) 
+    // {
+    //   colorCheck();
+    // }
   }
 
-  public void colorCheck() 
-  {
-    Color detectedColor = m_colorSensor.getColor(); // the color that was detected from the sensor
+  // public void colorCheck() 
+  // {
+  //   Color detectedColor = m_colorSensor.getColor(); // the color that was detected from the sensor
 
-    //checks if the color seen matches the colors
-    String colorString, requiredColorActual; 
-    ColorMatchResult match = m_colorMatcher.matchClosestColor(detectedColor);
-    if (match.color == kBlueTarget) {
-      colorString = "Blue";
-    } else if (match.color == kRedTarget) {
-      colorString = "Red";
-    } else if (match.color == kGreenTarget) {
-      colorString = "Green";
-    } else if (match.color == kYellowTarget) {
-      colorString = "Yellow";
-    } else {
-      colorString = "Unknown";
-    }
+  //   //checks if the color seen matches the colors
+  //   String colorString, requiredColorActual; 
+  //   ColorMatchResult match = m_colorMatcher.matchClosestColor(detectedColor);
+  //   if (match.color == kBlueTarget) {
+  //     colorString = "Blue";
+  //   } else if (match.color == kRedTarget) {
+  //     colorString = "Red";
+  //   } else if (match.color == kGreenTarget) {
+  //     colorString = "Green";
+  //   } else if (match.color == kYellowTarget) {
+  //     colorString = "Yellow";
+  //   } else {
+  //     colorString = "Unknown";
+  //   }
 
-    SmartDashboard.putNumber("Red", detectedColor.red); //results pasted into shuffleboard & smart dash
-    SmartDashboard.putNumber("Green", detectedColor.green);
-    SmartDashboard.putNumber("Blue", detectedColor.blue);
-    SmartDashboard.putNumber("Confidence", match.confidence);
-    SmartDashboard.putString("Detected Color", colorString);
+  //   SmartDashboard.putNumber("Red", detectedColor.red); //results pasted into shuffleboard & smart dash
+  //   SmartDashboard.putNumber("Green", detectedColor.green);
+  //   SmartDashboard.putNumber("Blue", detectedColor.blue);
+  //   SmartDashboard.putNumber("Confidence", match.confidence);
+  //   SmartDashboard.putString("Detected Color", colorString);
 
-    if(isSpinningToSpecific) 
-    {
-      colorMotor.set(0.05);
-      if(requiredColor == "Blue") {
-        requiredColorActual = "Red";
-      } else if (requiredColor == "Yellow") {
-        requiredColorActual = "Green";
-      } else if(requiredColor == "Red") {
-        requiredColorActual = "Blue";
-      } else if(requiredColor == "Green") {
-        requiredColorActual = "Yellow";
-      } else {
-        requiredColorActual = "Unknown";
-      } //translates the color we need to the color the sensor needs to stop on
+  //   if(isSpinningToSpecific) 
+  //   {
+  //     colorMotor.set(0.05);
+  //     if(requiredColor == "Blue") {
+  //       requiredColorActual = "Red";
+  //     } else if (requiredColor == "Yellow") {
+  //       requiredColorActual = "Green";
+  //     } else if(requiredColor == "Red") {
+  //       requiredColorActual = "Blue";
+  //     } else if(requiredColor == "Green") {
+  //       requiredColorActual = "Yellow";
+  //     } else {
+  //       requiredColorActual = "Unknown";
+  //     } //translates the color we need to the color the sensor needs to stop on
 
-      if(colorString == requiredColorActual) 
-      {
-        //stops checking colors after required color found
-        isSpinningToSpecific = false;
-        isCheckingColor = false;
-        colorMotor.set(0);
-      }
-    } else if (isSpinningMult) 
-    {
-      colorMotor.set(0.05);
-      //spins around the disk a total of 3.5 to 4 spins
-      if(colorString == "Yellow" && !hasSeenColor) 
-      {
-        hasSeenColor = true;
-        totalSpins++;
-      } else {
-        hasSeenColor = false;
-      }
+  //     if(colorString == requiredColorActual) 
+  //     {
+  //       //stops checking colors after required color found
+  //       isSpinningToSpecific = false;
+  //       isCheckingColor = false;
+  //       colorMotor.set(0);
+  //     }
+  //   } else if (isSpinningMult) 
+  //   {
+  //     colorMotor.set(0.05);
+  //     //spins around the disk a total of 3.5 to 4 spins
+  //     if(colorString == "Yellow" && !hasSeenColor) 
+  //     {
+  //       hasSeenColor = true;
+  //       totalSpins++;
+  //     } else {
+  //       hasSeenColor = false;
+  //     }
       
-      if(totalSpins >= 7) {
-        //stops checking colors after spins
-        isSpinningMult = false;
-        isCheckingColor = false;
-        totalSpins = 0;
-        colorMotor.set(0);
-      }
-    }
-  }
+  //     if(totalSpins >= 7) {
+  //       //stops checking colors after spins
+  //       isSpinningMult = false;
+  //       isCheckingColor = false;
+  //       totalSpins = 0;
+  //       colorMotor.set(0);
+  //     }
+  //   }
+  // }
 
-  /**
-   * This autonomous (along with the chooser code above) shows how to select
-   * between different autonomous modes using the dashboard. The sendable
-   * chooser code works with the Java SmartDashboard. If you prefer the
-   * LabVIEW Dashboard, remove all of the chooser code and uncomment the
-   * getString line to get the auto name from the text box below the Gyro
-   *
-   * <p>You can add additional auto modes by adding additional comparisons to
-   * the switch structure below with additional strings. If using the
-   * SendableChooser make sure to add them to the chooser code above as well.
-   */
+  // /**
+  //  * This autonomous (along with the chooser code above) shows how to select
+  //  * between different autonomous modes using the dashboard. The sendable
+  //  * chooser code works with the Java SmartDashboard. If you prefer the
+  //  * LabVIEW Dashboard, remove all of the chooser code and uncomment the
+  //  * getString line to get the auto name from the text box below the Gyro
+  //  *
+  //  * <p>You can add additional auto modes by adding additional comparisons to
+  //  * the switch structure below with additional strings. If using the
+  //  * SendableChooser make sure to add them to the chooser code above as well.
+  //  */
   @Override
   public void autonomousInit() 
   {
@@ -417,6 +402,44 @@ public class Robot extends TimedRobot
     }
   }
 
+  public void backAndAround() {
+    switch (state) {
+      case 1:
+        setDriveWheels(0.5, 0.5);
+        if (leftEncoder.getDistance() >= 36) {
+          state++;
+        }
+        break;
+
+      case 2:
+        setDriveWheels(-0.5, 0.5);
+        if (navx.getAngle() <= 280) {
+          leftEncoder.reset();
+          rightEncoder.reset();
+          state++;
+        }
+        break;
+
+      case 3:
+        setDriveWheels(0.5, 0.5);
+        if (leftEncoder.getDistance() >= 180) {
+          navx.reset();
+          state++;
+        }
+        break;
+      
+      case 4:
+        setDriveWheels(-0.5, 0.5);
+        if (navx.getAngle() <= 280) {
+          state++;
+        }
+      
+      case 5:
+        setDriveWheels(0, 0);
+        break;
+    }
+  }
+
   public void go4Feet()
   {
     System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
@@ -485,6 +508,10 @@ public void autoGoAround()
       case autoOutAndBack:
         outAndBack();
         break;
+        
+      case autoBackAndAround:
+        backAndAround();
+        break;
 
       case autoGo4Feet:
       default:
@@ -508,6 +535,9 @@ public void autoGoAround()
     double driveDirection = controllerdriver.getX(GenericHID.Hand.kRight);
     //int pov = controllerdriver.getPOV(0);
 
+    drive.arcadeDrive(driveSpeed, driveDirection, true);
+    System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
+    // setDriveWheels(driveSpeed - direction, driveSpeed + direction);
     // System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
     // setDriveWheels(speed - direction, speed + direction);
 
@@ -545,6 +575,10 @@ public void autoGoAround()
     double lidarDist = lidar.getDistanceIn();
     System.out.println("Cool lidar stuff: " + lidarDist);
 
+    if(controllerdriver.getBButtonPressed()){
+      playMusic();
+      System.out.println("I'm playing music!");
+    }
   }
 
   /**
