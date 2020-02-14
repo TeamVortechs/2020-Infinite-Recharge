@@ -81,7 +81,7 @@ public class Robot extends TimedRobot
   private boolean isCheckingColor, isSpinningToSpecific, isSpinningMult, hasSeenColor; //color logic
   private int totalSpins;
   private String requiredColor;
-  private final double topSpeed = 0, maxSpeedDiff = 0.3, minSpeedDiff = 0.2;
+  private double topSpeed = 0, maxSpeedDiff = 0.3, minSpeedDiff = 0.2;
   private boolean getTopSpeed = true, tracON = true;
 
   private pulsedLightLIDAR lidar;
@@ -432,42 +432,42 @@ public void autoGoAround()
     case 1: //drives forward 2 feet
       setDriveWheels(0.5, 0.5);
       if (leftEncoder.getDistance() >= 24)
-      state++;
-    break;
+        state++;
+      break;
       
     case 2: //turns right 90
       setDriveWheels(0.5, -0.5);
       if (navx.getAngle() >= 90) {
-      leftEncoder.reset();
-      state++;
+        leftEncoder.reset();
+        state++;
       }
-    break;
+      break;
 
     case 3: //drives forward 4 feet
       setDriveWheels(0.5, 0.5);
       if (leftEncoder.getDistance() >= 48) {
-      navx.reset();
-      state++;
+        navx.reset();
+        state++;
       }
-    break;
+      break;
 
     case 4: //turns right 90
       setDriveWheels(0.5, -0.5);
       if (navx.getAngle() >= 90) {
-      leftEncoder.reset();
-      state++;
+        leftEncoder.reset();
+        state++;
       }
-    break;
+      break;
 
     case 5: //forward 2 feet
       setDriveWheels(0.5, 0.5);
       if (leftEncoder.getDistance() >= 24)
-      state++;
-    break;
+        state++;
+      break;
 
     case 6:
-    setDriveWheels(0, 0);
-    break;
+      setDriveWheels(0, 0);
+      break;
   }
 }
 
@@ -512,7 +512,7 @@ public void autoGoAround()
     // setDriveWheels(speed - direction, speed + direction);
 
     if(tracON){
-      private double currentSpeedAvg = ((leftEncoder.getRate() + rightEncoder.getRate()) / 2) / topSpeed;
+      double currentSpeedAvg = ((leftEncoder.getRate() + rightEncoder.getRate()) / 2) / topSpeed;
       if(driveSpeed > (currentSpeedAvg + maxSpeedDiff)){
         driveSpeed = (currentSpeedAvg + maxSpeedDiff);
       }else if(driveSpeed < (currentSpeedAvg - minSpeedDiff)){
@@ -553,30 +553,28 @@ public void autoGoAround()
   @Override
   public void testPeriodic() 
   {
-
-<<<<<<< HEAD
     if(getTopSpeed){
-      private double driveSpeed = controllerdriver.getY(GenericHID.Hand.kLeft);
-      private double driveDirection = controllerdriver.getX(GenericHID.Hand.kRight);
-      private double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
+       double driveSpeed = controllerdriver.getY(GenericHID.Hand.kLeft);
+       double driveDirection = controllerdriver.getX(GenericHID.Hand.kRight);
+       double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
 
-      drive.arcadeDrive(driveSpeed, driveDirection, true);
-=======
-  }
-  public void playMusic(){
-   /* load the chirp file */
-   _orchestra.loadMusic(song); 
-   _orchestra.play();
-  }
->>>>>>> 66df6884f422147036d216439c9951dfe7f05760
+      drive.arcadeDrive(driveSpeed, driveDirection, true);  
 
       if(currentSpeedAvg > topSpeed){
-        topSpeed = currentSpeed;
+        topSpeed = currentSpeedAvg;
       }
-      print("Top Speed: " + topSpeed)
+      System.out.println("Top Speed: " + topSpeed);
     }
   }
+
+  public void playMusic(){
+    /* load the chirp file */
+    _orchestra.loadMusic(song); 
+    _orchestra.play();
+   }
+   
 }
+
 
 
 
