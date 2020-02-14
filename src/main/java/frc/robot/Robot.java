@@ -55,7 +55,6 @@ public class Robot extends TimedRobot
   private static final double shootSpeed = 0.5;
 
   private String m_autoSelected;
-  private Boolean activated;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private boolean align, approach, shoot;
   private AHRS navx;
@@ -68,7 +67,6 @@ public class Robot extends TimedRobot
   private NetworkTable table;
   private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT;
   private Timer timer;
-  private ADXRS450_Gyro gyro;
   private int state;
   private final I2C.Port i2cPort = I2C.Port.kOnboard; //this is the i2c port
   // private final ColorSensorV3 m_colorSensor = new ColorSensorV3(i2cPort); //uses the i2c parameter
@@ -82,6 +80,7 @@ public class Robot extends TimedRobot
   // private String requiredColor;
 
   private pulsedLightLIDAR lidar;
+
     /* The orchestra object that holds all the instruments */
   private Orchestra _orchestra;
     /* Talon FXs to play music through.  
@@ -102,7 +101,6 @@ public class Robot extends TimedRobot
   @Override
   public void robotInit() 
   {
-    playMusic();
     m_chooser.setDefaultOption("Turn 90", autoTurn90);
     m_chooser.addOption("Out and back", autoOutAndBack);
     m_chooser.addOption("Go 4 feet", autoGo4Feet);
@@ -163,15 +161,14 @@ public class Robot extends TimedRobot
     shoot = false;
 
     // Intake motors
-    intake = new Spark(4);
-    activated = false;
+    // intake = new Spark(4);
 
     // Belt motors in the magazine
-     belt1 = new Spark(5);
-     belt2 = new Spark(6);
-     belt3 = new Spark(7);
-     belt4 = new Spark(8);
-     loader = new Spark(9);
+    //  belt1 = new Spark(5);
+    //  belt2 = new Spark(6);
+    //  belt3 = new Spark(7);
+    //  belt4 = new Spark(8);
+    //  loader = new Spark(9);
 
     // Arm motor
     // arm = new PWMTalonSRX(0);
@@ -196,12 +193,7 @@ public class Robot extends TimedRobot
     _instruments.add(_fxes[i]);
   }
   /* Create the orchestra with the TalonFX instruments */
-  _orchestra = new Orchestra(_instruments);
-  
-  
-  
-
-  }
+  _orchestra = new Orchestra(_instruments);}
 
   public void setDriveWheels(double left, double right)
   {
@@ -243,20 +235,6 @@ public class Robot extends TimedRobot
   public void shoot()
   {
 
-  }
-
-  public void setIntake(double intakeSpeed)
-  {
-    intake.set(intakeSpeed);
-  }
-
-  public void setMagazineBelts(double magazineSpeed)
-  {
-    belt1.set(magazineSpeed);
-    belt2.set(magazineSpeed);
-    belt3.set(magazineSpeed);
-    belt4.set(magazineSpeed);
-    loader.set(magazineSpeed);
   }
 
   /**
@@ -502,6 +480,10 @@ public class Robot extends TimedRobot
     double lidarDist = lidar.getDistanceIn();
     System.out.println("Cool lidar stuff: " + lidarDist);
 
+    if(controllerdriver.getBButtonPressed()){
+      playMusic();
+      System.out.println("I'm playing music!");
+    }
   }
 
   /**
@@ -512,6 +494,7 @@ public class Robot extends TimedRobot
   {
 
   }
+
   public void playMusic(){
    /* load the chirp file */
    _orchestra.loadMusic(song); 
