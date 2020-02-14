@@ -72,7 +72,7 @@ public class Robot extends TimedRobot
   {
     m_chooser.setDefaultOption("Turn 90", autoTurn90);
     m_chooser.addOption("Go 4 feet", autoGo4Feet);
-    m_chooser.addOption("Go Around", autoGoAround):
+    m_chooser.addOption("Go Around", autoGoAround);
     SmartDashboard.putData("Auto choices", m_chooser);
 
     // NavX sensor
@@ -248,7 +248,7 @@ public void autoGoAround()
       setDriveWheels(0.5, 0.5);
       if (leftEncoder.getDistance() >= 24)
       state++;
-    break
+    break;
       
     case 2: //turns right 90
       setDriveWheels(0.5, -0.5);
@@ -256,7 +256,7 @@ public void autoGoAround()
       leftEncoder.reset();
       state++;
       }
-    break
+    break;
 
     case 3: //drives forward 4 feet
       setDriveWheels(0.5, 0.5);
@@ -264,10 +264,25 @@ public void autoGoAround()
       navx.reset();
       state++;
       }
-    break
+    break;
 
     case 4: //turns right 90
-    break
+      setDriveWheels(0.5, -0.5);
+      if (navx.getAngle() >= 90) {
+      leftEncoder.reset();
+      state++;
+      }
+    break;
+
+    case 5: //forward 2 feet
+      setDriveWheels(0.5, 0.5);
+      if (leftEncoder.getDistance() >= 24)
+      state++;
+    break;
+
+    case 6:
+    setDriveWheels(0, 0);
+    break;
   }
 }
 
@@ -288,9 +303,9 @@ public void autoGoAround()
         break;
 
       case autoGoAround:
-        autoGoAround(
+        autoGoAround();
         break;
-        )
+        
     }
 
     // if (timer.get() < 2.0)
