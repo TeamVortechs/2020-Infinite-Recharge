@@ -107,16 +107,16 @@ public class Robot extends TimedRobot
     navx = new AHRS(I2C.Port.kMXP);
 
     // Magazine sensors
-    ballbeam1 = new AnalogInput(0);
-    ballbeam2 = new AnalogInput(1);
-    ballbeam3 = new AnalogInput(2);
-    ballbeam4 = new AnalogInput(3);
-    ballbeam5 = new AnalogInput(4);
-    ballbeam6 = new AnalogInput(5);
-    ballbeam7 = new AnalogInput(6);
-    ballbeam8 = new AnalogInput(7);
-    ballbeam9 = new AnalogInput(8);
-    ballbeam10 = new AnalogInput(9);
+    // ballbeam1 = new AnalogInput(0);
+    // ballbeam2 = new AnalogInput(1);
+    // ballbeam3 = new AnalogInput(2);
+    // ballbeam4 = new AnalogInput(3);
+    // ballbeam5 = new AnalogInput(4);
+    // ballbeam6 = new AnalogInput(5);
+    // ballbeam7 = new AnalogInput(6);
+    // ballbeam8 = new AnalogInput(7);
+    // ballbeam9 = new AnalogInput(8);
+    // ballbeam10 = new AnalogInput(9);
 
     // Xbox Controllers
     controllerdriver = new XboxController(0);
@@ -161,11 +161,11 @@ public class Robot extends TimedRobot
     intake = new Spark(4);
 
     // Belt motors in the magazine
-     belt1 = new Spark(5);
-     belt2 = new Spark(6);
-     belt3 = new Spark(7);
-     belt4 = new Spark(8);
-     loader = new Spark(9);
+    //  belt1 = new Spark(5);
+    //  belt2 = new Spark(6);
+    //  belt3 = new Spark(7);
+    //  belt4 = new Spark(8);
+    //  loader = new Spark(9);
 
     // Arm motor
     // arm = new PWMTalonSRX(0);
