@@ -42,6 +42,7 @@ public class Robot extends TimedRobot
 
   private static final String autoGo4Feet = "autoGo4Feet";
   private static final String autoTurn90 = "autoTurn90";
+  private static final String autoGoAround = "autoGoAround";
 
   private static final double shootDistance = 30.0;
   private static final double shootSpeed = 0.5;
@@ -60,6 +61,7 @@ public class Robot extends TimedRobot
   private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT;
   private Timer timer;
   private ADXRS450_Gyro gyro;
+  private int state;
 
   /**
    * This function is run when the robot is first started up and should be
@@ -70,6 +72,7 @@ public class Robot extends TimedRobot
   {
     m_chooser.setDefaultOption("Turn 90", autoTurn90);
     m_chooser.addOption("Go 4 feet", autoGo4Feet);
+    m_chooser.addOption("Go Around", autoGoAround):
     SmartDashboard.putData("Auto choices", m_chooser);
 
     // NavX sensor
@@ -207,6 +210,7 @@ public class Robot extends TimedRobot
   @Override
   public void autonomousInit() 
   {
+    state = 1;
     m_autoSelected = m_chooser.getSelected();
     //m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
@@ -237,6 +241,36 @@ public class Robot extends TimedRobot
       setDriveWheels(0, 0);
   }
 
+public void autoGoAround()
+{
+  switch (state) {
+    case 1: //drives forward 2 feet
+      setDriveWheels(0.5, 0.5);
+      if (leftEncoder.getDistance() >= 24)
+      state++;
+    break
+      
+    case 2: //turns right 90
+      setDriveWheels(0.5, -0.5);
+      if (navx.getAngle() >= 90) {
+      leftEncoder.reset();
+      state++;
+      }
+    break
+
+    case 3: //drives forward 4 feet
+      setDriveWheels(0.5, 0.5);
+      if (leftEncoder.getDistance() >= 48) {
+      navx.reset();
+      state++;
+      }
+    break
+
+    case 4: //turns right 90
+    break
+  }
+}
+
   /**
    * This function is called periodically during autonomous.
    */
@@ -247,10 +281,16 @@ public class Robot extends TimedRobot
       case autoTurn90:
         turn90();
         break;
-      case autoGo4Feet:
+      
+        case autoGo4Feet:
       default:
         go4Feet();
         break;
+
+      case autoGoAround:
+        autoGoAround(
+        break;
+        )
     }
 
     // if (timer.get() < 2.0)
