@@ -10,6 +10,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.PWMVictorSPX;
 import com.kauailabs.navx.frc.AHRS;
 import com.kauailabs.navx.frc.AHRS.SerialDataType;
 import com.revrobotics.ColorSensorV3;
@@ -33,6 +34,7 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.Ultrasonic;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -76,6 +78,9 @@ public class Robot extends TimedRobot
   private boolean isCheckingColor, isSpinningToSpecific, isSpinningMult, hasSeenColor; //color logic
   private int totalSpins;
   private String requiredColor;
+  private Ultrasonic ultrasonicL, ultrasonicM, ultrasonicR;
+  private double ultrasonicLeftDistance, ultrasonicMidDistance, ultrasonicRightDistance;
+
 
   /**
    * This function is run when the robot is first started up and should be
@@ -169,6 +174,10 @@ public class Robot extends TimedRobot
     m_colorMatcher.addColorMatch(kRedTarget);
     m_colorMatcher.addColorMatch(kYellowTarget);
     colorMotor = new Spark(4); //defining motor with spark
+
+    ultrasonicL = new Ultrasonic(1, 2);
+    ultrasonicM = new Ultrasonic(3, 4);
+    ultrasonicR = new Ultrasonic(5, 6); //Ultrasonic(int pingChannel, int echoChannel)
   }
 
   public void setDriveWheels(double left, double right)
@@ -219,6 +228,7 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
+    getDistances();
     if(isCheckingColor) 
     {
       colorCheck();
@@ -294,6 +304,15 @@ public class Robot extends TimedRobot
     }
   }
 
+  public void getDistances() 
+  {
+    ultrasonicLeftDistance = ultrasonicL.getRangeInches();
+    ultrasonicMidDistance = ultrasonicM.getRangeInches();
+    ultrasonicRightDistance = ultrasonicR.getRangeInches();
+    SmartDashboard.putNumber("Distance Left", ultrasonicLeftDistance);
+    SmartDashboard.putNumber("Distance Middle", ultrasonicMidDistance);
+    SmartDashboard.putNumber("Distance Right", ultrasonicRightDistance);
+  }
   /**
    * This autonomous (along with the chooser code above) shows how to select
    * between different autonomous modes using the dashboard. The sendable
