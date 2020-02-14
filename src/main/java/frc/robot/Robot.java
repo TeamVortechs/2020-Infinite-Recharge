@@ -5,9 +5,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import com.kauailabs.navx.frc.AHRS;
 import com.kauailabs.navx.frc.AHRS.SerialDataType;
-//import com.revrobotics.ColorSensorV3;
-//import com.revrobotics.ColorMatchResult;
-//import com.revrobotics.ColorMatch;
+import com.revrobotics.ColorSensorV3;
+import com.revrobotics.ColorMatchResult;
+import com.revrobotics.ColorMatch;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.SPI.Port;
@@ -23,7 +23,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-//import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color;
 import com.ctre.phoenix.music.Orchestra;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import java.util.ArrayList;
@@ -42,6 +42,7 @@ public class Robot extends TimedRobot
   private static final String autoOutAndBack = "autoOutAndBack";
   private static final String autoBackAndAround = "autoBackAndAround";
   private static final String autoTurn90 = "autoTurn90";
+  private static final String autoGoAround = "autoGoAround";
 
   private static final double shootDistance = 30.0;
   private static final double shootSpeed = 0.5;
@@ -60,16 +61,19 @@ public class Robot extends TimedRobot
   private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT;
   private Timer timer;
   private int state;
+
   private final I2C.Port i2cPort = I2C.Port.kOnboard; //this is the i2c port
-  // private final ColorSensorV3 m_colorSensor = new ColorSensorV3(i2cPort); //uses the i2c parameter
-  // private final ColorMatch m_colorMatcher = new ColorMatch(); //detects out of predetermained colors
-  // private final Color kBlueTarget = ColorMatch.makeColor(0.143, 0.427, 0.429); // these targets can be configured
-  // private final Color kGreenTarget = ColorMatch.makeColor(0.197, 0.561, 0.240);
-  // private final Color kRedTarget = ColorMatch.makeColor(0.561, 0.232, 0.114);
-  // private final Color kYellowTarget = ColorMatch.makeColor(0.361, 0.524, 0.113);
-  // private boolean isCheckingColor, isSpinningToSpecific, isSpinningMult, hasSeenColor; //color logic
-  // private int totalSpins;
-  // private String requiredColor;
+  private final ColorSensorV3 m_colorSensor = new ColorSensorV3(i2cPort); //uses the i2c parameter
+  private final ColorMatch m_colorMatcher = new ColorMatch(); //detects out of predetermained colors
+  private final Color kBlueTarget = ColorMatch.makeColor(0.143, 0.427, 0.429); // these targets can be configured
+  private final Color kGreenTarget = ColorMatch.makeColor(0.197, 0.561, 0.240);
+  private final Color kRedTarget = ColorMatch.makeColor(0.561, 0.232, 0.114);
+  private final Color kYellowTarget = ColorMatch.makeColor(0.361, 0.524, 0.113);
+  private boolean isCheckingColor, isSpinningToSpecific, isSpinningMult, hasSeenColor; //color logic
+  private int totalSpins;
+  private String requiredColor;
+  private double topSpeed = 0, maxSpeedDiff = 0.3, minSpeedDiff = 0.2;
+  private boolean getTopSpeed = true, tracON = true;
 
   private pulsedLightLIDAR lidar;
 
@@ -96,6 +100,7 @@ public class Robot extends TimedRobot
     m_chooser.addOption("Out and back", autoOutAndBack);
     m_chooser.addOption("Back and around", autoBackAndAround);
     m_chooser.addOption("Go 4 feet", autoGo4Feet);
+    m_chooser.addOption("Go Around", autoGoAround);
     SmartDashboard.putData("Auto choices", m_chooser);
 
     // NavX sensor
@@ -121,19 +126,19 @@ public class Robot extends TimedRobot
 
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
-    backRightT = new PWMTalonSRX(0);
-    frontRightT = new PWMTalonSRX(1);
-    backLeftT = new PWMTalonSRX(2);
-    frontLeftT = new PWMTalonSRX(3);
-    leftMotors = new SpeedControllerGroup(backLeftT, frontLeftT);
-    rightMotors = new SpeedControllerGroup(backRightT, frontRightT);
+      backRightT = new PWMTalonSRX(0);
+      frontRightT = new PWMTalonSRX(1);
+      backLeftT = new PWMTalonSRX(2);
+      frontLeftT = new PWMTalonSRX(3);
+      leftMotors = new SpeedControllerGroup(backLeftT, frontLeftT);
+      rightMotors = new SpeedControllerGroup(backRightT, frontRightT);
     }else{
-    backRight = new Spark(0);
-    frontRight = new Spark(1);
-    backLeft = new Spark(2);
-    frontLeft = new Spark(3);
-    leftMotors = new SpeedControllerGroup(backLeft, frontLeft);
-    rightMotors = new SpeedControllerGroup(backRight, frontRight);
+      backRight = new Spark(0);
+      frontRight = new Spark(1);
+      backLeft = new Spark(2);
+      frontLeft = new Spark(3);
+      leftMotors = new SpeedControllerGroup(backLeft, frontLeft);
+      rightMotors = new SpeedControllerGroup(backRight, frontRight);
     }
 
     drive = new DifferentialDrive(leftMotors, rightMotors);
@@ -329,6 +334,7 @@ public class Robot extends TimedRobot
   @Override
   public void autonomousInit() 
   {
+    state = 1;
     m_autoSelected = m_chooser.getSelected();
     //m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
@@ -339,7 +345,6 @@ public class Robot extends TimedRobot
 
     rightEncoder.reset();
     leftEncoder.reset();
-    state = 1;
   }
 
   public void turn90()
@@ -444,6 +449,51 @@ public class Robot extends TimedRobot
       setDriveWheels(0, 0);
   }
 
+public void autoGoAround()
+{
+  switch (state) {
+    case 1: //drives forward 2 feet
+      setDriveWheels(0.5, 0.5);
+      if (leftEncoder.getDistance() >= 24)
+        state++;
+      break;
+      
+    case 2: //turns right 90
+      setDriveWheels(0.5, -0.5);
+      if (navx.getAngle() >= 90) {
+        leftEncoder.reset();
+        state++;
+      }
+      break;
+
+    case 3: //drives forward 4 feet
+      setDriveWheels(0.5, 0.5);
+      if (leftEncoder.getDistance() >= 48) {
+        navx.reset();
+        state++;
+      }
+      break;
+
+    case 4: //turns right 90
+      setDriveWheels(0.5, -0.5);
+      if (navx.getAngle() >= 90) {
+        leftEncoder.reset();
+        state++;
+      }
+      break;
+
+    case 5: //forward 2 feet
+      setDriveWheels(0.5, 0.5);
+      if (leftEncoder.getDistance() >= 24)
+        state++;
+      break;
+
+    case 6:
+      setDriveWheels(0, 0);
+      break;
+  }
+}
+
   /**
    * This function is called periodically during autonomous.
    */
@@ -454,24 +504,25 @@ public class Robot extends TimedRobot
       case autoTurn90:
         turn90();
         break;
+
       case autoOutAndBack:
         outAndBack();
         break;
+        
       case autoBackAndAround:
         backAndAround();
         break;
+
       case autoGo4Feet:
       default:
         go4Feet();
         break;
+
+      case autoGoAround:
+        autoGoAround();
+        break;
+        
     }
-
-    // if (timer.get() < 2.0)
-    //   setDriveWheels(0.5, 0.5);
-    // else
-    //   setDriveWheels(0, 0);
-
-
 
   }
   /**
@@ -489,6 +540,19 @@ public class Robot extends TimedRobot
     drive.arcadeDrive(driveSpeed, driveDirection, true);
     System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
     // setDriveWheels(driveSpeed - direction, driveSpeed + direction);
+    // System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
+    // setDriveWheels(speed - direction, speed + direction);
+
+    if(tracON){
+      double currentSpeedAvg = ((leftEncoder.getRate() + rightEncoder.getRate()) / 2) / topSpeed;
+      if(driveSpeed > (currentSpeedAvg + maxSpeedDiff)){
+        driveSpeed = (currentSpeedAvg + maxSpeedDiff);
+      }else if(driveSpeed < (currentSpeedAvg - minSpeedDiff)){
+        driveSpeed = (currentSpeedAvg - minSpeedDiff);
+      }
+    }
+
+    drive.arcadeDrive(driveSpeed, driveDirection);
 
     if(controllerdriver.getAButtonPressed()){
       align = !align;
@@ -525,16 +589,28 @@ public class Robot extends TimedRobot
   @Override
   public void testPeriodic() 
   {
+    if(getTopSpeed){
+       double driveSpeed = controllerdriver.getY(GenericHID.Hand.kLeft);
+       double driveDirection = controllerdriver.getX(GenericHID.Hand.kRight);
+       double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
 
+      drive.arcadeDrive(driveSpeed, driveDirection, true);  
+
+      if(currentSpeedAvg > topSpeed){
+        topSpeed = currentSpeedAvg;
+      }
+      System.out.println("Top Speed: " + topSpeed);
+    }
   }
 
   public void playMusic(){
-   /* load the chirp file */
-   _orchestra.loadMusic(song); 
-   _orchestra.play();
-  }
-
+    /* load the chirp file */
+    _orchestra.loadMusic(song); 
+    _orchestra.play();
+   }
+   
 }
+
 
 
 
