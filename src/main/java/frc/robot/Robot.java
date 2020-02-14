@@ -33,6 +33,9 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.util.Color;
+import com.ctre.phoenix.music.Orchestra;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import java.util.ArrayList;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -80,6 +83,18 @@ public class Robot extends TimedRobot
   private boolean getTopSpeed = true, tracON = true;
 
   private pulsedLightLIDAR lidar;
+    /* The orchestra object that holds all the instruments */
+  private Orchestra _orchestra;
+    /* Talon FXs to play music through.  
+    More complex music MIDIs will contain several tracks, requiring multiple instruments.  */
+  private TalonFX [] _fxes =  { new TalonFX(1), new TalonFX(2), new TalonFX(3), new TalonFX(4) };
+
+    /* An array of songs that are available to be played, can you guess the song/artists? */
+  String song = "crabRave.chrp";
+  
+  /* A list of TalonFX's that are to be used as instruments */
+  ArrayList<TalonFX> _instruments = new ArrayList<TalonFX>();
+
 
   /**
    * This function is run when the robot is first started up and should be
@@ -88,6 +103,7 @@ public class Robot extends TimedRobot
   @Override
   public void robotInit() 
   {
+    playMusic();
     m_chooser.setDefaultOption("Turn 90", autoTurn90);
     m_chooser.addOption("Out and back", autoOutAndBack);
     m_chooser.addOption("Go 4 feet", autoGo4Feet);
@@ -163,11 +179,11 @@ public class Robot extends TimedRobot
     //Timer
     timer = new Timer();
 
-    gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
+    //gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
 
-    isSpinningMult = true;
+    isSpinningMult = false;
     isSpinningToSpecific = false;
-    isCheckingColor = true;
+    isCheckingColor = false;
     hasSeenColor = false;
     requiredColor = "Blue";
     totalSpins = 0;
@@ -176,6 +192,17 @@ public class Robot extends TimedRobot
     m_colorMatcher.addColorMatch(kRedTarget);
     m_colorMatcher.addColorMatch(kYellowTarget);
     colorMotor = new Spark(4); //defining motor with spark
+
+    /* Initialize the TalonFX's to be used */
+  for (int i = 0; i < _fxes.length; ++i) {
+    _instruments.add(_fxes[i]);
+  }
+  /* Create the orchestra with the TalonFX instruments */
+  _orchestra = new Orchestra(_instruments);
+  
+  
+  
+
   }
 
   public void setDriveWheels(double left, double right)
@@ -184,6 +211,11 @@ public class Robot extends TimedRobot
     frontLeft.set(-left);
     backRight.set(right);
     frontRight.set(right);
+  }
+
+  public void goStraight(double power)
+  {
+    setDriveWheels(power*0.85, power);
   }
 
   public double directionToTarget()
@@ -323,6 +355,8 @@ public class Robot extends TimedRobot
     timer.start();
     navx.reset();
 
+    rightEncoder.reset();
+    leftEncoder.reset();
     state = 1;
   }
 
@@ -343,7 +377,7 @@ public class Robot extends TimedRobot
      switch (state) {
        case 1:
          // Go forward 36"
-         setDriveWheels(0.5, 0.5);
+         goStraight(0.5);
          if (leftEncoder.getDistance() >= 36)
            state++;
          break;
@@ -351,7 +385,7 @@ public class Robot extends TimedRobot
        case 2:
          // Turn 180 degrees
          setDriveWheels(0.5, -0.5);
-         if (navx.getAngle() >= 180) {
+         if (navx.getAngle() >= 170) {
            leftEncoder.reset();
            rightEncoder.reset();
            state++;
@@ -360,7 +394,7 @@ public class Robot extends TimedRobot
  
        case 3:
          // Go forward 36" again (return)
-         setDriveWheels(0.5, 0.5);
+         goStraight(0.5);
          if (leftEncoder.getDistance() >= 36) {
            navx.reset();
            state++;
@@ -370,7 +404,7 @@ public class Robot extends TimedRobot
        case 4:
          // Turns itself 180 degrees
          setDriveWheels(0.5, -0.5);
-         if (navx.getAngle() >= 180)
+         if (navx.getAngle() >= 170)
            state++;
            break;
  
@@ -399,6 +433,9 @@ public class Robot extends TimedRobot
     switch (m_autoSelected) {
       case autoTurn90:
         turn90();
+        break;
+      case autoOutAndBack:
+        outAndBack();
         break;
       case autoGo4Feet:
       default:
@@ -463,12 +500,21 @@ public class Robot extends TimedRobot
   public void testPeriodic() 
   {
 
+<<<<<<< HEAD
     if(getTopSpeed){
       private double driveSpeed = controllerdriver.getY(GenericHID.Hand.kLeft);
       private double driveDirection = controllerdriver.getX(GenericHID.Hand.kRight);
       private double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
 
       drive.arcadeDrive(driveSpeed, driveDirection, true);
+=======
+  }
+  public void playMusic(){
+   /* load the chirp file */
+   _orchestra.loadMusic(song); 
+   _orchestra.play();
+  }
+>>>>>>> 66df6884f422147036d216439c9951dfe7f05760
 
       if(currentSpeedAvg > topSpeed){
         topSpeed = currentSpeed;
