@@ -76,6 +76,8 @@ public class Robot extends TimedRobot
   private boolean isCheckingColor, isSpinningToSpecific, isSpinningMult, hasSeenColor; //color logic
   private int totalSpins;
   private String requiredColor;
+  private final double topSpeed = 0, maxSpeedDiff = 0.3, minSpeedDiff = 0.2;
+  private boolean getTopSpeed = true, tracON = true;
 
   private pulsedLightLIDAR lidar;
 
@@ -114,19 +116,19 @@ public class Robot extends TimedRobot
 
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
-    backRightT = new PWMTalonSRX(0);
-    frontRightT = new PWMTalonSRX(1);
-    backLeftT = new PWMTalonSRX(2);
-    frontLeftT = new PWMTalonSRX(3);
-    leftMotors = new SpeedControllerGroup(backLeftT, frontLeftT);
-    rightMotors = new SpeedControllerGroup(backRightT, frontRightT);
+      backRightT = new PWMTalonSRX(0);
+      frontRightT = new PWMTalonSRX(1);
+      backLeftT = new PWMTalonSRX(2);
+      frontLeftT = new PWMTalonSRX(3);
+      leftMotors = new SpeedControllerGroup(backLeftT, frontLeftT);
+      rightMotors = new SpeedControllerGroup(backRightT, frontRightT);
     }else{
-    backRight = new Spark(0);
-    frontRight = new Spark(1);
-    backLeft = new Spark(2);
-    frontLeft = new Spark(3);
-    leftMotors = new SpeedControllerGroup(backLeft, frontLeft);
-    rightMotors = new SpeedControllerGroup(backRight, frontRight);
+      backRight = new Spark(0);
+      frontRight = new Spark(1);
+      backLeft = new Spark(2);
+      frontLeft = new Spark(3);
+      leftMotors = new SpeedControllerGroup(backLeft, frontLeft);
+      rightMotors = new SpeedControllerGroup(backRight, frontRight);
     }
 
     drive = new DifferentialDrive(leftMotors, rightMotors);
@@ -404,13 +406,6 @@ public class Robot extends TimedRobot
         break;
     }
 
-    // if (timer.get() < 2.0)
-    //   setDriveWheels(0.5, 0.5);
-    // else
-    //   setDriveWheels(0, 0);
-
-
-
   }
   /**
    * This function is called periodically during operator control.
@@ -418,15 +413,23 @@ public class Robot extends TimedRobot
   @Override
   public void teleopPeriodic() 
   {
-    // double speed = Math.pow(controllerdriver.getY(GenericHID.Hand.kLeft), 3);
-    // double direction = controllerdriver.getX(GenericHID.Hand.kRight) * 0.66;
     double driveSpeed = controllerdriver.getY(GenericHID.Hand.kLeft);
     double driveDirection = controllerdriver.getX(GenericHID.Hand.kRight);
     //int pov = controllerdriver.getPOV(0);
 
-    drive.arcadeDrive(driveSpeed, driveDirection, true);
-    System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
+    // System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
     // setDriveWheels(speed - direction, speed + direction);
+
+    if(tracON){
+      private double currentSpeedAvg = ((leftEncoder.getRate() + rightEncoder.getRate()) / 2) / topSpeed;
+      if(driveSpeed > (currentSpeedAvg + maxSpeedDiff)){
+        driveSpeed = (currentSpeedAvg + maxSpeedDiff);
+      }else if(driveSpeed < (currentSpeedAvg - minSpeedDiff)){
+        driveSpeed = (currentSpeedAvg - minSpeedDiff);
+      }
+    }
+
+    drive.arcadeDrive(driveSpeed, driveDirection);
 
     if(controllerdriver.getAButtonPressed()){
       align = !align;
@@ -460,8 +463,19 @@ public class Robot extends TimedRobot
   public void testPeriodic() 
   {
 
-  }
+    if(getTopSpeed){
+      private double driveSpeed = controllerdriver.getY(GenericHID.Hand.kLeft);
+      private double driveDirection = controllerdriver.getX(GenericHID.Hand.kRight);
+      private double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
 
+      drive.arcadeDrive(driveSpeed, driveDirection, true);
+
+      if(currentSpeedAvg > topSpeed){
+        topSpeed = currentSpeed;
+      }
+      print("Top Speed: " + topSpeed)
+    }
+  }
 }
 
 
