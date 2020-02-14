@@ -531,8 +531,6 @@ public void autoGoAround()
   @Override
   public void teleopPeriodic() 
   {
-    // double driveSpeed = Math.pow(controllerdriver.getY(GenericHID.Hand.kLeft), 3);
-    // double direction = controllerdriver.getX(GenericHID.Hand.kRight) * 0.66;
     double driveSpeed = controllerdriver.getY(GenericHID.Hand.kLeft);
     double driveDirection = controllerdriver.getX(GenericHID.Hand.kRight);
     //int pov = controllerdriver.getPOV(0);
