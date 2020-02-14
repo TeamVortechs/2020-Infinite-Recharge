@@ -12,9 +12,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import com.kauailabs.navx.frc.AHRS;
 import com.kauailabs.navx.frc.AHRS.SerialDataType;
-import com.revrobotics.ColorSensorV3;
-import com.revrobotics.ColorMatchResult;
-import com.revrobotics.ColorMatch;
+//import com.revrobotics.ColorSensorV3;
+//import com.revrobotics.ColorMatchResult;
+//import com.revrobotics.ColorMatch;
 
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.XboxController;
@@ -28,11 +28,10 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.util.Color;
+//import edu.wpi.first.wpilibj.util.Color;
 import com.ctre.phoenix.music.Orchestra;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import java.util.ArrayList;
@@ -49,6 +48,7 @@ public class Robot extends TimedRobot
 
   private static final String autoGo4Feet = "autoGo4Feet";
   private static final String autoOutAndBack = "autoOutAndBack";
+  private static final String autoBackAndAround = "autoBackAndAround";
   private static final String autoTurn90 = "autoTurn90";
 
   private static final double shootDistance = 30.0;
@@ -103,6 +103,7 @@ public class Robot extends TimedRobot
   {
     m_chooser.setDefaultOption("Turn 90", autoTurn90);
     m_chooser.addOption("Out and back", autoOutAndBack);
+    m_chooser.addOption("Back and around", autoBackAndAround);
     m_chooser.addOption("Go 4 feet", autoGo4Feet);
     SmartDashboard.putData("Auto choices", m_chooser);
 
@@ -405,6 +406,44 @@ public class Robot extends TimedRobot
     }
   }
 
+  public void backAndAround() {
+    switch (state) {
+      case 1:
+        setDriveWheels(0.5, 0.5);
+        if (leftEncoder.getDistance() >= 36) {
+          state++;
+        }
+        break;
+
+      case 2:
+        setDriveWheels(-0.5, 0.5);
+        if (navx.getAngle() <= 280) {
+          leftEncoder.reset();
+          rightEncoder.reset();
+          state++;
+        }
+        break;
+
+      case 3:
+        setDriveWheels(0.5, 0.5);
+        if (leftEncoder.getDistance() >= 180) {
+          navx.reset();
+          state++;
+        }
+        break;
+      
+      case 4:
+        setDriveWheels(-0.5, 0.5);
+        if (navx.getAngle() <= 280) {
+          state++;
+        }
+      
+      case 5:
+        setDriveWheels(0, 0);
+        break;
+    }
+  }
+
   public void go4Feet()
   {
     System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
@@ -426,6 +465,9 @@ public class Robot extends TimedRobot
         break;
       case autoOutAndBack:
         outAndBack();
+        break;
+      case autoBackAndAround:
+        backAndAround();
         break;
       case autoGo4Feet:
       default:
