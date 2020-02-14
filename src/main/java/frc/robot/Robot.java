@@ -1,10 +1,3 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
-
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -15,7 +8,6 @@ import com.kauailabs.navx.frc.AHRS.SerialDataType;
 //import com.revrobotics.ColorSensorV3;
 //import com.revrobotics.ColorMatchResult;
 //import com.revrobotics.ColorMatch;
-
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.SPI.Port;
@@ -93,7 +85,6 @@ public class Robot extends TimedRobot
   /* A list of TalonFX's that are to be used as instruments */
   ArrayList<TalonFX> _instruments = new ArrayList<TalonFX>();
 
-
   /**
    * This function is run when the robot is first started up and should be
    * used for any initialization code.
@@ -162,14 +153,14 @@ public class Robot extends TimedRobot
     shoot = false;
 
     // Intake motors
-    // intake = new Spark(4);
+    intake = new Spark(4);
 
     // Belt motors in the magazine
-    //  belt1 = new Spark(5);
-    //  belt2 = new Spark(6);
-    //  belt3 = new Spark(7);
-    //  belt4 = new Spark(8);
-    //  loader = new Spark(9);
+     belt1 = new Spark(5);
+     belt2 = new Spark(6);
+     belt3 = new Spark(7);
+     belt4 = new Spark(8);
+     loader = new Spark(9);
 
     // Arm motor
     // arm = new PWMTalonSRX(0);
@@ -237,7 +228,7 @@ public class Robot extends TimedRobot
   {
 
   }
-
+  
   /**
    * This function is called every robot packet, no matter the mode. Use
    * this for items like diagnostics that you want ran during disabled,
