@@ -3,6 +3,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.PWMVictorSPX;
 import com.kauailabs.navx.frc.AHRS;
 import com.kauailabs.navx.frc.AHRS.SerialDataType;
 import com.revrobotics.ColorSensorV3;
@@ -24,6 +25,7 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.Ultrasonic;
 import com.ctre.phoenix.music.Orchestra;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import java.util.ArrayList;
@@ -72,6 +74,9 @@ public class Robot extends TimedRobot
   private boolean isCheckingColor, isSpinningToSpecific, isSpinningMult, hasSeenColor; //color logic
   private int totalSpins;
   private String requiredColor;
+  private Ultrasonic ultrasonicL, ultrasonicM, ultrasonicR;
+  private double ultrasonicLeftDistance, ultrasonicMidDistance, ultrasonicRightDistance;
+
   private double topSpeed = 0, maxSpeedDiff = 0.3, minSpeedDiff = 0.2;
   private boolean getTopSpeed = true, tracON = true;
 
@@ -172,7 +177,11 @@ public class Robot extends TimedRobot
 
     //Timer
     timer = new Timer();
+    gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
 
+    ultrasonicL = new Ultrasonic(1, 2);
+    ultrasonicM = new Ultrasonic(3, 4);
+    ultrasonicR = new Ultrasonic(5, 6); //Ultrasonic(int pingChannel, int echoChannel)
     // isSpinningMult = false;
     // isSpinningToSpecific = false;
     // isCheckingColor = false;
@@ -245,6 +254,7 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
+    getDistances();
     // if(isCheckingColor) 
     // {
     //   colorCheck();
@@ -320,17 +330,26 @@ public class Robot extends TimedRobot
   //   }
   // }
 
-  // /**
-  //  * This autonomous (along with the chooser code above) shows how to select
-  //  * between different autonomous modes using the dashboard. The sendable
-  //  * chooser code works with the Java SmartDashboard. If you prefer the
-  //  * LabVIEW Dashboard, remove all of the chooser code and uncomment the
-  //  * getString line to get the auto name from the text box below the Gyro
-  //  *
-  //  * <p>You can add additional auto modes by adding additional comparisons to
-  //  * the switch structure below with additional strings. If using the
-  //  * SendableChooser make sure to add them to the chooser code above as well.
-  //  */
+  public void getDistances() 
+  {
+    ultrasonicLeftDistance = ultrasonicL.getRangeInches();
+    ultrasonicMidDistance = ultrasonicM.getRangeInches();
+    ultrasonicRightDistance = ultrasonicR.getRangeInches();
+    SmartDashboard.putNumber("Distance Left", ultrasonicLeftDistance);
+    SmartDashboard.putNumber("Distance Middle", ultrasonicMidDistance);
+    SmartDashboard.putNumber("Distance Right", ultrasonicRightDistance);
+  }
+  /**
+   * This autonomous (along with the chooser code above) shows how to select
+   * between different autonomous modes using the dashboard. The sendable
+   * chooser code works with the Java SmartDashboard. If you prefer the
+   * LabVIEW Dashboard, remove all of the chooser code and uncomment the
+   * getString line to get the auto name from the text box below the Gyro
+   *
+   * <p>You can add additional auto modes by adding additional comparisons to
+   * the switch structure below with additional strings. If using the
+   * SendableChooser make sure to add them to the chooser code above as well.
+   */
   @Override
   public void autonomousInit() 
   {
