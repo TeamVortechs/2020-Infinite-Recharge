@@ -25,7 +25,7 @@ import edu.wpi.first.wpilibj.PWMTalonSRX;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+//import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
@@ -33,9 +33,9 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.util.Color;
-import com.ctre.phoenix.music.Orchestra;
-import com.ctre.phoenix.motorcontrol.can.TalonFX;
-import java.util.ArrayList;
+// import com.ctre.phoenix.music.Orchestra;
+// import com.ctre.phoenix.motorcontrol.can.TalonFX;
+// import java.util.ArrayList;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -63,7 +63,7 @@ public class Robot extends TimedRobot
   private XboxController controllerdriver, controlleroperator;
   private Spark backRight, frontRight, backLeft, frontLeft, intake, belt1, belt2, belt3, belt4, loader, colorMotor;
   private SpeedControllerGroup leftMotors, rightMotors;
-  private DifferentialDrive drive;
+  //private DifferentialDrive drive;
   private Encoder leftEncoder, rightEncoder;
   private NetworkTable table;
   private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT;
@@ -81,21 +81,21 @@ public class Robot extends TimedRobot
   private boolean isCheckingColor, isSpinningToSpecific, isSpinningMult, hasSeenColor; //color logic
   private int totalSpins;
   private String requiredColor;
-  private double topSpeed = 0, maxSpeedDiff = 0.3, minSpeedDiff = 0.2;
+  private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5;
   private boolean getTopSpeed = true, tracON = true;
 
   private pulsedLightLIDAR lidar;
     /* The orchestra object that holds all the instruments */
-  private Orchestra _orchestra;
-    /* Talon FXs to play music through.  
-    More complex music MIDIs will contain several tracks, requiring multiple instruments.  */
-  private TalonFX [] _fxes =  { new TalonFX(1), new TalonFX(2), new TalonFX(3), new TalonFX(4) };
+  // private Orchestra _orchestra;
+  //   /* Talon FXs to play music through.  
+  //   More complex music MIDIs will contain several tracks, requiring multiple instruments.  */
+  // private TalonFX [] _fxes =  { new TalonFX(1), new TalonFX(2), new TalonFX(3), new TalonFX(4) };
 
-    /* An array of songs that are available to be played, can you guess the song/artists? */
-  String song = "crabRave.chrp";
+  //   /* An array of songs that are available to be played, can you guess the song/artists? */
+  // String song = "crabRave.chrp";
   
-  /* A list of TalonFX's that are to be used as instruments */
-  ArrayList<TalonFX> _instruments = new ArrayList<TalonFX>();
+  // /* A list of TalonFX's that are to be used as instruments */
+  // ArrayList<TalonFX> _instruments = new ArrayList<TalonFX>();
 
   /**
    * This function is run when the robot is first started up and should be
@@ -104,7 +104,7 @@ public class Robot extends TimedRobot
   @Override
   public void robotInit() 
   {
-    playMusic();
+    // playMusic();
     m_chooser.setDefaultOption("Turn 90", autoTurn90);
     m_chooser.addOption("Out and back", autoOutAndBack);
     m_chooser.addOption("Go 4 feet", autoGo4Feet);
@@ -130,7 +130,7 @@ public class Robot extends TimedRobot
     controllerdriver = new XboxController(0);
     controlleroperator = new XboxController(1);
 
-    final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off sparks
+    final boolean driveWheelsAreTalonsAndNotSparks = false; // If you change this to false it will try to run the wheels off sparks
 
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
@@ -149,7 +149,7 @@ public class Robot extends TimedRobot
       rightMotors = new SpeedControllerGroup(backRight, frontRight);
     }
 
-    drive = new DifferentialDrive(leftMotors, rightMotors);
+    //drive = new DifferentialDrive(leftMotors, rightMotors);
 
     leftEncoder = new Encoder(5, 6, true, Encoder.EncodingType.k2X);
     rightEncoder = new Encoder(3, 4, false, Encoder.EncodingType.k2X);
@@ -185,7 +185,7 @@ public class Robot extends TimedRobot
 
     isSpinningMult = false;
     isSpinningToSpecific = false;
-    isCheckingColor = false;
+    isCheckingColor = true;
     hasSeenColor = false;
     requiredColor = "Blue";
     totalSpins = 0;
@@ -196,11 +196,6 @@ public class Robot extends TimedRobot
     colorMotor = new Spark(4); //defining motor with spark
 
     /* Initialize the TalonFX's to be used */
-  for (int i = 0; i < _fxes.length; ++i) {
-    _instruments.add(_fxes[i]);
-  }
-  /* Create the orchestra with the TalonFX instruments */
-  _orchestra = new Orchestra(_instruments);
   
   
   
@@ -224,16 +219,16 @@ public class Robot extends TimedRobot
   {
     NetworkTableEntry tx = table.getEntry("tx");
     double x = tx.getDouble(0.0);
-    if(x > -3 && x < 3){ // Dead Zone
+    if(x > -1 && x < 1){ // Dead Zone
       return 0.0;
-    }else if(x > -15 && x < -3){ // Move from left to center
-      return -0.2;
+    }else if(x > -15 && x < -1){ // Move from left to center
+      return -0.5;
     }else if(x < -15){
-      return -0.4;
-    }else if(x > 3 && x < 15){ // Move from right to center
-      return 0.2;
+      return -0.8;
+    }else if(x > 1 && x < 15){ // Move from right to center
+      return 0.5;
     }else if(x > 15){
-      return 0.4;
+      return 0.8;
     }else{ // If it finds nothing it won't change direction
       return 0.0;
     }
@@ -275,14 +270,19 @@ public class Robot extends TimedRobot
     ColorMatchResult match = m_colorMatcher.matchClosestColor(detectedColor);
     if (match.color == kBlueTarget) {
       colorString = "Blue";
+      System.out.println("Blue");
     } else if (match.color == kRedTarget) {
       colorString = "Red";
+      System.out.println("Red");
     } else if (match.color == kGreenTarget) {
       colorString = "Green";
+      System.out.println("Green");
     } else if (match.color == kYellowTarget) {
       colorString = "Yellow";
+      System.out.println("Yellow");
     } else {
       colorString = "Unknown";
+      System.out.println("Unknown");
     }
 
     SmartDashboard.putNumber("Red", detectedColor.red); //results pasted into shuffleboard & smart dash
@@ -311,7 +311,7 @@ public class Robot extends TimedRobot
         //stops checking colors after required color found
         isSpinningToSpecific = false;
         isCheckingColor = false;
-        colorMotor.set(0);
+        // colorMotor.set(0);
       }
     } else if (isSpinningMult) 
     {
@@ -330,7 +330,7 @@ public class Robot extends TimedRobot
         isSpinningMult = false;
         isCheckingColor = false;
         totalSpins = 0;
-        colorMotor.set(0);
+        // colorMotor.set(0);
       }
     }
   }
@@ -504,8 +504,15 @@ public void autoGoAround()
   @Override
   public void teleopPeriodic() 
   {
-    double driveSpeed = controllerdriver.getY(GenericHID.Hand.kLeft);
-    double driveDirection = controllerdriver.getX(GenericHID.Hand.kRight);
+    double driveSpeed = -controllerdriver.getY(GenericHID.Hand.kLeft);
+    double driveDirection = -controllerdriver.getX(GenericHID.Hand.kRight);
+
+    if (Math.abs(driveSpeed) < 0.1) 
+      driveSpeed = 0;
+    
+    if (Math.abs(driveDirection) < 0.1) 
+      driveDirection = 0;
+
     //int pov = controllerdriver.getPOV(0);
 
     // System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
@@ -520,7 +527,8 @@ public void autoGoAround()
       }
     }
 
-    drive.arcadeDrive(driveSpeed, driveDirection);
+    //drive.arcadeDrive(driveSpeed, driveDirection);
+    setDriveWheels(driveSpeed - driveDirection, driveSpeed + driveDirection);
 
     if(controllerdriver.getAButtonPressed()){
       align = !align;
@@ -533,7 +541,7 @@ public void autoGoAround()
     }
     if(align){
       double autoDirection = directionToTarget();
-      setDriveWheels(-autoDirection, autoDirection);
+      setDriveWheels(autoDirection, -autoDirection);
     }
     if(approach){
       approach();
@@ -543,7 +551,7 @@ public void autoGoAround()
     }
 
     double lidarDist = lidar.getDistanceIn();
-    System.out.println("Cool lidar stuff: " + lidarDist);
+    //System.out.println("Cool lidar stuff: " + lidarDist);
 
   }
 
@@ -558,7 +566,7 @@ public void autoGoAround()
        double driveDirection = controllerdriver.getX(GenericHID.Hand.kRight);
        double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
 
-      drive.arcadeDrive(driveSpeed, driveDirection, true);  
+      setDriveWheels(driveSpeed - driveDirection, driveSpeed + driveDirection);
 
       if(currentSpeedAvg > topSpeed){
         topSpeed = currentSpeedAvg;
@@ -567,11 +575,11 @@ public void autoGoAround()
     }
   }
 
-  public void playMusic(){
-    /* load the chirp file */
-    _orchestra.loadMusic(song); 
-    _orchestra.play();
-   }
+  // public void playMusic(){
+  //   /* load the chirp file */
+  //   _orchestra.loadMusic(song); 
+  //   _orchestra.play();
+  //  }
    
 }
 
