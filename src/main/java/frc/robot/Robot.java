@@ -30,6 +30,12 @@ import edu.wpi.first.wpilibj.Ultrasonic;
 // import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import java.util.ArrayList;
 
+import javax.xml.transform.Source;
+
+import edu.wpi.first.wpilibj.Counter;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DigitalSource;
+
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the TimedRobot
@@ -48,6 +54,7 @@ public class Robot extends TimedRobot
 
   private static final double shootDistance = 30.0;
   private static final double shootSpeed = 0.5;
+  private double lidarDist;
 
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
@@ -84,6 +91,7 @@ public class Robot extends TimedRobot
   private boolean getTopSpeed = true, tracON = true;
 
   private pulsedLightLIDAR lidar;
+  private DigitalSource lidarPort = new DigitalInput(0);
 
     /* The orchestra object that holds all the instruments */
   // private Orchestra _orchestra;
@@ -161,8 +169,8 @@ public class Robot extends TimedRobot
 
     table = NetworkTableInstance.getDefault().getTable("limelight");
 
-    lidar = new pulsedLightLIDAR();
-    lidar.start();
+    lidar = new pulsedLightLIDAR(lidarPort);
+    lidar.getDistance();
 
     align = false;
     approach = false;
@@ -613,8 +621,8 @@ public void autoGoAround()
       shoot();
     }
 
-    double lidarDist = lidar.getDistanceIn();
-    //System.out.println("Cool lidar stuff: " + lidarDist);
+    double lidarDist = lidar.getDistance();
+    System.out.println("Cool lidar distance: " + lidarDist);
 
     if(controllerdriver.getBButtonPressed()){
       // playMusic();
