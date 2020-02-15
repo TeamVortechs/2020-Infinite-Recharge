@@ -63,8 +63,6 @@ public class Robot extends TimedRobot
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
   private Spark backRight, frontRight, backLeft, frontLeft, intake, belt1, belt2, belt3, belt4, loader, colorMotor;
-  private SpeedControllerGroup leftMotors, rightMotors;
-  //private DifferentialDrive drive;
   private Encoder leftEncoder, rightEncoder;
   private NetworkTable table;
   private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT;
@@ -88,7 +86,8 @@ public class Robot extends TimedRobot
   
   private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5;
 
-  private boolean getTopSpeed = true, tracON = true;
+  private boolean getTopSpeed = true, trac = true;
+  final boolean driveWheelsAreTalonsAndNotSparks = false; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
   private DigitalSource lidarPort = new DigitalInput(0);
@@ -141,23 +140,25 @@ public class Robot extends TimedRobot
     controllerdriver = new XboxController(0);
     controlleroperator = new XboxController(1);
 
-    final boolean driveWheelsAreTalonsAndNotSparks = false; // If you change this to false it will try to run the wheels off sparks
-
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
       backRightT = new PWMTalonSRX(0);
       frontRightT = new PWMTalonSRX(1);
       backLeftT = new PWMTalonSRX(2);
       frontLeftT = new PWMTalonSRX(3);
-      leftMotors = new SpeedControllerGroup(backLeftT, frontLeftT);
-      rightMotors = new SpeedControllerGroup(backRightT, frontRightT);
+      backLeftT.set(0);
+      frontLeftT.set(0);
+      backRightT.set(0);
+      frontRightT.set(0);
     }else{
       backRight = new Spark(0);
       frontRight = new Spark(1);
       backLeft = new Spark(2);
       frontLeft = new Spark(3);
-      leftMotors = new SpeedControllerGroup(backLeft, frontLeft);
-      rightMotors = new SpeedControllerGroup(backRight, frontRight);
+      backLeft.set(0);
+      frontLeft.set(0);
+      backRight.set(0);
+      frontRight.set(0);
     }
 
     //drive = new DifferentialDrive(leftMotors, rightMotors);
@@ -216,17 +217,52 @@ public class Robot extends TimedRobot
     /* Initialize the TalonFX's to be used */
   }
 
-  public void setDriveWheels(double left, double right)
-  {
-    backLeft.set(-left);
-    frontLeft.set(-left);
-    backRight.set(right);
-    frontRight.set(right);
+  public void drive(double desiredSpeed, double direction, boolean tracON){ // Both desiredSpeed and direction should be sent as positive values as you would expect
+    if(tracON){
+      double currentSpeedAvg = ((leftEncoder.getRate() + rightEncoder.getRate()) / 2) / topSpeed;
+      if(desiredSpeed > (currentSpeedAvg + maxSpeedDiff)){
+        desiredSpeed = (currentSpeedAvg + maxSpeedDiff);
+      }else if(desiredSpeed < (currentSpeedAvg - minSpeedDiff)){
+        desiredSpeed = (currentSpeedAvg - minSpeedDiff);
+      }
+    }
+
+    double leftSpeedFinal = desiredSpeed - direction;
+    double rightSpeedFinal = desiredSpeed + direction;
+
+    if(driveWheelsAreTalonsAndNotSparks){
+      backLeftT.set(-leftSpeedFinal);
+      frontLeftT.set(-leftSpeedFinal);
+      backRightT.set(rightSpeedFinal);
+      frontRightT.set(rightSpeedFinal);
+    }else{
+      backLeft.set(-leftSpeedFinal);
+      frontLeft.set(-leftSpeedFinal);
+      backRight.set(rightSpeedFinal);
+      frontRight.set(rightSpeedFinal);
+    }
   }
+
+  // public void directDrive(double desiredSpeed, double direction){
+  //   double leftSpeedFinal = desiredSpeed + direction;
+  //   double rightSpeedFinal = desiredSpeed - direction;
+
+  //   if(driveWheelsAreTalonsAndNotSparks){
+  //     backLeftT.set(-leftSpeedFinal);
+  //     frontLeftT.set(-leftSpeedFinal);
+  //     backRightT.set(rightSpeedFinal);
+  //     frontRightT.set(rightSpeedFinal);
+  //   }else{
+  //     backLeft.set(-leftSpeedFinal);
+  //     frontLeft.set(-leftSpeedFinal);
+  //     backRight.set(rightSpeedFinal);
+  //     frontRight.set(rightSpeedFinal);
+  //   }
+  // }
 
   public void goStraight(double power)
   {
-    setDriveWheels(power*0.85, power);
+    drive(power*0.85, power, false);
   }
 
   public double directionToTarget()
@@ -394,11 +430,11 @@ public class Robot extends TimedRobot
     System.out.println(navx.getAngle());
 
     if (navx.getAngle() < 75)         //Until 75 degrees, the robot turns at half power 
-      setDriveWheels(0.5, -0.5);
+      drive(0.5, -0.5, false);
     else if (navx.getAngle() < 90)    // For the last 15 degrees, the robot turns at third power
-      setDriveWheels(0.3, 0.3);
+      drive(0.3, 0.3, false);
     else
-      setDriveWheels(0, 0);
+      drive(0, 0, false);
   }
 
   public void outAndBack()
@@ -413,7 +449,7 @@ public class Robot extends TimedRobot
  
        case 2:
          // Turn 180 degrees
-         setDriveWheels(0.5, -0.5);
+         drive(0.5, -0.5, false);
          if (navx.getAngle() >= 170) {
            leftEncoder.reset();
            rightEncoder.reset();
@@ -432,14 +468,14 @@ public class Robot extends TimedRobot
  
        case 4:
          // Turns itself 180 degrees
-         setDriveWheels(0.5, -0.5);
+         drive(0.5, -0.5, false);
          if (navx.getAngle() >= 170)
            state++;
            break;
  
        case 5:
          // Stops the robot
-         setDriveWheels(0, 0);
+         drive(0, 0, false);
          break;
     }
   }
@@ -447,14 +483,14 @@ public class Robot extends TimedRobot
   public void backAndAround() {
     switch (state) {
       case 1:
-        setDriveWheels(0.5, 0.5);
+        drive(0.5, 0.5, false);
         if (leftEncoder.getDistance() >= 36) {
           state++;
         }
         break;
 
       case 2:
-        setDriveWheels(-0.5, 0.5);
+        drive(-0.5, 0.5, false);
         if (navx.getAngle() <= 280) {
           leftEncoder.reset();
           rightEncoder.reset();
@@ -463,7 +499,7 @@ public class Robot extends TimedRobot
         break;
 
       case 3:
-        setDriveWheels(0.5, 0.5);
+        drive(0.5, 0.5, false);
         if (leftEncoder.getDistance() >= 180) {
           navx.reset();
           state++;
@@ -471,13 +507,13 @@ public class Robot extends TimedRobot
         break;
       
       case 4:
-        setDriveWheels(-0.5, 0.5);
+        drive(-0.5, 0.5, false);
         if (navx.getAngle() <= 280) {
           state++;
         }
       
       case 5:
-        setDriveWheels(0, 0);
+        drive(0, 0, false);
         break;
     }
   }
@@ -486,22 +522,22 @@ public class Robot extends TimedRobot
   {
     System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
     if (leftEncoder.getDistance() < 48)
-      setDriveWheels(0.3, 0.3);
+      drive(0.3, 0.3, false);
     else
-      setDriveWheels(0, 0);
+      drive(0, 0, false);
   }
 
 public void autoGoAround()
 {
   switch (state) {
     case 1: //drives forward 2 feet
-      setDriveWheels(0.5, 0.5);
+      drive(0.5, 0.5, false);
       if (leftEncoder.getDistance() >= 24)
         state++;
       break;
       
     case 2: //turns right 90
-      setDriveWheels(0.5, -0.5);
+      drive(0.5, -0.5, false);
       if (navx.getAngle() >= 90) {
         leftEncoder.reset();
         state++;
@@ -509,7 +545,7 @@ public void autoGoAround()
       break;
 
     case 3: //drives forward 4 feet
-      setDriveWheels(0.5, 0.5);
+      drive(0.5, 0.5, false);
       if (leftEncoder.getDistance() >= 48) {
         navx.reset();
         state++;
@@ -517,7 +553,7 @@ public void autoGoAround()
       break;
 
     case 4: //turns right 90
-      setDriveWheels(0.5, -0.5);
+      drive(0.5, -0.5, false);
       if (navx.getAngle() >= 90) {
         leftEncoder.reset();
         state++;
@@ -525,13 +561,13 @@ public void autoGoAround()
       break;
 
     case 5: //forward 2 feet
-      setDriveWheels(0.5, 0.5);
+      drive(0.5, 0.5, false);
       if (leftEncoder.getDistance() >= 24)
         state++;
       break;
 
     case 6:
-      setDriveWheels(0, 0);
+      drive(0, 0, false);
       break;
   }
 }
@@ -573,35 +609,20 @@ public void autoGoAround()
   @Override
   public void teleopPeriodic() 
   {
-    double driveSpeed = -controllerdriver.getY(GenericHID.Hand.kLeft);
-    double driveDirection = -controllerdriver.getX(GenericHID.Hand.kRight);
+    double joystickY = -controllerdriver.getY(GenericHID.Hand.kLeft);
+    double joystickX = -controllerdriver.getX(GenericHID.Hand.kRight);
 
-    getDistances();
-
-    if (Math.abs(driveSpeed) < 0.1) 
-      driveSpeed = 0;
-    
-    if (Math.abs(driveDirection) < 0.1) 
-      driveDirection = 0;
-
-    //int pov = controllerdriver.getPOV(0);
-
-    System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
-    // setDriveWheels(driveSpeed - direction, driveSpeed + direction);
-    // System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
-    // setDriveWheels(speed - direction, speed + direction);
-
-    if(tracON){
-      double currentSpeedAvg = ((leftEncoder.getRate() + rightEncoder.getRate()) / 2) / topSpeed;
-      if(driveSpeed > (currentSpeedAvg + maxSpeedDiff)){
-        driveSpeed = (currentSpeedAvg + maxSpeedDiff);
-      }else if(driveSpeed < (currentSpeedAvg - minSpeedDiff)){
-        driveSpeed = (currentSpeedAvg - minSpeedDiff);
-      }
+    if(controllerdriver.getYButtonPressed()){
+      trac = !trac;
     }
 
-    //drive.arcadeDrive(driveSpeed, driveDirection);
-    setDriveWheels(driveSpeed - driveDirection, driveSpeed + driveDirection);
+    if (Math.abs(joystickY) < 0.1) 
+      joystickY = 0;
+    
+    if (Math.abs(joystickX) < 0.1) 
+      joystickX = 0;
+
+    drive(joystickY, joystickX, trac);
 
     if(controllerdriver.getAButtonPressed()){
       align = !align;
@@ -609,12 +630,12 @@ public void autoGoAround()
     if(controllerdriver.getXButtonPressed()){
       approach = !approach;
     }
-    if(controllerdriver.getYButtonPressed()){
-      shoot = !shoot;
-    }
+    // if(controllerdriver.getYButtonPressed()){
+    //   shoot = !shoot;
+    // }
     if(align){
       double autoDirection = directionToTarget();
-      setDriveWheels(autoDirection, -autoDirection);
+      drive(autoDirection, -autoDirection, trac);
     }
     if(approach){
       approach();
@@ -623,14 +644,18 @@ public void autoGoAround()
       shoot();
     }
 
-    double lidarDist = lidar.getDistance();
-    System.out.println("Cool lidar distance: " + lidarDist);
+    // For testing lidar distance
 
-    if(controllerdriver.getBButtonPressed()){
-      // playMusic();
+    // double lidarDist = lidar.getDistance();
+    // System.out.println("Cool lidar distance: " + lidarDist);
 
-      System.out.println("I'm playing music!");
-    }
+    // if(controllerdriver.getBButtonPressed()){
+    //   playMusic();
+
+    //   System.out.println("I'm playing music!");
+    // }
+
+    getDistances(); // Proximity Sensors
   }
 
   /**
@@ -640,11 +665,11 @@ public void autoGoAround()
   public void testPeriodic() 
   {
     if(getTopSpeed){
-       double driveSpeed = controllerdriver.getY(GenericHID.Hand.kLeft);
-       double driveDirection = controllerdriver.getX(GenericHID.Hand.kRight);
+       double joystickY = controllerdriver.getY(GenericHID.Hand.kLeft);
+       double joystickX = controllerdriver.getX(GenericHID.Hand.kRight);
        double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
 
-      setDriveWheels(driveSpeed - driveDirection, driveSpeed + driveDirection);
+      drive(joystickY, joystickX, false);
 
       if(currentSpeedAvg > topSpeed){
         topSpeed = currentSpeedAvg;
