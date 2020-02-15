@@ -313,7 +313,7 @@ public class Robot extends TimedRobot
 
     if(isSpinningToSpecific) 
     {
-      colorMotor.set(0.05);
+      // colorMotor.set(0.05);
       if(requiredColor == "Blue") {
         requiredColorActual = "Red";
       } else if (requiredColor == "Yellow") {
@@ -335,7 +335,7 @@ public class Robot extends TimedRobot
       }
     } else if (isSpinningMult) 
     {
-      colorMotor.set(0.05);
+      // colorMotor.set(0.05);
       //spins around the disk a total of 3.5 to 4 spins
       if(colorString == "Yellow" && !hasSeenColor) 
       {
@@ -604,17 +604,7 @@ public void autoGoAround()
     }
     if(align){
       double autoDirection = directionToTarget();
-      //setDriveWheels(autoDirection, -autoDirection);
-      if(autoDirection < 0) 
-      {
-        System.out.println("Left");
-      }else if(autoDirection > 0) 
-      {
-        System.out.println("Right");
-      } else 
-      {
-        System.out.println("Not Move");
-      }
+      setDriveWheels(autoDirection, -autoDirection);
     }
     if(approach){
       approach();
