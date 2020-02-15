@@ -26,8 +26,8 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.Ultrasonic;
-import com.ctre.phoenix.music.Orchestra;
-import com.ctre.phoenix.motorcontrol.can.TalonFX;
+// import com.ctre.phoenix.music.Orchestra;
+// import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import java.util.ArrayList;
 
 /**
@@ -74,9 +74,12 @@ public class Robot extends TimedRobot
   private boolean isCheckingColor, isSpinningToSpecific, isSpinningMult, hasSeenColor; //color logic
   private int totalSpins;
   private String requiredColor;
+  private int ultrasonicLPort, ultrasonicMPort, ultrasonicRPort;
+  private double ultrasonicLDistance, ultrasonicMDistance, ultrasonicRDistance;
+  private AnalogInput m_ultrasonicL, m_ultrasonicM, m_ultrasonicR;
+  private static final double kValueToInches = 0.125;
+  
   private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5;
-  private Ultrasonic ultrasonicL, ultrasonicM, ultrasonicR;
-  private double ultrasonicLeftDistance, ultrasonicMidDistance, ultrasonicRightDistance;
 
   private boolean getTopSpeed = true, tracON = true;
 
@@ -91,7 +94,9 @@ public class Robot extends TimedRobot
   //   /* An array of songs that are available to be played, can you guess the song/artists? */
   // String song = "crabRave.chrp";
   
-  // /* A list of TalonFX's that are to be used as instruments */
+
+  /* A list of TalonFX's that are to be used as instruments */
+
   // ArrayList<TalonFX> _instruments = new ArrayList<TalonFX>();
 
   /**
@@ -178,26 +183,29 @@ public class Robot extends TimedRobot
 
     //Timer
     timer = new Timer();
+    // gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
 
-    //gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
+    ultrasonicLPort = 0;
+    ultrasonicMPort = 1;
+    ultrasonicRPort = 2; //Ultrasonic(int pingChannel, int echoChannel)
 
-    isSpinningMult = false;
-    isSpinningToSpecific = false;
-    isCheckingColor = true;
-    hasSeenColor = false;
-    requiredColor = "Blue";
-    totalSpins = 0;
-    m_colorMatcher.addColorMatch(kBlueTarget);
-    m_colorMatcher.addColorMatch(kGreenTarget);
-    m_colorMatcher.addColorMatch(kRedTarget);
-    m_colorMatcher.addColorMatch(kYellowTarget);
-    colorMotor = new Spark(4); //defining motor with spark
+    m_ultrasonicL = new AnalogInput(ultrasonicLPort);
+    m_ultrasonicM = new AnalogInput(ultrasonicMPort);
+    m_ultrasonicR = new AnalogInput(ultrasonicRPort);
+  
+    // isSpinningMult = false;
+    // isSpinningToSpecific = false;
+    // isCheckingColor = false;
+    // hasSeenColor = false;
+    // requiredColor = "Blue";
+    // totalSpins = 0;
+    // m_colorMatcher.addColorMatch(kBlueTarget);
+    // m_colorMatcher.addColorMatch(kGreenTarget);
+    // m_colorMatcher.addColorMatch(kRedTarget);
+    // m_colorMatcher.addColorMatch(kYellowTarget);
+    // colorMotor = new Spark(4); //defining motor with spark
 
     /* Initialize the TalonFX's to be used */
-  
-  
-  
-
   }
 
   public void setDriveWheels(double left, double right)
@@ -253,12 +261,25 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
-    //getDistances();
+    getDistances();
     // if(isCheckingColor) 
     // {
     //   colorCheck();
     // }
   }
+
+  public void getDistances() 
+  {
+    ultrasonicLDistance = m_ultrasonicL.getValue() * kValueToInches;
+    ultrasonicMDistance = m_ultrasonicM.getValue() * kValueToInches;
+    ultrasonicRDistance = m_ultrasonicR.getValue() * kValueToInches;
+    SmartDashboard.putNumber("Distance Left", ultrasonicLDistance);
+    SmartDashboard.putNumber("Distance Middle", ultrasonicMDistance);
+    SmartDashboard.putNumber("Distance Right", ultrasonicRDistance);
+    System.out.println("Distance Left: " + ultrasonicLDistance);
+    System.out.println("Distance Middle: " + ultrasonicMDistance);
+    System.out.println("Distance Right: " + ultrasonicRDistance);
+   }
 
   public void colorCheck() 
   {
@@ -596,7 +617,8 @@ public void autoGoAround()
     //System.out.println("Cool lidar stuff: " + lidarDist);
 
     if(controllerdriver.getBButtonPressed()){
-      //playMusic();
+      // playMusic();
+
       System.out.println("I'm playing music!");
     }
   }
