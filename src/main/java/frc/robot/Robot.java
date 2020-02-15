@@ -269,7 +269,7 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
-    getDistances();
+
     // if(isCheckingColor) 
     // {
     //   colorCheck();
@@ -575,6 +575,8 @@ public void autoGoAround()
   {
     double driveSpeed = -controllerdriver.getY(GenericHID.Hand.kLeft);
     double driveDirection = -controllerdriver.getX(GenericHID.Hand.kRight);
+
+    getDistances();
 
     if (Math.abs(driveSpeed) < 0.1) 
       driveSpeed = 0;
