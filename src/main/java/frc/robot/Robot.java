@@ -164,7 +164,7 @@ public class Robot extends TimedRobot
     lidar = new pulsedLightLIDAR();
     lidar.start();
 
-    align = false;
+    align = true;
     approach = false;
     shoot = false;
 
@@ -604,7 +604,17 @@ public void autoGoAround()
     }
     if(align){
       double autoDirection = directionToTarget();
-      setDriveWheels(autoDirection, -autoDirection);
+      //setDriveWheels(autoDirection, -autoDirection);
+      if(autoDirection < 0) 
+      {
+        System.out.println("Left");
+      }else if(autoDirection > 0) 
+      {
+        System.out.println("Right");
+      } else 
+      {
+        System.out.println("Not Move");
+      }
     }
     if(approach){
       approach();
