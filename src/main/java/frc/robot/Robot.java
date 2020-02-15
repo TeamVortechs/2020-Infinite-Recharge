@@ -30,6 +30,12 @@ import edu.wpi.first.wpilibj.Ultrasonic;
 // import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import java.util.ArrayList;
 
+import javax.xml.transform.Source;
+
+import edu.wpi.first.wpilibj.Counter;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DigitalSource;
+
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the TimedRobot
@@ -48,6 +54,7 @@ public class Robot extends TimedRobot
 
   private static final double shootDistance = 30.0;
   private static final double shootSpeed = 0.5;
+  private double lidarDist;
 
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
@@ -84,6 +91,7 @@ public class Robot extends TimedRobot
   private boolean getTopSpeed = true, tracON = true;
 
   private pulsedLightLIDAR lidar;
+  private DigitalSource lidarPort = new DigitalInput(0);
 
     /* The orchestra object that holds all the instruments */
   // private Orchestra _orchestra;
@@ -161,8 +169,8 @@ public class Robot extends TimedRobot
 
     table = NetworkTableInstance.getDefault().getTable("limelight");
 
-    lidar = new pulsedLightLIDAR();
-    lidar.start();
+    lidar = new pulsedLightLIDAR(lidarPort);
+    lidar.getDistance();
 
     align = true;
     approach = false;
@@ -261,7 +269,7 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
-    getDistances();
+
     // if(isCheckingColor) 
     // {
     //   colorCheck();
@@ -276,9 +284,9 @@ public class Robot extends TimedRobot
     SmartDashboard.putNumber("Distance Left", ultrasonicLDistance);
     SmartDashboard.putNumber("Distance Middle", ultrasonicMDistance);
     SmartDashboard.putNumber("Distance Right", ultrasonicRDistance);
-    System.out.println("Distance Left: " + ultrasonicLDistance);
-    System.out.println("Distance Middle: " + ultrasonicMDistance);
-    System.out.println("Distance Right: " + ultrasonicRDistance);
+    // System.out.println("Distance Left: " + ultrasonicLDistance);
+    // System.out.println("Distance Middle: " + ultrasonicMDistance);
+    // System.out.println("Distance Right: " + ultrasonicRDistance);
    }
 
   public void colorCheck() 
@@ -568,6 +576,8 @@ public void autoGoAround()
     double driveSpeed = -controllerdriver.getY(GenericHID.Hand.kLeft);
     double driveDirection = -controllerdriver.getX(GenericHID.Hand.kRight);
 
+    getDistances();
+
     if (Math.abs(driveSpeed) < 0.1) 
       driveSpeed = 0;
     
@@ -613,8 +623,8 @@ public void autoGoAround()
       shoot();
     }
 
-    double lidarDist = lidar.getDistanceIn();
-    //System.out.println("Cool lidar stuff: " + lidarDist);
+    double lidarDist = lidar.getDistance();
+    System.out.println("Cool lidar distance: " + lidarDist);
 
     if(controllerdriver.getBButtonPressed()){
       // playMusic();
