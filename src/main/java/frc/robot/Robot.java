@@ -26,8 +26,8 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.Ultrasonic;
-import com.ctre.phoenix.music.Orchestra;
-import com.ctre.phoenix.motorcontrol.can.TalonFX;
+// import com.ctre.phoenix.music.Orchestra;
+// import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import java.util.ArrayList;
 
 /**
@@ -74,8 +74,11 @@ public class Robot extends TimedRobot
   private boolean isCheckingColor, isSpinningToSpecific, isSpinningMult, hasSeenColor; //color logic
   private int totalSpins;
   private String requiredColor;
-  private Ultrasonic ultrasonicL, ultrasonicM, ultrasonicR;
-  private double ultrasonicLeftDistance, ultrasonicMidDistance, ultrasonicRightDistance;
+  private int ultrasonicLPort, ultrasonicMPort, ultrasonicRPort;
+  private double ultrasonicLDistance, ultrasonicMDistance, ultrasonicRDistance;
+  private AnalogInput m_ultrasonicL, m_ultrasonicM, m_ultrasonicR;
+  private static final double kValueToInches = 0.125;
+  
 
   private double topSpeed = 0, maxSpeedDiff = 0.3, minSpeedDiff = 0.2;
   private boolean getTopSpeed = true, tracON = true;
@@ -83,16 +86,16 @@ public class Robot extends TimedRobot
   private pulsedLightLIDAR lidar;
 
     /* The orchestra object that holds all the instruments */
-  private Orchestra _orchestra;
-    /* Talon FXs to play music through.  
-    More complex music MIDIs will contain several tracks, requiring multiple instruments.  */
-  private TalonFX [] _fxes =  { new TalonFX(1), new TalonFX(2), new TalonFX(3), new TalonFX(4) };
+  // private Orchestra _orchestra;
+  //   /* Talon FXs to play music through.  
+  //   More complex music MIDIs will contain several tracks, requiring multiple instruments.  */
+  // private TalonFX [] _fxes =  { new TalonFX(1), new TalonFX(2), new TalonFX(3), new TalonFX(4) };
 
-    /* An array of songs that are available to be played, can you guess the song/artists? */
-  String song = "crabRave.chrp";
+  //   /* An array of songs that are available to be played, can you guess the song/artists? */
+  // String song = "crabRave.chrp";
   
   /* A list of TalonFX's that are to be used as instruments */
-  ArrayList<TalonFX> _instruments = new ArrayList<TalonFX>();
+  // ArrayList<TalonFX> _instruments = new ArrayList<TalonFX>();
 
   /**
    * This function is run when the robot is first started up and should be
@@ -177,11 +180,16 @@ public class Robot extends TimedRobot
 
     //Timer
     timer = new Timer();
-    gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
+    // gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
 
-    ultrasonicL = new Ultrasonic(1, 2);
-    ultrasonicM = new Ultrasonic(3, 4);
-    ultrasonicR = new Ultrasonic(5, 6); //Ultrasonic(int pingChannel, int echoChannel)
+    ultrasonicLPort = 0;
+    ultrasonicMPort = 1;
+    ultrasonicRPort = 2; //Ultrasonic(int pingChannel, int echoChannel)
+
+    m_ultrasonicL = new AnalogInput(ultrasonicLPort);
+    m_ultrasonicM = new AnalogInput(ultrasonicMPort);
+    m_ultrasonicR = new AnalogInput(ultrasonicRPort);
+  
     // isSpinningMult = false;
     // isSpinningToSpecific = false;
     // isCheckingColor = false;
@@ -195,11 +203,11 @@ public class Robot extends TimedRobot
     // colorMotor = new Spark(4); //defining motor with spark
 
     /* Initialize the TalonFX's to be used */
-  for (int i = 0; i < _fxes.length; ++i) {
-    _instruments.add(_fxes[i]);
+  // for (int i = 0; i < _fxes.length; ++i) {
+  //   _instruments.add(_fxes[i]);
   }
-  /* Create the orchestra with the TalonFX instruments */
-  _orchestra = new Orchestra(_instruments);}
+  // /* Create the orchestra with the TalonFX instruments */
+  // _orchestra = new Orchestra(_instruments);}
 
   public void setDriveWheels(double left, double right)
   {
@@ -332,12 +340,15 @@ public class Robot extends TimedRobot
 
   public void getDistances() 
   {
-    ultrasonicLeftDistance = ultrasonicL.getRangeInches();
-    ultrasonicMidDistance = ultrasonicM.getRangeInches();
-    ultrasonicRightDistance = ultrasonicR.getRangeInches();
-    SmartDashboard.putNumber("Distance Left", ultrasonicLeftDistance);
-    SmartDashboard.putNumber("Distance Middle", ultrasonicMidDistance);
-    SmartDashboard.putNumber("Distance Right", ultrasonicRightDistance);
+    ultrasonicLDistance = m_ultrasonicL.getValue() * kValueToInches;
+    ultrasonicMDistance = m_ultrasonicM.getValue() * kValueToInches;
+    ultrasonicRDistance = m_ultrasonicR.getValue() * kValueToInches;
+    SmartDashboard.putNumber("Distance Left", ultrasonicLDistance);
+    SmartDashboard.putNumber("Distance Middle", ultrasonicMDistance);
+    SmartDashboard.putNumber("Distance Right", ultrasonicRDistance);
+    System.out.println("Distance Left: " + ultrasonicLDistance);
+    System.out.println("Distance Middle: " + ultrasonicMDistance);
+    System.out.println("Distance Right: " + ultrasonicRDistance);
   }
   /**
    * This autonomous (along with the chooser code above) shows how to select
@@ -595,7 +606,7 @@ public void autoGoAround()
     System.out.println("Cool lidar stuff: " + lidarDist);
 
     if(controllerdriver.getBButtonPressed()){
-      playMusic();
+      // playMusic();
       System.out.println("I'm playing music!");
     }
   }
@@ -620,11 +631,11 @@ public void autoGoAround()
     }
   }
 
-  public void playMusic(){
-    /* load the chirp file */
-    _orchestra.loadMusic(song); 
-    _orchestra.play();
-   }
+  // public void playMusic(){
+  //   /* load the chirp file */
+  //   _orchestra.loadMusic(song); 
+  //   _orchestra.play();
+  //  }
    
 }
 
