@@ -284,9 +284,9 @@ public class Robot extends TimedRobot
     SmartDashboard.putNumber("Distance Left", ultrasonicLDistance);
     SmartDashboard.putNumber("Distance Middle", ultrasonicMDistance);
     SmartDashboard.putNumber("Distance Right", ultrasonicRDistance);
-    System.out.println("Distance Left: " + ultrasonicLDistance);
-    System.out.println("Distance Middle: " + ultrasonicMDistance);
-    System.out.println("Distance Right: " + ultrasonicRDistance);
+    // System.out.println("Distance Left: " + ultrasonicLDistance);
+    // System.out.println("Distance Middle: " + ultrasonicMDistance);
+    // System.out.println("Distance Right: " + ultrasonicRDistance);
    }
 
   public void colorCheck() 
