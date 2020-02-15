@@ -1,21 +1,14 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
-
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.PWMVictorSPX;
 import com.kauailabs.navx.frc.AHRS;
 import com.kauailabs.navx.frc.AHRS.SerialDataType;
 import com.revrobotics.ColorSensorV3;
 import com.revrobotics.ColorMatchResult;
 import com.revrobotics.ColorMatch;
-
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.SPI.Port;
@@ -28,14 +21,14 @@ import edu.wpi.first.wpilibj.GenericHID;
 //import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.util.Color;
-// import com.ctre.phoenix.music.Orchestra;
-// import com.ctre.phoenix.motorcontrol.can.TalonFX;
-// import java.util.ArrayList;
+import edu.wpi.first.wpilibj.Ultrasonic;
+import com.ctre.phoenix.music.Orchestra;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import java.util.ArrayList;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -49,6 +42,7 @@ public class Robot extends TimedRobot
 
   private static final String autoGo4Feet = "autoGo4Feet";
   private static final String autoOutAndBack = "autoOutAndBack";
+  private static final String autoBackAndAround = "autoBackAndAround";
   private static final String autoTurn90 = "autoTurn90";
   private static final String autoGoAround = "autoGoAround";
 
@@ -68,7 +62,6 @@ public class Robot extends TimedRobot
   private NetworkTable table;
   private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT;
   private Timer timer;
-  private ADXRS450_Gyro gyro;
   private int state;
 
   private final I2C.Port i2cPort = I2C.Port.kOnboard; //this is the i2c port
@@ -82,9 +75,13 @@ public class Robot extends TimedRobot
   private int totalSpins;
   private String requiredColor;
   private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5;
+  private Ultrasonic ultrasonicL, ultrasonicM, ultrasonicR;
+  private double ultrasonicLeftDistance, ultrasonicMidDistance, ultrasonicRightDistance;
+
   private boolean getTopSpeed = true, tracON = true;
 
   private pulsedLightLIDAR lidar;
+
     /* The orchestra object that holds all the instruments */
   // private Orchestra _orchestra;
   //   /* Talon FXs to play music through.  
@@ -107,6 +104,7 @@ public class Robot extends TimedRobot
     // playMusic();
     m_chooser.setDefaultOption("Turn 90", autoTurn90);
     m_chooser.addOption("Out and back", autoOutAndBack);
+    m_chooser.addOption("Back and around", autoBackAndAround);
     m_chooser.addOption("Go 4 feet", autoGo4Feet);
     m_chooser.addOption("Go Around", autoGoAround);
     SmartDashboard.putData("Auto choices", m_chooser);
@@ -166,14 +164,14 @@ public class Robot extends TimedRobot
     shoot = false;
 
     // Intake motors
-    //intake = new Spark(4);
+    intake = new Spark(4);
 
     // Belt motors in the magazine
-    // belt1 = new Spark(5);
-    // belt2 = new Spark(6);
-    // belt3 = new Spark(7);
-    // belt4 = new Spark(8);
-    // loader = new Spark(9);
+    //  belt1 = new Spark(5);
+    //  belt2 = new Spark(6);
+    //  belt3 = new Spark(7);
+    //  belt4 = new Spark(8);
+    //  loader = new Spark(9);
 
     // Arm motor
     // arm = new PWMTalonSRX(0);
@@ -243,7 +241,7 @@ public class Robot extends TimedRobot
   {
 
   }
-
+  
   /**
    * This function is called every robot packet, no matter the mode. Use
    * this for items like diagnostics that you want ran during disabled,
@@ -255,10 +253,11 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
-    if(isCheckingColor) 
-    {
-      colorCheck();
-    }
+    //getDistances();
+    // if(isCheckingColor) 
+    // {
+    //   colorCheck();
+    // }
   }
 
   public void colorCheck() 
@@ -334,7 +333,6 @@ public class Robot extends TimedRobot
       }
     }
   }
-
   /**
    * This autonomous (along with the chooser code above) shows how to select
    * between different autonomous modes using the dashboard. The sendable
@@ -417,6 +415,44 @@ public class Robot extends TimedRobot
     }
   }
 
+  public void backAndAround() {
+    switch (state) {
+      case 1:
+        setDriveWheels(0.5, 0.5);
+        if (leftEncoder.getDistance() >= 36) {
+          state++;
+        }
+        break;
+
+      case 2:
+        setDriveWheels(-0.5, 0.5);
+        if (navx.getAngle() <= 280) {
+          leftEncoder.reset();
+          rightEncoder.reset();
+          state++;
+        }
+        break;
+
+      case 3:
+        setDriveWheels(0.5, 0.5);
+        if (leftEncoder.getDistance() >= 180) {
+          navx.reset();
+          state++;
+        }
+        break;
+      
+      case 4:
+        setDriveWheels(-0.5, 0.5);
+        if (navx.getAngle() <= 280) {
+          state++;
+        }
+      
+      case 5:
+        setDriveWheels(0, 0);
+        break;
+    }
+  }
+
   public void go4Feet()
   {
     System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
@@ -485,6 +521,10 @@ public void autoGoAround()
       case autoOutAndBack:
         outAndBack();
         break;
+        
+      case autoBackAndAround:
+        backAndAround();
+        break;
 
       case autoGo4Feet:
       default:
@@ -515,6 +555,8 @@ public void autoGoAround()
 
     //int pov = controllerdriver.getPOV(0);
 
+    System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
+    // setDriveWheels(driveSpeed - direction, driveSpeed + direction);
     // System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
     // setDriveWheels(speed - direction, speed + direction);
 
@@ -553,6 +595,10 @@ public void autoGoAround()
     double lidarDist = lidar.getDistanceIn();
     //System.out.println("Cool lidar stuff: " + lidarDist);
 
+    if(controllerdriver.getBButtonPressed()){
+      //playMusic();
+      System.out.println("I'm playing music!");
+    }
   }
 
   /**
