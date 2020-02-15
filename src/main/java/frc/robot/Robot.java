@@ -262,7 +262,7 @@ public class Robot extends TimedRobot
 
   public void goStraight(double power)
   {
-    drive(power*0.85, power, false);
+    drive(power, -0.15, false);
   }
 
   public double directionToTarget()
@@ -430,9 +430,9 @@ public class Robot extends TimedRobot
     System.out.println(navx.getAngle());
 
     if (navx.getAngle() < 75)         //Until 75 degrees, the robot turns at half power 
-      drive(0.5, -0.5, false);
+      drive(0.0, 0.5, false);
     else if (navx.getAngle() < 90)    // For the last 15 degrees, the robot turns at third power
-      drive(0.3, 0.3, false);
+      drive(0.0, 0.3, false);
     else
       drive(0, 0, false);
   }
@@ -449,7 +449,7 @@ public class Robot extends TimedRobot
  
        case 2:
          // Turn 180 degrees
-         drive(0.5, -0.5, false);
+         drive(0.0, -0.5, false);
          if (navx.getAngle() >= 170) {
            leftEncoder.reset();
            rightEncoder.reset();
@@ -468,7 +468,7 @@ public class Robot extends TimedRobot
  
        case 4:
          // Turns itself 180 degrees
-         drive(0.5, -0.5, false);
+         drive(0.0, -0.5, false);
          if (navx.getAngle() >= 170)
            state++;
            break;
@@ -483,14 +483,14 @@ public class Robot extends TimedRobot
   public void backAndAround() {
     switch (state) {
       case 1:
-        drive(0.5, 0.5, false);
+        drive(0.5, 0.0, false);
         if (leftEncoder.getDistance() >= 36) {
           state++;
         }
         break;
 
       case 2:
-        drive(-0.5, 0.5, false);
+        drive(-0.5, 0.0, false);
         if (navx.getAngle() <= 280) {
           leftEncoder.reset();
           rightEncoder.reset();
@@ -499,7 +499,7 @@ public class Robot extends TimedRobot
         break;
 
       case 3:
-        drive(0.5, 0.5, false);
+        drive(0.5, 0.0, false);
         if (leftEncoder.getDistance() >= 180) {
           navx.reset();
           state++;
@@ -507,7 +507,7 @@ public class Robot extends TimedRobot
         break;
       
       case 4:
-        drive(-0.5, 0.5, false);
+        drive(-0.5, 0.0, false);
         if (navx.getAngle() <= 280) {
           state++;
         }
@@ -522,7 +522,7 @@ public class Robot extends TimedRobot
   {
     System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
     if (leftEncoder.getDistance() < 48)
-      drive(0.3, 0.3, false);
+      drive(0.3, 0.0, false);
     else
       drive(0, 0, false);
   }
@@ -531,13 +531,13 @@ public void autoGoAround()
 {
   switch (state) {
     case 1: //drives forward 2 feet
-      drive(0.5, 0.5, false);
+      drive(0.5, 0.0, false);
       if (leftEncoder.getDistance() >= 24)
         state++;
       break;
       
     case 2: //turns right 90
-      drive(0.5, -0.5, false);
+      drive(0.0, 0.5, false);
       if (navx.getAngle() >= 90) {
         leftEncoder.reset();
         state++;
@@ -545,7 +545,7 @@ public void autoGoAround()
       break;
 
     case 3: //drives forward 4 feet
-      drive(0.5, 0.5, false);
+      drive(0.5, 0.0, false);
       if (leftEncoder.getDistance() >= 48) {
         navx.reset();
         state++;
@@ -553,7 +553,7 @@ public void autoGoAround()
       break;
 
     case 4: //turns right 90
-      drive(0.5, -0.5, false);
+      drive(0.0, 0.5, false);
       if (navx.getAngle() >= 90) {
         leftEncoder.reset();
         state++;
@@ -561,7 +561,7 @@ public void autoGoAround()
       break;
 
     case 5: //forward 2 feet
-      drive(0.5, 0.5, false);
+      drive(0.5, 0.0, false);
       if (leftEncoder.getDistance() >= 24)
         state++;
       break;
@@ -635,7 +635,7 @@ public void autoGoAround()
     // }
     if(align){
       double autoDirection = directionToTarget();
-      drive(autoDirection, -autoDirection, trac);
+      drive(0, -autoDirection, trac);
     }
     if(approach){
       approach();
