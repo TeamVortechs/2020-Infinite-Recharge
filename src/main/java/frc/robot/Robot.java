@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj.PWMTalonSRX;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+//import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.networktables.NetworkTable;
@@ -57,7 +57,7 @@ public class Robot extends TimedRobot
   private XboxController controllerdriver, controlleroperator;
   private Spark backRight, frontRight, backLeft, frontLeft, intake, belt1, belt2, belt3, belt4, loader, colorMotor;
   private SpeedControllerGroup leftMotors, rightMotors;
-  private DifferentialDrive drive;
+  //private DifferentialDrive drive;
   private Encoder leftEncoder, rightEncoder;
   private NetworkTable table;
   private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT;
@@ -79,8 +79,8 @@ public class Robot extends TimedRobot
   private AnalogInput m_ultrasonicL, m_ultrasonicM, m_ultrasonicR;
   private static final double kValueToInches = 0.125;
   
+  private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5;
 
-  private double topSpeed = 0, maxSpeedDiff = 0.3, minSpeedDiff = 0.2;
   private boolean getTopSpeed = true, tracON = true;
 
   private pulsedLightLIDAR lidar;
@@ -94,7 +94,9 @@ public class Robot extends TimedRobot
   //   /* An array of songs that are available to be played, can you guess the song/artists? */
   // String song = "crabRave.chrp";
   
+
   /* A list of TalonFX's that are to be used as instruments */
+
   // ArrayList<TalonFX> _instruments = new ArrayList<TalonFX>();
 
   /**
@@ -104,6 +106,7 @@ public class Robot extends TimedRobot
   @Override
   public void robotInit() 
   {
+    // playMusic();
     m_chooser.setDefaultOption("Turn 90", autoTurn90);
     m_chooser.addOption("Out and back", autoOutAndBack);
     m_chooser.addOption("Back and around", autoBackAndAround);
@@ -130,7 +133,7 @@ public class Robot extends TimedRobot
     controllerdriver = new XboxController(0);
     controlleroperator = new XboxController(1);
 
-    final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off sparks
+    final boolean driveWheelsAreTalonsAndNotSparks = false; // If you change this to false it will try to run the wheels off sparks
 
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
@@ -149,7 +152,7 @@ public class Robot extends TimedRobot
       rightMotors = new SpeedControllerGroup(backRight, frontRight);
     }
 
-    drive = new DifferentialDrive(leftMotors, rightMotors);
+    //drive = new DifferentialDrive(leftMotors, rightMotors);
 
     leftEncoder = new Encoder(5, 6, true, Encoder.EncodingType.k2X);
     rightEncoder = new Encoder(3, 4, false, Encoder.EncodingType.k2X);
@@ -203,11 +206,7 @@ public class Robot extends TimedRobot
     // colorMotor = new Spark(4); //defining motor with spark
 
     /* Initialize the TalonFX's to be used */
-  // for (int i = 0; i < _fxes.length; ++i) {
-  //   _instruments.add(_fxes[i]);
   }
-  // /* Create the orchestra with the TalonFX instruments */
-  // _orchestra = new Orchestra(_instruments);}
 
   public void setDriveWheels(double left, double right)
   {
@@ -226,16 +225,16 @@ public class Robot extends TimedRobot
   {
     NetworkTableEntry tx = table.getEntry("tx");
     double x = tx.getDouble(0.0);
-    if(x > -3 && x < 3){ // Dead Zone
+    if(x > -1 && x < 1){ // Dead Zone
       return 0.0;
-    }else if(x > -15 && x < -3){ // Move from left to center
-      return -0.2;
+    }else if(x > -15 && x < -1){ // Move from left to center
+      return -0.5;
     }else if(x < -15){
-      return -0.4;
-    }else if(x > 3 && x < 15){ // Move from right to center
-      return 0.2;
+      return -0.8;
+    }else if(x > 1 && x < 15){ // Move from right to center
+      return 0.5;
     }else if(x > 15){
-      return 0.4;
+      return 0.8;
     }else{ // If it finds nothing it won't change direction
       return 0.0;
     }
@@ -269,75 +268,6 @@ public class Robot extends TimedRobot
     // }
   }
 
-  // public void colorCheck() 
-  // {
-  //   Color detectedColor = m_colorSensor.getColor(); // the color that was detected from the sensor
-
-  //   //checks if the color seen matches the colors
-  //   String colorString, requiredColorActual; 
-  //   ColorMatchResult match = m_colorMatcher.matchClosestColor(detectedColor);
-  //   if (match.color == kBlueTarget) {
-  //     colorString = "Blue";
-  //   } else if (match.color == kRedTarget) {
-  //     colorString = "Red";
-  //   } else if (match.color == kGreenTarget) {
-  //     colorString = "Green";
-  //   } else if (match.color == kYellowTarget) {
-  //     colorString = "Yellow";
-  //   } else {
-  //     colorString = "Unknown";
-  //   }
-
-  //   SmartDashboard.putNumber("Red", detectedColor.red); //results pasted into shuffleboard & smart dash
-  //   SmartDashboard.putNumber("Green", detectedColor.green);
-  //   SmartDashboard.putNumber("Blue", detectedColor.blue);
-  //   SmartDashboard.putNumber("Confidence", match.confidence);
-  //   SmartDashboard.putString("Detected Color", colorString);
-
-  //   if(isSpinningToSpecific) 
-  //   {
-  //     colorMotor.set(0.05);
-  //     if(requiredColor == "Blue") {
-  //       requiredColorActual = "Red";
-  //     } else if (requiredColor == "Yellow") {
-  //       requiredColorActual = "Green";
-  //     } else if(requiredColor == "Red") {
-  //       requiredColorActual = "Blue";
-  //     } else if(requiredColor == "Green") {
-  //       requiredColorActual = "Yellow";
-  //     } else {
-  //       requiredColorActual = "Unknown";
-  //     } //translates the color we need to the color the sensor needs to stop on
-
-  //     if(colorString == requiredColorActual) 
-  //     {
-  //       //stops checking colors after required color found
-  //       isSpinningToSpecific = false;
-  //       isCheckingColor = false;
-  //       colorMotor.set(0);
-  //     }
-  //   } else if (isSpinningMult) 
-  //   {
-  //     colorMotor.set(0.05);
-  //     //spins around the disk a total of 3.5 to 4 spins
-  //     if(colorString == "Yellow" && !hasSeenColor) 
-  //     {
-  //       hasSeenColor = true;
-  //       totalSpins++;
-  //     } else {
-  //       hasSeenColor = false;
-  //     }
-      
-  //     if(totalSpins >= 7) {
-  //       //stops checking colors after spins
-  //       isSpinningMult = false;
-  //       isCheckingColor = false;
-  //       totalSpins = 0;
-  //       colorMotor.set(0);
-  //     }
-  //   }
-  // }
-
   public void getDistances() 
   {
     ultrasonicLDistance = m_ultrasonicL.getValue() * kValueToInches;
@@ -349,6 +279,80 @@ public class Robot extends TimedRobot
     System.out.println("Distance Left: " + ultrasonicLDistance);
     System.out.println("Distance Middle: " + ultrasonicMDistance);
     System.out.println("Distance Right: " + ultrasonicRDistance);
+   }
+
+  public void colorCheck() 
+  {
+    Color detectedColor = m_colorSensor.getColor(); // the color that was detected from the sensor
+
+    //checks if the color seen matches the colors
+    String colorString, requiredColorActual; 
+    ColorMatchResult match = m_colorMatcher.matchClosestColor(detectedColor);
+    if (match.color == kBlueTarget) {
+      colorString = "Blue";
+      System.out.println("Blue");
+    } else if (match.color == kRedTarget) {
+      colorString = "Red";
+      System.out.println("Red");
+    } else if (match.color == kGreenTarget) {
+      colorString = "Green";
+      System.out.println("Green");
+    } else if (match.color == kYellowTarget) {
+      colorString = "Yellow";
+      System.out.println("Yellow");
+    } else {
+      colorString = "Unknown";
+      System.out.println("Unknown");
+    }
+
+    SmartDashboard.putNumber("Red", detectedColor.red); //results pasted into shuffleboard & smart dash
+    SmartDashboard.putNumber("Green", detectedColor.green);
+    SmartDashboard.putNumber("Blue", detectedColor.blue);
+    SmartDashboard.putNumber("Confidence", match.confidence);
+    SmartDashboard.putString("Detected Color", colorString);
+
+    if(isSpinningToSpecific) 
+    {
+      colorMotor.set(0.05);
+      if(requiredColor == "Blue") {
+        requiredColorActual = "Red";
+      } else if (requiredColor == "Yellow") {
+        requiredColorActual = "Green";
+      } else if(requiredColor == "Red") {
+        requiredColorActual = "Blue";
+      } else if(requiredColor == "Green") {
+        requiredColorActual = "Yellow";
+      } else {
+        requiredColorActual = "Unknown";
+      } //translates the color we need to the color the sensor needs to stop on
+
+      if(colorString == requiredColorActual) 
+      {
+        //stops checking colors after required color found
+        isSpinningToSpecific = false;
+        isCheckingColor = false;
+        // colorMotor.set(0);
+      }
+    } else if (isSpinningMult) 
+    {
+      colorMotor.set(0.05);
+      //spins around the disk a total of 3.5 to 4 spins
+      if(colorString == "Yellow" && !hasSeenColor) 
+      {
+        hasSeenColor = true;
+        totalSpins++;
+      } else {
+        hasSeenColor = false;
+      }
+      
+      if(totalSpins >= 7) {
+        //stops checking colors after spins
+        isSpinningMult = false;
+        isCheckingColor = false;
+        totalSpins = 0;
+        // colorMotor.set(0);
+      }
+    }
   }
   /**
    * This autonomous (along with the chooser code above) shows how to select
@@ -561,11 +565,17 @@ public void autoGoAround()
   @Override
   public void teleopPeriodic() 
   {
-    double driveSpeed = controllerdriver.getY(GenericHID.Hand.kLeft);
-    double driveDirection = controllerdriver.getX(GenericHID.Hand.kRight);
+    double driveSpeed = -controllerdriver.getY(GenericHID.Hand.kLeft);
+    double driveDirection = -controllerdriver.getX(GenericHID.Hand.kRight);
+
+    if (Math.abs(driveSpeed) < 0.1) 
+      driveSpeed = 0;
+    
+    if (Math.abs(driveDirection) < 0.1) 
+      driveDirection = 0;
+
     //int pov = controllerdriver.getPOV(0);
 
-    drive.arcadeDrive(driveSpeed, driveDirection, true);
     System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
     // setDriveWheels(driveSpeed - direction, driveSpeed + direction);
     // System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
@@ -580,7 +590,8 @@ public void autoGoAround()
       }
     }
 
-    drive.arcadeDrive(driveSpeed, driveDirection);
+    //drive.arcadeDrive(driveSpeed, driveDirection);
+    setDriveWheels(driveSpeed - driveDirection, driveSpeed + driveDirection);
 
     if(controllerdriver.getAButtonPressed()){
       align = !align;
@@ -593,7 +604,7 @@ public void autoGoAround()
     }
     if(align){
       double autoDirection = directionToTarget();
-      setDriveWheels(-autoDirection, autoDirection);
+      setDriveWheels(autoDirection, -autoDirection);
     }
     if(approach){
       approach();
@@ -603,10 +614,11 @@ public void autoGoAround()
     }
 
     double lidarDist = lidar.getDistanceIn();
-    System.out.println("Cool lidar stuff: " + lidarDist);
+    //System.out.println("Cool lidar stuff: " + lidarDist);
 
     if(controllerdriver.getBButtonPressed()){
       // playMusic();
+
       System.out.println("I'm playing music!");
     }
   }
@@ -622,7 +634,7 @@ public void autoGoAround()
        double driveDirection = controllerdriver.getX(GenericHID.Hand.kRight);
        double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
 
-      drive.arcadeDrive(driveSpeed, driveDirection, true);  
+      setDriveWheels(driveSpeed - driveDirection, driveSpeed + driveDirection);
 
       if(currentSpeedAvg > topSpeed){
         topSpeed = currentSpeedAvg;
