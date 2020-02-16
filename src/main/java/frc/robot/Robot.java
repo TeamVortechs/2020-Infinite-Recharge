@@ -173,7 +173,7 @@ public class Robot extends TimedRobot
     lidar = new pulsedLightLIDAR(lidarPort);
     lidar.getDistance();
 
-    align = true;
+    align = false;
     approach = false;
     shoot = false;
 
@@ -425,6 +425,78 @@ public class Robot extends TimedRobot
     leftEncoder.reset();
   }
 
+  public void autonomousPos1() 
+  {
+    switch (state) {
+      case 1:
+        approach();
+        break;
+      case 2:
+        shoot();
+        break;
+      case 3:
+        drive(0.5, 0.5, false);
+        if (leftEncoder.getDistance() >= 10) {
+          state++;
+          leftEncoder.reset();
+          rightEncoder.reset();
+        }
+        break;
+    }
+  }
+
+  public void autonomousPos2() 
+  {
+    switch (state) {
+      case 1:
+        drive(-0.5, -0.5, false);
+        if (leftEncoder.getDistance() <= -36) {
+          state++;
+          leftEncoder.reset();
+          rightEncoder.reset();
+        }
+        break;
+      case 2:
+      drive(0.5, -0.5, false);
+        if (leftEncoder.getDistance() >= 90) {
+          state++;
+          leftEncoder.reset();
+          rightEncoder.reset();
+        }
+        break;
+      case 3:
+        drive(0.5, 0.5, false);
+        if (leftEncoder.getDistance() >= 40) {
+          state++;
+          leftEncoder.reset();
+          rightEncoder.reset();
+        }
+        break;
+      case 4:
+        drive(-0.5, 0.5, false);
+        if (leftEncoder.getDistance() <= -90) {
+          state++;
+          leftEncoder.reset();
+          rightEncoder.reset();
+        }
+        break;
+      case 5:
+        approach();
+        break;
+      case 6:
+        shoot();
+        break;
+      case 7:
+        drive(0.5, 0.5, false);
+        if (leftEncoder.getDistance() >= 10) {
+          state++;
+          leftEncoder.reset();
+          rightEncoder.reset();
+        }
+        break;
+    }
+  }
+
   public void turn90()
   {
     System.out.println(navx.getAngle());
@@ -432,7 +504,7 @@ public class Robot extends TimedRobot
     if (navx.getAngle() < 75)         //Until 75 degrees, the robot turns at half power 
       drive(0.5, -0.5, false);
     else if (navx.getAngle() < 90)    // For the last 15 degrees, the robot turns at third power
-      drive(0.3, 0.3, false);
+      drive(0.3, -0.3, false);
     else
       drive(0, 0, false);
   }
