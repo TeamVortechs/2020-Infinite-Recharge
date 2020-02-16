@@ -424,18 +424,18 @@ public class Robot extends TimedRobot
     rightEncoder.reset();
     leftEncoder.reset();
   }
-
+  //used if no positioning required (variables can change if you want)
   public void autonomousPos1() 
   {
     switch (state) {
       case 1:
-        approach();
+        approach();//sweetspot
         break;
       case 2:
-        shoot();
+        shoot();//shoot
         break;
       case 3:
-        drive(0.5, 0.5, false);
+        drive(0.5, 0.5, false);//get outa there
         if (leftEncoder.getDistance() >= 10) {
           state++;
           leftEncoder.reset();
@@ -444,13 +444,13 @@ public class Robot extends TimedRobot
         break;
     }
   }
-
+  //used if positioning required (variables can change if you want)
   public void autonomousPos2() 
   {
     switch (state) {
       case 1:
         drive(-0.5, -0.5, false);
-        if (leftEncoder.getDistance() <= -36) {
+        if (leftEncoder.getDistance() <= -36) {//sweet spot y
           state++;
           leftEncoder.reset();
           rightEncoder.reset();
@@ -458,7 +458,7 @@ public class Robot extends TimedRobot
         break;
       case 2:
       drive(0.5, -0.5, false);
-        if (leftEncoder.getDistance() >= 90) {
+        if (leftEncoder.getDistance() >= 90) {//turn 90
           state++;
           leftEncoder.reset();
           rightEncoder.reset();
@@ -466,7 +466,7 @@ public class Robot extends TimedRobot
         break;
       case 3:
         drive(0.5, 0.5, false);
-        if (leftEncoder.getDistance() >= 40) {
+        if (leftEncoder.getDistance() >= 40) {//sweet spot x
           state++;
           leftEncoder.reset();
           rightEncoder.reset();
@@ -474,7 +474,7 @@ public class Robot extends TimedRobot
         break;
       case 4:
         drive(-0.5, 0.5, false);
-        if (leftEncoder.getDistance() <= -90) {
+        if (leftEncoder.getDistance() <= -90) {//turn -90
           state++;
           leftEncoder.reset();
           rightEncoder.reset();
@@ -487,8 +487,8 @@ public class Robot extends TimedRobot
         shoot();
         break;
       case 7:
-        drive(0.5, 0.5, false);
-        if (leftEncoder.getDistance() >= 10) {
+        drive(-0.5, -0.5, false);
+        if (leftEncoder.getDistance() <= -10) {//get out
           state++;
           leftEncoder.reset();
           rightEncoder.reset();
