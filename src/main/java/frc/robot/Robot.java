@@ -86,7 +86,7 @@ public class Robot extends TimedRobot
   
   private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5;
 
-  private boolean getTopSpeed = true, trac = true;
+  private boolean getTopSpeed = true, trac = true, intakeToggle, forward6, back6, left30, right30;
   final boolean driveWheelsAreTalonsAndNotSparks = false; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
@@ -140,6 +140,42 @@ public class Robot extends TimedRobot
     controllerdriver = new XboxController(0);
     controlleroperator = new XboxController(1);
 
+    // BUTTON LAYOUT FOR CONTROLLERS:
+    //
+    // Driver:
+    //   A: Intake Toggle ::: TO-DO
+    //   B: N/A
+    //   X: tracON/tracOFF
+    //   Y: N/A
+    //   Left Joystick X-Axis: N/A
+    //   Left Joystick Y-Axis: Forward and Backward Desired Speeds
+    //   Right Joystick X-Axis: Direction
+    //   Right Joystick Y-Axis: N/A
+    //   D-Pad Up: Move forward 6 inches ::: TO-DO
+    //   D-Pad Down: Move backward 6 inches ::: TO-DO
+    //   D-Pad Left: Rotate -30 degrees ::: TO-DO
+    //   D-Pad Right: Rotate +30 degrees ::: TO-DO
+    //   Right Trigger: N/A
+    //   Left Trigger: Limelight align and LIDAR approach ::: TO-DO
+    //   Start Button: Break from any loop
+    
+    // Operator:
+    //   A: Start Color Wheel Turning (Toggle) ::: TO-DO
+    //   B: N/A
+    //   X: N/A
+    //   Y: N/A
+    //   Left Joystick X-Axis: N/A
+    //   Left Joystick Y-Axis: Left Winch Up/Down ::: TO-DO
+    //   Right Joystick X-Axis: N/A
+    //   Right Joystick Y-Axis: Right Winch Up/Down ::: TO-DO
+    //   D-Pad Up: Elevator Up Toggle ::: TO-DO also wait for last 30 to be able to use
+    //   D-Pad Down: Elevator Down Toggle ::: TO-DO
+    //   D-Pad Left: Color Wheel Left One (1) Color ::: TO-DO
+    //   D-Pad Right: Color Wheel Right One (1) Color ::: TO-DO
+    //   Right Trigger: Shoot (Until Released) ::: TO-DO
+    //   Left Trigger: N/A
+
+
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
       backRightT = new PWMTalonSRX(0);
@@ -160,8 +196,6 @@ public class Robot extends TimedRobot
       backRight.set(0);
       frontRight.set(0);
     }
-
-    //drive = new DifferentialDrive(leftMotors, rightMotors);
 
     leftEncoder = new Encoder(5, 6, true, Encoder.EncodingType.k2X);
     rightEncoder = new Encoder(3, 4, false, Encoder.EncodingType.k2X);
@@ -192,7 +226,6 @@ public class Robot extends TimedRobot
 
     //Timer
     timer = new Timer();
-    // gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
 
     ultrasonicLPort = 0;
     ultrasonicMPort = 1;
@@ -289,7 +322,7 @@ public class Robot extends TimedRobot
     // Do later bc no sensor :(
   }
 
-  public void shoot()
+  public void shoot(double shootSpeed)
   {
 
   }
@@ -609,53 +642,72 @@ public void autoGoAround()
   @Override
   public void teleopPeriodic() 
   {
-    double joystickY = -controllerdriver.getY(GenericHID.Hand.kLeft);
-    double joystickX = -controllerdriver.getX(GenericHID.Hand.kRight);
 
-    if(controllerdriver.getYButtonPressed()){
-      trac = !trac;
-    }
+    //
+    // DRIVER CONTROLLER CODE
+    //
 
-    if (Math.abs(joystickY) < 0.1) 
-      joystickY = 0;
+    double driverJoystickY = -controllerdriver.getY(GenericHID.Hand.kLeft);
+    double driverJoystickX = -controllerdriver.getX(GenericHID.Hand.kRight);
+    if (Math.abs(driverJoystickY) < 0.1) // Zero joysticks
+      driverJoystickY = 0;
     
-    if (Math.abs(joystickX) < 0.1) 
-      joystickX = 0;
+    if (Math.abs(driverJoystickX) < 0.1) 
+      driverJoystickX = 0;
 
-    drive(joystickY, joystickX, trac);
+    // Toggle Swtiches for Driver
+    if(controllerdriver.getXButtonPressed())
+      trac = !trac;
+    if(controllerdriver.getAButtonPressed())
+      intakeToggle = !intakeToggle;
+    if(controllerdriver.getPOV() == 0)
+      forward6 = !forward6;
+    if(controllerdriver.getPOV() == 90)
+      right30 = !right30;
+    if(controllerdriver.getPOV() == 180)
+      back6 = !back6;
+    if(controllerdriver.getPOV() == 270)
+      left30 = !left30;
 
-    if(controllerdriver.getAButtonPressed()){
-      align = !align;
-    }
-    if(controllerdriver.getXButtonPressed()){
-      approach = !approach;
-    }
-    // if(controllerdriver.getYButtonPressed()){
-    //   shoot = !shoot;
-    // }
+    // Intense trigger algorithms
+    if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) > 50) // Complicated algorithm to decide if the left trigger is being held
+      align = true;
+    else if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) < 50)
+      align = false;
+    
     if(align){
       double autoDirection = directionToTarget();
-      drive(0, -autoDirection, trac);
-    }
-    if(approach){
-      approach();
+      if(autoDirection != 0){
+        drive(0, -autoDirection, trac);
+      }else{
+        approach(); // Approaches upon a successful alignment
+      }
     }
     if(shoot){
-      shoot();
+      shoot(0);
     }
 
-    // For testing lidar distance
+    drive(driverJoystickY, driverJoystickX, trac); // Actually calls the driving
 
-    // double lidarDist = lidar.getDistance();
-    // System.out.println("Cool lidar distance: " + lidarDist);
+    //
+    // OPERATOR CONTROLLER
+    //
+
+    double driverJoystickYLeft = -controllerdriver.getY(GenericHID.Hand.kLeft);
+    double driverJoystickYRight = -controllerdriver.getY(GenericHID.Hand.kRight);
+
+    // YOU WOULD SET THESE JOYSTICK VALUES TO THE WINCH MOTOR(S) IF YOU KNEW ANYTHING ABOUT THEM BUT :(
+
+    if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) > 50) // Complicated algorithm to decide if the right trigger is being held
+      shoot = true;
+    else if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) < 50)
+      shoot = false;
 
     // if(controllerdriver.getBButtonPressed()){
     //   playMusic();
 
     //   System.out.println("I'm playing music!");
     // }
-
-    getDistances(); // Proximity Sensors
   }
 
   /**
@@ -664,12 +716,16 @@ public void autoGoAround()
   @Override
   public void testPeriodic() 
   {
+    // For testing lidar distance
+
+    // double lidarDist = lidar.getDistance();
+    // System.out.println("Cool lidar distance: " + lidarDist);
     if(getTopSpeed){
-       double joystickY = controllerdriver.getY(GenericHID.Hand.kLeft);
-       double joystickX = controllerdriver.getX(GenericHID.Hand.kRight);
+       double driverJoystickY = controllerdriver.getY(GenericHID.Hand.kLeft);
+       double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
        double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
 
-      drive(joystickY, joystickX, false);
+      drive(driverJoystickY, driverJoystickX, false);
 
       if(currentSpeedAvg > topSpeed){
         topSpeed = currentSpeedAvg;
