@@ -269,6 +269,8 @@ public class Robot extends TimedRobot
       backRightT.set(rightSpeedFinal);
       frontRightT.set(rightSpeedFinal);
     }else{
+      // backLeft.set(-leftSpeedFinal * 0.7);
+      // frontLeft.set(-leftSpeedFinal * 0.7);
       backLeft.set(-leftSpeedFinal);
       frontLeft.set(-leftSpeedFinal);
       backRight.set(rightSpeedFinal);
@@ -669,19 +671,29 @@ public void autoGoAround()
     if(controllerdriver.getPOV() == 270)
       left30 = !left30;
 
+
+    System.out.println(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft));
     // Intense trigger algorithms
-    if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) > 50) // Complicated algorithm to decide if the left trigger is being held
+    if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5) // Complicated algorithm to decide if the left trigger is being held
       align = true;
-    else if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) < 50)
+    else if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) < 0.5)
       align = false;
     
-    if(align){
+    while(align){
       double autoDirection = directionToTarget();
+      System.out.println("returned direction: " + autoDirection);
       if(autoDirection != 0){
-        drive(0, -autoDirection, trac);
-      }else{
-        approach(); // Approaches upon a successful alignment
+        System.out.println("driving");
+        drive(0, -autoDirection, false);
+      if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) < 0.5)
+        align = false;
+      if(controllerdriver.getStartButtonPressed())
+        break;
       }
+      // else{
+      //   System.out.println("it did it");
+      //   //approach(); // Approaches upon a successful alignment
+      // }
     }
     if(shoot){
       shoot(0);
