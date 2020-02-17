@@ -54,7 +54,7 @@ public class Robot extends TimedRobot
 
   private static final double shootDistance = 30.0;
   private static final double shootSpeed = 0.5;
-  private double lidarDist;
+  private double lidarDist, area, offsetAngle;
 
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
@@ -65,6 +65,7 @@ public class Robot extends TimedRobot
   private Spark backRight, frontRight, backLeft, frontLeft, intake, belt1, belt2, belt3, belt4, loader, colorMotor;
   private Encoder leftEncoder, rightEncoder;
   private NetworkTable table;
+  private NetworkTableEntry ta;
   private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT;
   private Timer timer;
   private int state;
@@ -314,6 +315,9 @@ public class Robot extends TimedRobot
 
   public void getDistances() 
   {
+    lidarDist = lidar.getDistance();
+    ta = table.getEntry("ta");
+    area = ta.getDouble(0.0);
     ultrasonicLDistance = m_ultrasonicL.getValue() * kValueToInches;
     ultrasonicMDistance = m_ultrasonicM.getValue() * kValueToInches;
     ultrasonicRDistance = m_ultrasonicR.getValue() * kValueToInches;
@@ -435,12 +439,36 @@ public class Robot extends TimedRobot
         shoot();//shoot
         break;
       case 3:
-        drive(0.5, 0.5, false);//get outa there
+        drive(0.5, -0.5, false);//turn toward wall
+        if (leftEncoder.getDistance() >= 90) {
+          state++;
+          leftEncoder.reset();
+          rightEncoder.reset();
+        }
+        break;
+      case 4:
+        drive(0.5, 0.5, false);//drive toward wall
         if (leftEncoder.getDistance() >= 10) {
           state++;
           leftEncoder.reset();
           rightEncoder.reset();
         }
+      case 5:
+        drive(0.5, -0.5, false);//turn toward other balls
+        if (leftEncoder.getDistance() >= 90) {
+          state++;
+          leftEncoder.reset();
+          rightEncoder.reset();
+        }
+      case 6:
+        drive(0.5, 0.5, false);//get outa there toward balls
+        if (leftEncoder.getDistance() >= 30 || lidarDist <= 100) {
+          state++;
+          leftEncoder.reset();
+          rightEncoder.reset();
+        }
+      case 7:
+        drive(0, 0, false);//stop
         break;
     }
   }
@@ -450,7 +478,7 @@ public class Robot extends TimedRobot
     switch (state) {
       case 1:
         drive(-0.5, -0.5, false);
-        if (leftEncoder.getDistance() <= -36) {//sweet spot y
+        if (leftEncoder.getDistance() <= -20) {//sweet spot y
           state++;
           leftEncoder.reset();
           rightEncoder.reset();
@@ -466,7 +494,7 @@ public class Robot extends TimedRobot
         break;
       case 3:
         drive(0.5, 0.5, false);
-        if (leftEncoder.getDistance() >= 40) {//sweet spot x
+        if (leftEncoder.getDistance() >= 40 || lidarDist <= 100) {//sweet spot x
           state++;
           leftEncoder.reset();
           rightEncoder.reset();
@@ -474,8 +502,9 @@ public class Robot extends TimedRobot
         break;
       case 4:
         drive(-0.5, 0.5, false);
-        if (leftEncoder.getDistance() <= -90) {//turn -90
+        if (leftEncoder.getDistance() <= -90 || (directionToTarget() == 0.0 && area != 0.0)) {//turn -90 or until seen the target
           state++;
+          offsetAngle = leftEncoder.getDistance();
           leftEncoder.reset();
           rightEncoder.reset();
         }
@@ -487,12 +516,37 @@ public class Robot extends TimedRobot
         shoot();
         break;
       case 7:
-        drive(-0.5, -0.5, false);
-        if (leftEncoder.getDistance() <= -10) {//get out
+        drive(0.5, -0.5, false);
+        if (leftEncoder.getDistance() >= offsetAngle) {//return to angle
           state++;
           leftEncoder.reset();
           rightEncoder.reset();
         }
+        break;
+      case 8:
+        drive(0.5, 0.5, false);
+        if (leftEncoder.getDistance() >= 10) {//drive to wall
+          state++;
+          leftEncoder.reset();
+          rightEncoder.reset();
+        }
+        break;
+      case 9:
+        drive(0.5, -0.5, false);
+        if (leftEncoder.getDistance() >= 90) {//turn toward balls
+          state++;
+          leftEncoder.reset();
+          rightEncoder.reset();
+        }
+      case 10:
+        drive(0.5, 0.5, false);
+        if (leftEncoder.getDistance() >= 30 || lidarDist <= 100) {//drive toward balls
+          state++;
+          leftEncoder.reset();
+          rightEncoder.reset();
+        }
+      case 11:
+        drive(0, 0, false);//stop
         break;
     }
   }
