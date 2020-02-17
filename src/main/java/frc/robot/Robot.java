@@ -471,7 +471,7 @@ public class Robot extends TimedRobot
         approach();//sweetspot
         break;
       case 2:
-        shoot();//shoot
+        shoot(0);//shoot
         break;
       case 3:
         drive(0.5, -0.5, false);//turn toward wall
@@ -548,7 +548,7 @@ public class Robot extends TimedRobot
         approach();
         break;
       case 6:
-        shoot();
+        shoot(0);
         break;
       case 7:
         drive(0.5, -0.5, false);
