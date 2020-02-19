@@ -245,7 +245,8 @@ public class Robot extends TimedRobot
     // m_colorMatcher.addColorMatch(kGreenTarget);
     // m_colorMatcher.addColorMatch(kRedTarget);
     // m_colorMatcher.addColorMatch(kYellowTarget);
-    // colorMotor = new Spark(4); //defining motor with spark
+     colorMotor = new Spark(10); 
+    //defining motor with spark
 
     /* Initialize the TalonFX's to be used */
   }
@@ -408,7 +409,7 @@ public class Robot extends TimedRobot
         //stops checking colors after required color found
         isSpinningToSpecific = false;
         isCheckingColor = false;
-        // colorMotor.set(0);
+        colorMotor.set(0);
       }
     } else if (isSpinningMult) 
     {
@@ -427,7 +428,7 @@ public class Robot extends TimedRobot
         isSpinningMult = false;
         isCheckingColor = false;
         totalSpins = 0;
-        // colorMotor.set(0);
+        colorMotor.set(0);
       }
     }
   }
