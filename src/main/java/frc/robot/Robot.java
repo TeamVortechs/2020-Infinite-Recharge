@@ -62,7 +62,7 @@ public class Robot extends TimedRobot
   private AHRS navx;
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
-  private Spark backRight, frontRight, backLeft, frontLeft, intake, belt1, belt2, belt3, belt4, loader, colorMotor;
+  private Spark backRight, frontRight, backLeft, frontLeft, intake, belt, shooter, colorMotor;
   private Encoder leftEncoder, rightEncoder;
   private NetworkTable table;
   private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT;
@@ -84,7 +84,7 @@ public class Robot extends TimedRobot
   private AnalogInput m_ultrasonicL, m_ultrasonicM, m_ultrasonicR;
   private static final double kValueToInches = 0.125;
   
-  private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5;
+  private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
 
   private boolean getTopSpeed = true, trac = true, intakeToggle, forward6, back6, left30, right30;
   final boolean driveWheelsAreTalonsAndNotSparks = false; // If you change this to false it will try to run the wheels off something
@@ -214,12 +214,11 @@ public class Robot extends TimedRobot
     // Intake motors
     intake = new Spark(4);
 
-    // Belt motors in the magazine
-    //  belt1 = new Spark(5);
-    //  belt2 = new Spark(6);
-    //  belt3 = new Spark(7);
-    //  belt4 = new Spark(8);
-    //  loader = new Spark(9);
+    // Belt motor
+    belt = new Spark(5);
+
+    // Shooter motor
+    shooter = new Spark(6); 
 
     // Arm motor
     // arm = new PWMTalonSRX(0);
@@ -304,17 +303,17 @@ public class Robot extends TimedRobot
   {
     NetworkTableEntry tx = table.getEntry("tx");
     double x = tx.getDouble(0.0);
-    if(x > -1 && x < 1){ // Dead Zone
+    if(x > -3 && x < 3){              // Dead Zone
       return 0.0;
-    }else if(x > -15 && x < -1){ // Move from left to center
+    }else if(x > -15 && x < -3){      // Move from left to center
       return -0.5;
     }else if(x < -15){
       return -0.8;
-    }else if(x > 1 && x < 15){ // Move from right to center
+    }else if(x > 3 && x < 15){        // Move from right to center
       return 0.5;
     }else if(x > 15){
       return 0.8;
-    }else{ // If it finds nothing it won't change direction
+    }else{                            // If it finds nothing it won't change direction
       return 0.0;
     }
   }
@@ -324,9 +323,10 @@ public class Robot extends TimedRobot
     // Do later bc no sensor :(
   }
 
-  public void shoot(double shootSpeed)
+  public void shoot()
   {
-
+    double lidarDist = lidar.getDistance();
+    shooter.set(shooterSpeed);
   }
   
   /**
@@ -695,9 +695,6 @@ public void autoGoAround()
       //   //approach(); // Approaches upon a successful alignment
       // }
     }
-    if(shoot){
-      shoot(0);
-    }
 
     drive(driverJoystickY, driverJoystickX, trac); // Actually calls the driving
 
@@ -705,8 +702,8 @@ public void autoGoAround()
     // OPERATOR CONTROLLER
     //
 
-    double driverJoystickYLeft = -controllerdriver.getY(GenericHID.Hand.kLeft);
-    double driverJoystickYRight = -controllerdriver.getY(GenericHID.Hand.kRight);
+    double operatorJoystickYLeft = -controllerdriver.getY(GenericHID.Hand.kLeft);
+    double operatorJoystickYRight = -controllerdriver.getY(GenericHID.Hand.kRight);
 
     // YOU WOULD SET THESE JOYSTICK VALUES TO THE WINCH MOTOR(S) IF YOU KNEW ANYTHING ABOUT THEM BUT :(
 
@@ -714,6 +711,24 @@ public void autoGoAround()
       shoot = true;
     else if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) < 50)
       shoot = false;
+
+    // if(shoot){
+    //   shoot(0);
+    // }
+
+    double intakeSpeed = 0.3;
+
+    intake.set(intakeSpeed);
+
+    belt.set(operatorJoystickYRight * 0.75);
+    if(controlleroperator.getPOV() == 0){
+      shooterSpeed += 0.1;
+    }else if(controlleroperator.getPOV() == 180){
+      shooterSpeed -= 0.1;
+    }
+    shooter.set(shooterSpeed);
+
+    System.out.println("Belt Speed: " + operatorJoystickYRight + " and Shooter Speed: " + shooterSpeed + " and Intake Speed " + intakeSpeed);
 
     // if(controllerdriver.getBButtonPressed()){
     //   playMusic();
