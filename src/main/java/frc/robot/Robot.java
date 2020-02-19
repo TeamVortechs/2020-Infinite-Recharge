@@ -87,7 +87,7 @@ public class Robot extends TimedRobot
   
   private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
 
-  private boolean getTopSpeed = true, trac = true, intakeToggle, forward6, back6, left30, right30, intakeOnOff = false;
+  private boolean trac = true, intakeToggle, forward6, back6, left30, right30, intakeOnOff = false;
   final boolean driveWheelsAreTalonsAndNotSparks = false; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
@@ -317,6 +317,15 @@ public class Robot extends TimedRobot
     }else{                            // If it finds nothing it won't change direction
       return 0.0;
     }
+  }
+
+  public void align()
+  {
+    double autoDirection = directionToTarget();
+    if(autoDirection != 0)
+      drive(0, -autoDirection, false);
+    if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) < 0.5)
+      align = false;
   }
 
   public void approach()
@@ -805,19 +814,8 @@ public void autoGoAround()
     else if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) < 0.5)
       align = false;
     
-    while(align){
-      double autoDirection = directionToTarget();
-      if(autoDirection != 0){
-        drive(0, -autoDirection, false);
-      if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) < 0.5)
-        align = false;
-      if(controllerdriver.getStartButtonPressed())
-        break;
-      }
-      // else{
-      //   System.out.println("it did it");
-      //   //approach(); // Approaches upon a successful alignment
-      // }
+    if(align){
+      align();
     }
 
     drive(driverJoystickY, driverJoystickX, trac); // Actually calls the driving
@@ -878,8 +876,8 @@ public void autoGoAround()
 
     // double lidarDist = lidar.getDistance();
     // System.out.println("Cool lidar distance: " + lidarDist);
-    if(getTopSpeed){
-       double driverJoystickY = controllerdriver.getY(GenericHID.Hand.kLeft);
+    if(true){
+       double driverJoystickY = controllerdriver.getY(GenericHID.Hand.kLeft); // good luck future team members uwu :)
        double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
        double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
 
