@@ -87,7 +87,7 @@ public class Robot extends TimedRobot
   
   private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
 
-  private boolean getTopSpeed = true, trac = true, intakeToggle, forward6, back6, left30, right30;
+  private boolean getTopSpeed = true, trac = true, intakeToggle, forward6, back6, left30, right30, intakeOnOff = false;
   final boolean driveWheelsAreTalonsAndNotSparks = false; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
@@ -324,7 +324,7 @@ public class Robot extends TimedRobot
     // Do later bc no sensor :(
   }
 
-  public void shoot()
+  public void shoot(double fixthislater)
   {
     double lidarDist = lidar.getDistance();
     shooter.set(shooterSpeed);
@@ -798,7 +798,7 @@ public void autoGoAround()
       left30 = !left30;
 
 
-    System.out.println(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft));
+    // System.out.println(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft));
     // Intense trigger algorithms
     if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5) // Complicated algorithm to decide if the left trigger is being held
       align = true;
@@ -807,9 +807,7 @@ public void autoGoAround()
     
     while(align){
       double autoDirection = directionToTarget();
-      System.out.println("returned direction: " + autoDirection);
       if(autoDirection != 0){
-        System.out.println("driving");
         drive(0, -autoDirection, false);
       if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) < 0.5)
         align = false;
@@ -844,7 +842,14 @@ public void autoGoAround()
 
     double intakeSpeed = 0.3;
 
-    intake.set(intakeSpeed);
+    if(controlleroperator.getAButtonPressed()){
+      intakeOnOff = !intakeOnOff;
+    }
+    if(intakeOnOff){
+      intake.set(intakeSpeed);
+    }else{
+      intake.set(0);
+    }
 
     belt.set(operatorJoystickYRight * 0.75);
     if(controlleroperator.getPOV() == 0){
