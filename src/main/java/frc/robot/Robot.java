@@ -306,6 +306,10 @@ public class Robot extends TimedRobot
     NetworkTableEntry tx = table.getEntry("tx");
     double x = tx.getDouble(0.0);
     if(x > -3 && x < 3){              // Dead Zone
+      controllerdriver.setRumble(kLeftRumble, 1);
+      controllerdriver.setRumble(kRightRumble, 1);
+      controlleroperator.setRumble(kLeftRumble, 1);
+      controlleroperator.setRumble(kRightRumble, 1);
       return 0.0;
     }else if(x > -15 && x < -3){      // Move from left to center
       return -0.5;
@@ -325,8 +329,6 @@ public class Robot extends TimedRobot
     double autoDirection = directionToTarget();
     if(autoDirection != 0)
       drive(0, -autoDirection, false);
-    if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) < 0.5)
-      align = false;
   }
 
   public void approach()
