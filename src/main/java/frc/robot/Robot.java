@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.PWMTalonSRX;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 //import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Timer;
@@ -306,10 +307,10 @@ public class Robot extends TimedRobot
     NetworkTableEntry tx = table.getEntry("tx");
     double x = tx.getDouble(0.0);
     if(x > -3 && x < 3){              // Dead Zone
-      controllerdriver.setRumble(kLeftRumble, 1);
-      controllerdriver.setRumble(kRightRumble, 1);
-      controlleroperator.setRumble(kLeftRumble, 1);
-      controlleroperator.setRumble(kRightRumble, 1);
+      controllerdriver.setRumble(RumbleType.kLeftRumble, 1);
+      controllerdriver.setRumble(RumbleType.kRightRumble, 1);
+      controlleroperator.setRumble(RumbleType.kLeftRumble, 1);
+      controlleroperator.setRumble(RumbleType.kRightRumble, 1);
       return 0.0;
     }else if(x > -15 && x < -3){      // Move from left to center
       return -0.5;
