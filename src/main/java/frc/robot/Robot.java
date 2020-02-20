@@ -61,7 +61,7 @@ public class Robot extends TimedRobot
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private boolean align, approach, shoot;
   private AHRS navx;
-  private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
+  private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5;
   private XboxController controllerdriver, controlleroperator;
   private Spark backRight, frontRight, backLeft, frontLeft, intake, belt, shooter, colorMotor;
   private Encoder leftEncoder, rightEncoder;
@@ -127,16 +127,12 @@ public class Robot extends TimedRobot
     navx = new AHRS(I2C.Port.kMXP);
 
     // Magazine sensors
-    // ballbeam1 = new AnalogInput(0);
-    // ballbeam2 = new AnalogInput(1);
-    // ballbeam3 = new AnalogInput(2);
-    // ballbeam4 = new AnalogInput(3);
-    // ballbeam5 = new AnalogInput(4);
-    // ballbeam6 = new AnalogInput(5);
-    // ballbeam7 = new AnalogInput(6);
-    // ballbeam8 = new AnalogInput(7);
-    // ballbeam9 = new AnalogInput(8);
-    // ballbeam10 = new AnalogInput(9);
+    ballbeam1 = new DigitalInput(1);
+    ballbeam2 = new DigitalInput(2);
+    ballbeam3 = new DigitalInput(3);
+    ballbeam4 = new DigitalInput(4);
+    ballbeam5 = new DigitalInput(5);
+  
 
     // Xbox Controllers
     controllerdriver = new XboxController(0);
@@ -359,6 +355,24 @@ public class Robot extends TimedRobot
     // {
     //   colorCheck();
     // }
+  }
+
+  public void checkBallBeams() {
+    if (ballbeam1.get() == "high") {
+      System.out.println ("Ball 1 found");
+    }
+    if (ballbeam2.get() == "high") {
+      System.out.println ("Ball 2 found");
+    }
+    if (ballbeam3.get() == "high") {
+      System.out.println ("Ball 3 found");
+    }
+    if (ballbeam4.get() == "high") {
+      System.out.println ("Ball 4 found");
+    }
+    if (ballbeam5.get() == "high") {
+      System.out.println ("Ball 5 found");
+    }
   }
 
   public void getDistances() 
@@ -784,6 +798,7 @@ public void autoGoAround()
   public void teleopPeriodic() 
   {
 
+    checkBallBeams();
     //
     // DRIVER CONTROLLER CODE
     //
