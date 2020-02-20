@@ -478,7 +478,7 @@ public class Robot extends TimedRobot
   {
     switch (state) {
       case 1:
-        approach();//sweetspot
+        align = true;//sweetspot
         break;
       case 2:
         shoot(0);//shoot
@@ -555,7 +555,7 @@ public class Robot extends TimedRobot
         }
         break;
       case 5:
-        approach();
+        align = true;
         break;
       case 6:
         shoot(0);
@@ -749,29 +749,32 @@ public void autoGoAround()
   @Override
   public void autonomousPeriodic() 
   {
-    switch (m_autoSelected) {
-      case autoTurn90:
-        turn90();
-        break;
-
-      case autoOutAndBack:
-        outAndBack();
-        break;
-        
-      case autoBackAndAround:
-        backAndAround();
-        break;
-
-      case autoGo4Feet:
-      default:
-        go4Feet();
-        break;
-
-      case autoGoAround:
-        autoGoAround();
-        break;
-        
+    if(align){
+      align();
     }
+    // switch (m_autoSelected) {
+    //   case autoTurn90:
+    //     turn90();
+    //     break;
+
+    //   case autoOutAndBack:
+    //     outAndBack();
+    //     break;
+        
+    //   case autoBackAndAround:
+    //     backAndAround();
+    //     break;
+
+    //   case autoGo4Feet:
+    //   default:
+    //     go4Feet();
+    //     break;
+
+    //   case autoGoAround:
+    //     autoGoAround();
+    //     break;
+        
+    // }
 
   }
   /**
