@@ -63,11 +63,11 @@ public class Robot extends TimedRobot
   private AHRS navx;
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
-  private Spark backRight, frontRight, backLeft, frontLeft, intake, belt, shooter, colorMotor;
+  private Spark backRightS, frontRightS, backLeftS, frontLeftS, intake, belt, shooter, colorMotor;
   private Encoder leftEncoder, rightEncoder;
   private NetworkTable table;
   private NetworkTableEntry ta;
-  private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT;
+  private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT, backRight, frontRight, backLeft, frontLeft;
   private Timer timer;
   private int state;
 
@@ -88,8 +88,8 @@ public class Robot extends TimedRobot
   
   private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
 
-  private boolean trac = true, intakeToggle, forward6, back6, left30, right30, intakeOnOff = false;
-  final boolean driveWheelsAreTalonsAndNotSparks = false; // If you change this to false it will try to run the wheels off something
+  private boolean trac = true, intakeToggle, forward6, back6, left30, right30, intakeOnOff = true;
+  final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
   private DigitalSource lidarPort = new DigitalInput(0);
@@ -180,23 +180,23 @@ public class Robot extends TimedRobot
 
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
-      backRightT = new PWMTalonSRX(0);
-      frontRightT = new PWMTalonSRX(1);
-      backLeftT = new PWMTalonSRX(2);
-      frontLeftT = new PWMTalonSRX(3);
+      backRightT = new PWMTalonSRX(1);
+      frontRightT = new PWMTalonSRX(2);
+      backLeftT = new PWMTalonSRX(3);
+      frontLeftT = new PWMTalonSRX(4);
       backLeftT.set(0);
       frontLeftT.set(0);
       backRightT.set(0);
       frontRightT.set(0);
     }else{
-      backRight = new Spark(0);
-      frontRight = new Spark(1);
-      backLeft = new Spark(2);
-      frontLeft = new Spark(3);
-      backLeft.set(0);
-      frontLeft.set(0);
-      backRight.set(0);
-      frontRight.set(0);
+      backRightS = new Spark(0);
+      frontRightS = new Spark(1);
+      backLeftS = new Spark(2);
+      frontLeftS = new Spark(3);
+      backLeftS.set(0);
+      frontLeftS.set(0);
+      backRightS.set(0);
+      frontRightS.set(0);
     }
 
     leftEncoder = new Encoder(5, 6, true, Encoder.EncodingType.k2X);
@@ -273,10 +273,10 @@ public class Robot extends TimedRobot
     }else{
       // backLeft.set(-leftSpeedFinal * 0.7);
       // frontLeft.set(-leftSpeedFinal * 0.7);
-      backLeft.set(-leftSpeedFinal);
-      frontLeft.set(-leftSpeedFinal);
-      backRight.set(rightSpeedFinal);
-      frontRight.set(rightSpeedFinal);
+      backLeftS.set(-leftSpeedFinal);
+      frontLeftS.set(-leftSpeedFinal);
+      backRightS.set(rightSpeedFinal);
+      frontRightS.set(rightSpeedFinal);
     }
   }
 
@@ -290,10 +290,10 @@ public class Robot extends TimedRobot
   //     backRightT.set(rightSpeedFinal);
   //     frontRightT.set(rightSpeedFinal);
   //   }else{
-  //     backLeft.set(-leftSpeedFinal);
-  //     frontLeft.set(-leftSpeedFinal);
-  //     backRight.set(rightSpeedFinal);
-  //     frontRight.set(rightSpeedFinal);
+  //     backLeftS.set(-leftSpeedFinal);
+  //     frontLeftS.set(-leftSpeedFinal);
+  //     backRightS.set(rightSpeedFinal);
+  //     frontRightS.set(rightSpeedFinal);
   //   }
   // }
 
@@ -306,7 +306,7 @@ public class Robot extends TimedRobot
   {
     NetworkTableEntry tx = table.getEntry("tx");
     double x = tx.getDouble(0.0);
-    if(x > -3 && x < 3){              // Dead Zone
+    if(x > -3 && x < 3){              // Dead Zonek/
       controllerdriver.setRumble(RumbleType.kLeftRumble, 1);
       controllerdriver.setRumble(RumbleType.kRightRumble, 1);
       controlleroperator.setRumble(RumbleType.kLeftRumble, 1);
@@ -901,10 +901,3 @@ public void autoGoAround()
   //  }
    
 }
-
-
-
-
-
-
-
