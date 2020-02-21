@@ -63,11 +63,11 @@ public class Robot extends TimedRobot
   private AHRS navx;
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
-  private Spark backRightS, frontRightS, backLeftS, frontLeftS, intake, belt, shooter, colorMotor;
+  private Spark backRightS, frontRightS, backLeftS, frontLeftS, intake, belt, colorMotor;
   private Encoder leftEncoder, rightEncoder;
   private NetworkTable table;
   private NetworkTableEntry ta;
-  private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT, backRight, frontRight, backLeft, frontLeft;
+  private PWMTalonSRX shooterP, shooterD, backRightT, frontRightT, backLeftT, frontLeftT;
   private Timer timer;
   private int state;
 
@@ -214,13 +214,14 @@ public class Robot extends TimedRobot
     shoot = false;
 
     // Intake motors
-    intake = new Spark(4);
+    //intake = new Spark(4);
 
     // Belt motor
     belt = new Spark(5);
 
     // Shooter motor
-    shooter = new Spark(6); 
+    shooterD = new PWMTalonSRX(6); // Driver Side
+    //shooterP = new PWMTalonSRX(5); // Passenger Side
 
     // Arm motor
     // arm = new PWMTalonSRX(0);
@@ -246,7 +247,7 @@ public class Robot extends TimedRobot
     // m_colorMatcher.addColorMatch(kGreenTarget);
     // m_colorMatcher.addColorMatch(kRedTarget);
     // m_colorMatcher.addColorMatch(kYellowTarget);
-     colorMotor = new Spark(10); 
+     // colorMotor = new Spark(10); 
     //defining motor with spark
 
     /* Initialize the TalonFX's to be used */
@@ -340,7 +341,9 @@ public class Robot extends TimedRobot
   public void shoot(double fixthislater)
   {
     double lidarDist = lidar.getDistance();
-    shooter.set(shooterSpeed);
+    shooterD.set(-shooterSpeed);
+    shooterP.set(shooterSpeed);
+
   }
   
   /**
@@ -859,7 +862,9 @@ public void autoGoAround()
     }else if(controlleroperator.getPOV() == 180){
       shooterSpeed -= 0.1;
     }
-    shooter.set(shooterSpeed);
+    shooterD.set(-shooterSpeed);
+    shooterP.set(shooterSpeed);
+
 
     System.out.println("Belt Speed: " + operatorJoystickYRight + " and Shooter Speed: " + shooterSpeed + " and Intake Speed " + intakeSpeed);
 
