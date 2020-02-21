@@ -87,7 +87,7 @@ public class Robot extends TimedRobot
   private int ultrasonicLPort, ultrasonicMPort, ultrasonicRPort;
   private double ultrasonicLDistance, ultrasonicMDistance, ultrasonicRDistance;
   private AnalogInput m_ultrasonicL, m_ultrasonicM, m_ultrasonicR;
-  private static final double kValueToInches = 0.125;
+  private static final double kValueToInches = 0.125, intakeSpeed = 0.4;
   
   private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
 
@@ -816,6 +816,11 @@ public void autoGoAround()
     if(controllerdriver.getPOV() == 270)
       left30 = !left30;
 
+    if(intakeToggle){
+      intake.set(intakeSpeed);
+    }else{
+      intake.set(0);
+    }
 
     // System.out.println(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft));
     // Intense trigger algorithms
@@ -847,17 +852,6 @@ public void autoGoAround()
     // if(shoot){
     //   shoot(0);
     // }
-
-    double intakeSpeed = 0.3;
-
-    if(controlleroperator.getAButtonPressed()){
-      intakeOnOff = !intakeOnOff;
-    }
-    if(intakeOnOff){
-      intake.set(intakeSpeed);
-    }else{
-      intake.set(0);
-    }
 
     belt.set(operatorJoystickYRight * 0.75);
     if(controlleroperator.getPOV() == 0){
