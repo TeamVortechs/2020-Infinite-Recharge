@@ -66,11 +66,11 @@ public class Robot extends TimedRobot
   private AHRS navx;
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
-  private Spark shooterP, shooterD, backRightS, frontRightS, backLeftS, frontLeftS, intake, belt, colorMotor;
+  private Spark shooterP, shooterD, backRightS, frontRightS, backLeftS, frontLeftS, intake, colorMotor;
   private Encoder leftEncoder, rightEncoder;
   private NetworkTable table;
   private NetworkTableEntry ta;
-  private TalonFX backRightT, frontRightT, backLeftT, frontLeftT;
+  private TalonFX belt, backRightT, frontRightT, backLeftT, frontLeftT;
   private Timer timer;
   private int state;
 
@@ -220,11 +220,11 @@ public class Robot extends TimedRobot
     intake = new Spark(0);
 
     // Belt motor
-    belt = new Spark(1);
+    belt = new TalonFX(6);
 
     // Shooter motor
-    shooterD = new Spark(6); // Driver Side
-    shooterP = new Spark(5); // Passenger Side
+    shooterD = new Spark(1); // Driver Side
+    shooterP = new Spark(3); // Passenger Side
 
     // Arm motor
     // arm = new PWMTalonSRX(0);
@@ -343,9 +343,9 @@ public class Robot extends TimedRobot
 
   public void shoot(double fixthislater)
   {
-    double lidarDist = lidar.getDistance();
-    shooterD.set(-shooterSpeed);
-    shooterP.set(shooterSpeed);
+    //double lidarDist = lidar.getDistance();
+    shooterD.set(fixthislater);
+    shooterP.set(fixthislater);
 
   }
   
@@ -817,7 +817,7 @@ public void autoGoAround()
       left30 = !left30;
 
     if(intakeToggle){
-      intake.set(intakeSpeed);
+      intake.set(-intakeSpeed);
     }else{
       intake.set(0);
     }
@@ -839,28 +839,31 @@ public void autoGoAround()
     // OPERATOR CONTROLLER
     //
 
-    double operatorJoystickYLeft = -controllerdriver.getY(GenericHID.Hand.kLeft);
-    double operatorJoystickYRight = -controllerdriver.getY(GenericHID.Hand.kRight);
+    double operatorJoystickYLeft = -controlleroperator.getY(GenericHID.Hand.kLeft);
+    double operatorJoystickYRight = -controlleroperator.getY(GenericHID.Hand.kRight);
 
     // YOU WOULD SET THESE JOYSTICK VALUES TO THE WINCH MOTOR(S) IF YOU KNEW ANYTHING ABOUT THEM BUT :(
 
-    if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) > 50) // Complicated algorithm to decide if the right trigger is being held
+    if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) > 0.5) // Complicated algorithm to decide if the right trigger is being held
       shoot = true;
-    else if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) < 50)
+    else if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) < 0.5)
       shoot = false;
 
-    // if(shoot){
-    //   shoot(0);
-    // }
-
-    belt.set(operatorJoystickYRight * 0.75);
+    belt.set(ControlMode.PercentOutput, operatorJoystickYRight * 0.75);
     if(controlleroperator.getPOV() == 0){
-      shooterSpeed += 0.1;
+      shooterSpeed += 0.01;
     }else if(controlleroperator.getPOV() == 180){
-      shooterSpeed -= 0.1;
+      shooterSpeed -= 0.01;
     }
-    shooterD.set(-shooterSpeed);
-    shooterP.set(shooterSpeed);
+
+    if(shoot){
+      shoot(shooterSpeed);
+    }
+    else{
+      shoot(0);
+    }
+    // shooterD.set(-shooterSpeed);
+    // shooterP.set(shooterSpeed);
 
 
     System.out.println("Belt Speed: " + operatorJoystickYRight + " and Shooter Speed: " + shooterSpeed + " and Intake Speed " + intakeSpeed);
