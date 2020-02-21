@@ -89,7 +89,7 @@ public class Robot extends TimedRobot
   private AnalogInput m_ultrasonicL, m_ultrasonicM, m_ultrasonicR;
   private static final double kValueToInches = 0.125, intakeSpeed = 0.4;
   
-  private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
+  private double topSpeed = 0, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
 
   private boolean trac = true, intakeToggle, forward6, back6, left30, right30, intakeOnOff = false;
   final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
@@ -890,10 +890,10 @@ public void autoGoAround()
        double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
        double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
 
-      drive(driverJoystickY, driverJoystickX, false);
+      drive(-driverJoystickY * 0.25, -driverJoystickX, false);
 
       if(currentSpeedAvg > topSpeed){
-        topSpeed = currentSpeedAvg;
+        topSpeed = currentSpeedAvg * 4;
       }
       System.out.println("Top Speed: " + topSpeed);
     }
