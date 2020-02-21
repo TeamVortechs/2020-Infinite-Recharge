@@ -882,7 +882,7 @@ public void autoGoAround()
     // System.out.println("Cool lidar distance: " + lidarDist);
     if(true){
        double driverJoystickY = controllerdriver.getY(GenericHID.Hand.kLeft); // good luck future team members uwu :)
-       double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
+       double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight); //                   BTW... this ^ is punishable by death
        double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
 
       drive(driverJoystickY, driverJoystickX, false);
