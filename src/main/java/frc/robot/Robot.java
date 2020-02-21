@@ -14,9 +14,12 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.SPI.Port;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
-import edu.wpi.first.wpilibj.PWMTalonSRX;
+
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.I2C;
+import edu.wpi.first.wpilibj.PWMTalonFX;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 //import edu.wpi.first.wpilibj.drive.DifferentialDrive;
@@ -63,11 +66,11 @@ public class Robot extends TimedRobot
   private AHRS navx;
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
-  private Spark backRightS, frontRightS, backLeftS, frontLeftS, intake, belt, colorMotor;
+  private Spark shooterP, shooterD, backRightS, frontRightS, backLeftS, frontLeftS, intake, belt, colorMotor;
   private Encoder leftEncoder, rightEncoder;
   private NetworkTable table;
   private NetworkTableEntry ta;
-  private PWMTalonSRX shooterP, shooterD, backRightT, frontRightT, backLeftT, frontLeftT;
+  private TalonFX backRightT, frontRightT, backLeftT, frontLeftT;
   private Timer timer;
   private int state;
 
@@ -89,7 +92,7 @@ public class Robot extends TimedRobot
   private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
 
   private boolean trac = true, intakeToggle, forward6, back6, left30, right30, intakeOnOff = false;
-  final boolean driveWheelsAreTalonsAndNotSparks = false; // If you change this to false it will try to run the wheels off something
+  final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
   private DigitalSource lidarPort = new DigitalInput(0);
@@ -180,23 +183,23 @@ public class Robot extends TimedRobot
 
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
-      backRightT = new PWMTalonSRX(0);
-      frontRightT = new PWMTalonSRX(1);
-      backLeftT = new PWMTalonSRX(2);
-      frontLeftT = new PWMTalonSRX(3);
-      backLeftT.set(0);
-      frontLeftT.set(0);
-      backRightT.set(0);
-      frontRightT.set(0);
-    }else{
-      backRightS = new Spark(0);
-      frontRightS = new Spark(1);
-      backLeftS = new Spark(2);
-      frontLeftS = new Spark(3);
-      backLeftS.set(0);
-      frontLeftS.set(0);
-      backRightS.set(0);
-      frontRightS.set(0);
+      backRightT = new TalonFX(1);
+      frontRightT = new TalonFX(2);
+      backLeftT = new TalonFX(3);
+      frontLeftT = new TalonFX(4);
+      backLeftT.set(ControlMode.PercentOutput, 0);
+      frontLeftT.set(ControlMode.PercentOutput, 0);
+      backRightT.set(ControlMode.PercentOutput, 0);
+      frontRightT.set(ControlMode.PercentOutput, 0);
+    // }else{
+    //   backRightS = new Spark(0);
+    //   frontRightS = new Spark(1);
+    //   backLeftS = new Spark(2);
+    //   frontLeftS = new Spark(3);
+    //   backLeftS.set(0);
+    //   frontLeftS.set(0);
+    //   backRightS.set(0);
+    //   frontRightS.set(0);
     }
 
     leftEncoder = new Encoder(5, 6, true, Encoder.EncodingType.k2X);
@@ -214,14 +217,14 @@ public class Robot extends TimedRobot
     shoot = false;
 
     // Intake motors
-    //intake = new Spark(4);
+    intake = new Spark(0);
 
     // Belt motor
-    belt = new Spark(5);
+    belt = new Spark(1);
 
     // Shooter motor
-    shooterD = new PWMTalonSRX(6); // Driver Side
-    //shooterP = new PWMTalonSRX(5); // Passenger Side
+    shooterD = new Spark(6); // Driver Side
+    shooterP = new Spark(5); // Passenger Side
 
     // Arm motor
     // arm = new PWMTalonSRX(0);
@@ -267,10 +270,10 @@ public class Robot extends TimedRobot
     double rightSpeedFinal = desiredSpeed + direction;
 
     if(driveWheelsAreTalonsAndNotSparks){
-      backLeftT.set(-leftSpeedFinal);
-      frontLeftT.set(-leftSpeedFinal);
-      backRightT.set(rightSpeedFinal);
-      frontRightT.set(rightSpeedFinal);
+      backLeftT.set(ControlMode.PercentOutput, -leftSpeedFinal);
+      frontLeftT.set(ControlMode.PercentOutput, -leftSpeedFinal);
+      backRightT.set(ControlMode.PercentOutput, rightSpeedFinal);
+      frontRightT.set(ControlMode.PercentOutput, rightSpeedFinal);
     }else{
       // backLeft.set(-leftSpeedFinal * 0.7);
       // frontLeft.set(-leftSpeedFinal * 0.7);
