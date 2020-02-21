@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj.PWMTalonSRX;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 //import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Timer;
@@ -88,8 +87,8 @@ public class Robot extends TimedRobot
   
   private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
 
-  private boolean trac = true, intakeToggle, forward6, back6, left30, right30, intakeOnOff = true;
-  final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
+  private boolean trac = true, intakeToggle, forward6, back6, left30, right30, intakeOnOff = false;
+  final boolean driveWheelsAreTalonsAndNotSparks = false; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
   private DigitalSource lidarPort = new DigitalInput(0);
@@ -180,23 +179,23 @@ public class Robot extends TimedRobot
 
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
-      backRightT = new PWMTalonSRX(1);
-      frontRightT = new PWMTalonSRX(2);
-      backLeftT = new PWMTalonSRX(3);
-      frontLeftT = new PWMTalonSRX(4);
+      backRightT = new PWMTalonSRX(0);
+      frontRightT = new PWMTalonSRX(1);
+      backLeftT = new PWMTalonSRX(2);
+      frontLeftT = new PWMTalonSRX(3);
       backLeftT.set(0);
       frontLeftT.set(0);
       backRightT.set(0);
       frontRightT.set(0);
     }else{
-      backRightS = new Spark(0);
-      frontRightS = new Spark(1);
-      backLeftS = new Spark(2);
-      frontLeftS = new Spark(3);
-      backLeftS.set(0);
-      frontLeftS.set(0);
-      backRightS.set(0);
-      frontRightS.set(0);
+      backRight = new Spark(0);
+      frontRight = new Spark(1);
+      backLeft = new Spark(2);
+      frontLeft = new Spark(3);
+      backLeft.set(0);
+      frontLeft.set(0);
+      backRight.set(0);
+      frontRight.set(0);
     }
 
     leftEncoder = new Encoder(5, 6, true, Encoder.EncodingType.k2X);
@@ -274,10 +273,10 @@ public class Robot extends TimedRobot
     }else{
       // backLeft.set(-leftSpeedFinal * 0.7);
       // frontLeft.set(-leftSpeedFinal * 0.7);
-      backLeftS.set(-leftSpeedFinal);
-      frontLeftS.set(-leftSpeedFinal);
-      backRightS.set(rightSpeedFinal);
-      frontRightS.set(rightSpeedFinal);
+      backLeft.set(-leftSpeedFinal);
+      frontLeft.set(-leftSpeedFinal);
+      backRight.set(rightSpeedFinal);
+      frontRight.set(rightSpeedFinal);
     }
   }
 
@@ -291,10 +290,10 @@ public class Robot extends TimedRobot
   //     backRightT.set(rightSpeedFinal);
   //     frontRightT.set(rightSpeedFinal);
   //   }else{
-  //     backLeftS.set(-leftSpeedFinal);
-  //     frontLeftS.set(-leftSpeedFinal);
-  //     backRightS.set(rightSpeedFinal);
-  //     frontRightS.set(rightSpeedFinal);
+  //     backLeft.set(-leftSpeedFinal);
+  //     frontLeft.set(-leftSpeedFinal);
+  //     backRight.set(rightSpeedFinal);
+  //     frontRight.set(rightSpeedFinal);
   //   }
   // }
 
@@ -307,11 +306,11 @@ public class Robot extends TimedRobot
   {
     NetworkTableEntry tx = table.getEntry("tx");
     double x = tx.getDouble(0.0);
-    if(x > -3 && x < 3){              // Dead Zonek/
-      controllerdriver.setRumble(RumbleType.kLeftRumble, 1);
-      controllerdriver.setRumble(RumbleType.kRightRumble, 1);
-      controlleroperator.setRumble(RumbleType.kLeftRumble, 1);
-      controlleroperator.setRumble(RumbleType.kRightRumble, 1);
+    if(x > -3 && x < 3){              // Dead Zone
+      controllerdriver.setRumble(kLeftRumble, 1);
+      controllerdriver.setRumble(kRightRumble, 1);
+      controlleroperator.setRumble(kLeftRumble, 1);
+      controlleroperator.setRumble(kRightRumble, 1);
       return 0.0;
     }else if(x > -15 && x < -3){      // Move from left to center
       return -0.5;
@@ -887,7 +886,7 @@ public void autoGoAround()
     // System.out.println("Cool lidar distance: " + lidarDist);
     if(true){
        double driverJoystickY = controllerdriver.getY(GenericHID.Hand.kLeft); // good luck future team members uwu :)
-       double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight); //                   BTW... this ^ is punishable by death
+       double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
        double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
 
       drive(driverJoystickY, driverJoystickX, false);
@@ -906,3 +905,10 @@ public void autoGoAround()
   //  }
    
 }
+
+
+
+
+
+
+
