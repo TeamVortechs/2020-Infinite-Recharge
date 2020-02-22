@@ -14,9 +14,12 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.SPI.Port;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
-import edu.wpi.first.wpilibj.PWMTalonSRX;
+
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.I2C;
+import edu.wpi.first.wpilibj.PWMTalonFX;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 //import edu.wpi.first.wpilibj.drive.DifferentialDrive;
@@ -63,11 +66,11 @@ public class Robot extends TimedRobot
   private AHRS navx;
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
-  private Spark backRightS, frontRightS, backLeftS, frontLeftS, intake, shooterD, colorMotor;
+  private Spark shooterP, shooterD, backRightS, frontRightS, backLeftS, frontLeftS, intake, colorMotor;
   private Encoder leftEncoder, rightEncoder;
   private NetworkTable table;
   private NetworkTableEntry ta;
-  private PWMTalonSRX shooterP, belt, backRightT, frontRightT, backLeftT, frontLeftT;
+  private TalonFX belt, backRightT, frontRightT, backLeftT, frontLeftT;
   private Timer timer;
   private int state;
 
@@ -84,9 +87,9 @@ public class Robot extends TimedRobot
   private int ultrasonicLPort, ultrasonicMPort, ultrasonicRPort;
   private double ultrasonicLDistance, ultrasonicMDistance, ultrasonicRDistance;
   private AnalogInput m_ultrasonicL, m_ultrasonicM, m_ultrasonicR;
-  private static final double kValueToInches = 0.125;
+  private static final double kValueToInches = 0.125, intakeSpeed = 0.4;
   
-  private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
+  private double topSpeed = 0, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
 
   private boolean trac = true, intakeToggle, forward6, back6, left30, right30, intakeOnOff = false;
   final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
@@ -179,24 +182,24 @@ public class Robot extends TimedRobot
 
 
     // Drive motors
-    if(true){
-      backRightT = new PWMTalonSRX(0);
-      frontRightT = new PWMTalonSRX(1);
-      backLeftT = new PWMTalonSRX(2);
-      frontLeftT = new PWMTalonSRX(3);
-      backLeftT.set(0);
-      frontLeftT.set(0);
-      backRightT.set(0);
-      frontRightT.set(0);
-    }else{
-      // backRightS = new Spark(0);
-      // frontRightS = new Spark(1);
-      // backLeftS = new Spark(2);
-      // frontLeftS = new Spark(3);
-      // backLeftS.set(0);
-      // frontLeftS.set(0);
-      // backRightS.set(0);
-      // frontRightS.set(0);
+    if(driveWheelsAreTalonsAndNotSparks){
+      backRightT = new TalonFX(1);
+      frontRightT = new TalonFX(2);
+      backLeftT = new TalonFX(3);
+      frontLeftT = new TalonFX(4);
+      backLeftT.set(ControlMode.PercentOutput, 0);
+      frontLeftT.set(ControlMode.PercentOutput, 0);
+      backRightT.set(ControlMode.PercentOutput, 0);
+      frontRightT.set(ControlMode.PercentOutput, 0);
+    // }else{
+    //   backRightS = new Spark(0);
+    //   frontRightS = new Spark(1);
+    //   backLeftS = new Spark(2);
+    //   frontLeftS = new Spark(3);
+    //   backLeftS.set(0);
+    //   frontLeftS.set(0);
+    //   backRightS.set(0);
+    //   frontRightS.set(0);
     }
 
     leftEncoder = new Encoder(5, 6, true, Encoder.EncodingType.k2X);
@@ -217,11 +220,11 @@ public class Robot extends TimedRobot
     intake = new Spark(0);
 
     // Belt motor
-    belt = new PWMTalonSRX(6);
+    belt = new TalonFX(6);
 
     // Shooter motor
-    shooterD = new Spark(1);
-    shooterP = new PWMTalonSRX(5); // Passenger Side
+    shooterD = new Spark(1); // Driver Side
+    shooterP = new Spark(3); // Passenger Side
 
     // Arm motor
     // arm = new PWMTalonSRX(0);
@@ -267,10 +270,10 @@ public class Robot extends TimedRobot
     double rightSpeedFinal = desiredSpeed + direction;
 
     if(driveWheelsAreTalonsAndNotSparks){
-      backLeftT.set(-leftSpeedFinal);
-      frontLeftT.set(-leftSpeedFinal);
-      backRightT.set(rightSpeedFinal);
-      frontRightT.set(rightSpeedFinal);
+      backLeftT.set(ControlMode.PercentOutput, -leftSpeedFinal);
+      frontLeftT.set(ControlMode.PercentOutput, -leftSpeedFinal);
+      backRightT.set(ControlMode.PercentOutput, rightSpeedFinal);
+      frontRightT.set(ControlMode.PercentOutput, rightSpeedFinal);
     }else{
       // backLeft.set(-leftSpeedFinal * 0.7);
       // frontLeft.set(-leftSpeedFinal * 0.7);
@@ -297,6 +300,19 @@ public class Robot extends TimedRobot
   //     frontRight.set(rightSpeedFinal);
   //   }
   // }
+
+  //resets the encoder values to 0
+  public void resetDistance() 
+  {
+    leftEncoder.reset();
+    rightEncoder.reset();
+  }
+
+  //takes average of the encoder values
+  public double getDriveDistance() 
+  {
+    return (leftEncoder.getDistance() + rightEncoder.getDistance())/2;
+  }
 
   public void goStraight(double power)
   {
@@ -340,9 +356,14 @@ public class Robot extends TimedRobot
 
   public void shoot(double fixthislater)
   {
-    // double lidarDist = lidar.getDistance();
-    shooterD.set(-shooterSpeed);
-    shooterP.set(shooterSpeed);
+    //double lidarDist = lidar.getDistance();
+    shooterD.set(fixthislater);
+    shooterP.set(fixthislater);
+
+  }
+
+  public void print(String toPrint){
+    System.out.println(toPrint);
   }
   
   /**
@@ -356,7 +377,6 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
-
     // if(isCheckingColor) 
     // {
     //   colorCheck();
@@ -475,48 +495,43 @@ public class Robot extends TimedRobot
     timer.start();
     navx.reset();
 
-    rightEncoder.reset();
-    leftEncoder.reset();
+    resetDistance();
   }
   //used if no positioning required (variables can change if you want)
   public void autonomousPos1() 
   {
     switch (state) {
       case 1:
-        approach();//sweetspot
+        align = true;//sweetspot
         break;
       case 2:
         shoot(0);//shoot
         break;
       case 3:
         drive(0.5, -0.5, false);//turn toward wall
-        if (leftEncoder.getDistance() >= 90) {
+        if (getDriveDistance()  >= 90) {
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
         break;
       case 4:
         drive(0.5, 0.5, false);//drive toward wall
-        if (leftEncoder.getDistance() >= 10) {
+        if (getDriveDistance()  >= 10) {
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
       case 5:
         drive(0.5, -0.5, false);//turn toward other balls
-        if (leftEncoder.getDistance() >= 90) {
+        if (getDriveDistance()  >= 90) {
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
       case 6:
         drive(0.5, 0.5, false);//get outa there toward balls
-        // if (leftEncoder.getDistance() >= 30 || lidarDist <= 100) {
-        //   state++;
-        //   leftEncoder.reset();
-        //   rightEncoder.reset();
-        // }
+        if (getDriveDistance()  >= 30 || lidarDist <= 100) {
+          state++;
+          resetDistance();
+        }
       case 7:
         drive(0, 0, false);//stop
         break;
@@ -528,73 +543,65 @@ public class Robot extends TimedRobot
     switch (state) {
       case 1:
         drive(-0.5, -0.5, false);
-        if (leftEncoder.getDistance() <= -20) {//sweet spot y
+        if (getDriveDistance()  <= -20) {//sweet spot y
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
         break;
       case 2:
       drive(0.5, -0.5, false);
-        if (leftEncoder.getDistance() >= 90) {//turn 90
+        if (getDriveDistance()  >= 90) {//turn 90
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
         break;
       case 3:
         drive(0.5, 0.5, false);
-        // if (leftEncoder.getDistance() >= 40 || lidarDist <= 100) {//sweet spot x
-        //   state++;
-        //   leftEncoder.reset();
-        //   rightEncoder.reset();
-        // }
+        if (getDriveDistance()  >= 40 || lidarDist <= 100) {//sweet spot x
+          state++;
+          resetDistance();
+        }
         break;
       case 4:
         drive(-0.5, 0.5, false);
-        if (leftEncoder.getDistance() <= -90 || (directionToTarget() == 0.0 && area != 0.0)) {//turn -90 or until seen the target
+        if (getDriveDistance()  <= -90 || (directionToTarget() == 0.0 && area != 0.0)) {//turn -90 or until seen the target
           state++;
-          offsetAngle = leftEncoder.getDistance();
-          leftEncoder.reset();
-          rightEncoder.reset();
+          offsetAngle = getDriveDistance();
+          resetDistance();
         }
         break;
       case 5:
-        approach();
+        align = true;
         break;
       case 6:
         shoot(0);
         break;
       case 7:
         drive(0.5, -0.5, false);
-        if (leftEncoder.getDistance() >= offsetAngle) {//return to angle
+        if (getDriveDistance()  >= offsetAngle) {//return to angle
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
         break;
       case 8:
         drive(0.5, 0.5, false);
-        if (leftEncoder.getDistance() >= 10) {//drive to wall
+        if (getDriveDistance()  >= 10) {//drive to wall
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
         break;
       case 9:
         drive(0.5, -0.5, false);
-        if (leftEncoder.getDistance() >= 90) {//turn toward balls
+        if (getDriveDistance()  >= 90) {//turn toward balls
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
       case 10:
         drive(0.5, 0.5, false);
-        // if (leftEncoder.getDistance() >= 30 || lidarDist <= 100) {//drive toward balls
-        //   state++;
-        //   leftEncoder.reset();
-        //   rightEncoder.reset();
-        // }
+        if (getDriveDistance()  >= 30 || lidarDist <= 100) {//drive toward balls
+          state++;
+          resetDistance();
+        }
       case 11:
         drive(0, 0, false);//stop
         break;
@@ -619,7 +626,7 @@ public class Robot extends TimedRobot
        case 1:
          // Go forward 36"
          goStraight(0.5);
-         if (leftEncoder.getDistance() >= 36)
+         if (getDriveDistance()  >= 36)
            state++;
          break;
  
@@ -627,8 +634,7 @@ public class Robot extends TimedRobot
          // Turn 180 degrees
          drive(0.0, -0.5, false);
          if (navx.getAngle() >= 170) {
-           leftEncoder.reset();
-           rightEncoder.reset();
+          resetDistance();
            state++;
          }
          break;
@@ -636,7 +642,7 @@ public class Robot extends TimedRobot
        case 3:
          // Go forward 36" again (return)
          goStraight(0.5);
-         if (leftEncoder.getDistance() >= 36) {
+         if (getDriveDistance()  >= 36) {
            navx.reset();
            state++;
          }
@@ -660,7 +666,7 @@ public class Robot extends TimedRobot
     switch (state) {
       case 1:
         drive(0.5, 0.0, false);
-        if (leftEncoder.getDistance() >= 36) {
+        if (getDriveDistance()  >= 36) {
           state++;
         }
         break;
@@ -668,15 +674,14 @@ public class Robot extends TimedRobot
       case 2:
         drive(-0.5, 0.0, false);
         if (navx.getAngle() <= 280) {
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
           state++;
         }
         break;
 
       case 3:
         drive(0.5, 0.0, false);
-        if (leftEncoder.getDistance() >= 180) {
+        if (getDriveDistance()  >= 180) {
           navx.reset();
           state++;
         }
@@ -697,7 +702,7 @@ public class Robot extends TimedRobot
   public void go4Feet()
   {
     System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
-    if (leftEncoder.getDistance() < 48)
+    if (getDriveDistance()  < 48)
       drive(0.3, 0.0, false);
     else
       drive(0, 0, false);
@@ -708,21 +713,21 @@ public void autoGoAround()
   switch (state) {
     case 1: //drives forward 2 feet
       drive(0.5, 0.0, false);
-      if (leftEncoder.getDistance() >= 24)
+      if (getDriveDistance()  >= 24)
         state++;
       break;
       
     case 2: //turns right 90
       drive(0.0, 0.5, false);
       if (navx.getAngle() >= 90) {
-        leftEncoder.reset();
+        resetDistance();
         state++;
       }
       break;
 
     case 3: //drives forward 4 feet
       drive(0.5, 0.0, false);
-      if (leftEncoder.getDistance() >= 48) {
+      if (getDriveDistance()  >= 48) {
         navx.reset();
         state++;
       }
@@ -731,14 +736,14 @@ public void autoGoAround()
     case 4: //turns right 90
       drive(0.0, 0.5, false);
       if (navx.getAngle() >= 90) {
-        leftEncoder.reset();
+        resetDistance();
         state++;
       }
       break;
 
     case 5: //forward 2 feet
       drive(0.5, 0.0, false);
-      if (leftEncoder.getDistance() >= 24)
+      if (getDriveDistance()  >= 24)
         state++;
       break;
 
@@ -754,29 +759,32 @@ public void autoGoAround()
   @Override
   public void autonomousPeriodic() 
   {
-    switch (m_autoSelected) {
-      case autoTurn90:
-        turn90();
-        break;
-
-      case autoOutAndBack:
-        outAndBack();
-        break;
-        
-      case autoBackAndAround:
-        backAndAround();
-        break;
-
-      case autoGo4Feet:
-      default:
-        go4Feet();
-        break;
-
-      case autoGoAround:
-        autoGoAround();
-        break;
-        
+    if(align){
+      align();
     }
+    // switch (m_autoSelected) {
+    //   case autoTurn90:
+    //     turn90();
+    //     break;
+
+    //   case autoOutAndBack:
+    //     outAndBack();
+    //     break;
+        
+    //   case autoBackAndAround:
+    //     backAndAround();
+    //     break;
+
+    //   case autoGo4Feet:
+    //   default:
+    //     go4Feet();
+    //     break;
+
+    //   case autoGoAround:
+    //     autoGoAround();
+    //     break;
+        
+    // }
 
   }
   /**
@@ -812,6 +820,11 @@ public void autoGoAround()
     if(controllerdriver.getPOV() == 270)
       left30 = !left30;
 
+    if(intakeToggle){
+      intake.set(-intakeSpeed);
+    }else{
+      intake.set(0);
+    }
 
     // System.out.println(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft));
     // Intense trigger algorithms
@@ -830,39 +843,31 @@ public void autoGoAround()
     // OPERATOR CONTROLLER
     //
 
-    double operatorJoystickYLeft = -controllerdriver.getY(GenericHID.Hand.kLeft);
-    double operatorJoystickYRight = -controllerdriver.getY(GenericHID.Hand.kRight);
+    double operatorJoystickYLeft = -controlleroperator.getY(GenericHID.Hand.kLeft);
+    double operatorJoystickYRight = -controlleroperator.getY(GenericHID.Hand.kRight);
 
     // YOU WOULD SET THESE JOYSTICK VALUES TO THE WINCH MOTOR(S) IF YOU KNEW ANYTHING ABOUT THEM BUT :(
 
-    if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) > 50) // Complicated algorithm to decide if the right trigger is being held
+    if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) > 0.5) // Complicated algorithm to decide if the right trigger is being held
       shoot = true;
-    else if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) < 50)
+    else if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) < 0.5)
       shoot = false;
 
-    // if(shoot){
-    //   shoot(0);
-    // }
-
-    double intakeSpeed = 0.3;
-
-    if(controlleroperator.getAButtonPressed()){
-      intakeOnOff = !intakeOnOff;
-    }
-    if(intakeOnOff){
-      intake.set(intakeSpeed);
-    }else{
-      intake.set(0);
-    }
-
-    belt.set(operatorJoystickYRight * 0.75);
+    belt.set(ControlMode.PercentOutput, operatorJoystickYRight * 0.75);
     if(controlleroperator.getPOV() == 0){
-      shooterSpeed += 0.1;
+      shooterSpeed += 0.01;
     }else if(controlleroperator.getPOV() == 180){
-      shooterSpeed -= 0.1;
+      shooterSpeed -= 0.01;
     }
-    shooterD.set(-shooterSpeed);
-    shooterP.set(shooterSpeed);
+
+    if(shoot){
+      shoot(shooterSpeed);
+    }
+    else{
+      shoot(0);
+    }
+    // shooterD.set(-shooterSpeed);
+    // shooterP.set(shooterSpeed);
 
 
     System.out.println("Belt Speed: " + operatorJoystickYRight + " and Shooter Speed: " + shooterSpeed + " and Intake Speed " + intakeSpeed);
@@ -889,10 +894,10 @@ public void autoGoAround()
        double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
        double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
 
-      drive(driverJoystickY, driverJoystickX, false);
+      drive(-driverJoystickY * 0.25, -driverJoystickX, false);
 
       if(currentSpeedAvg > topSpeed){
-        topSpeed = currentSpeedAvg;
+        topSpeed = currentSpeedAvg * 4;
       }
       System.out.println("Top Speed: " + topSpeed);
     }
