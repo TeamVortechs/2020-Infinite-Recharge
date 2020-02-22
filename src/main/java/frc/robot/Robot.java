@@ -904,6 +904,7 @@ public void autoGoAround()
 
     // double lidarDist = lidar.getDistance();
     // System.out.println("Cool lidar distance: " + lidarDist);
+    System.out.println("Left: " + getLeftDriveDistance() + " Right: " + getRightDriveDistance());
     if(true){
        double driverJoystickY = controllerdriver.getY(GenericHID.Hand.kLeft); // good luck future team members uwu :)
        double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
