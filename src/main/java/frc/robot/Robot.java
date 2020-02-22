@@ -91,6 +91,8 @@ public class Robot extends TimedRobot
   
   private double topSpeed = 20857, maxSpeedDiff = 0.2, minSpeedDiff = 0.3, shooterSpeed = 0.3;
 
+  private double leftEncoderZero, rightEncoderZero;
+
   private boolean trac = true, intakeToggle, forward6, back6, left30, right30;
   final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
 
@@ -240,8 +242,9 @@ public class Robot extends TimedRobot
     m_ultrasonicL = new AnalogInput(ultrasonicLPort);
     m_ultrasonicM = new AnalogInput(ultrasonicMPort);
     m_ultrasonicR = new AnalogInput(ultrasonicRPort);
-  
+    System.out.println("BEFORE left: " + getLeftDriveDistance() + " right: " + getRightDriveDistance());
     resetDistance();
+    System.out.println("AFTER left: " + getLeftDriveDistance() + " right: " + getRightDriveDistance());
 
     // isSpinningMult = false;
     // isSpinningToSpecific = false;
@@ -307,8 +310,10 @@ public class Robot extends TimedRobot
   //resets the encoder values to 0
   public void resetDistance() 
   {
-    backLeftT.setSelectedSensorPosition(0, 0, 10);
-    backRightT.setSelectedSensorPosition(0, 0, 10);
+    // backLeftT.setSelectedSensorPosition(0, 0, 10);
+    // backRightT.setSelectedSensorPosition(0, 0, 10);
+    leftEncoderZero = backLeftT.getSelectedSensorPosition();
+    rightEncoderZero = backRightT.getSelectedSensorPosition();
   }
 
   //takes average of the encoder values
@@ -326,13 +331,13 @@ public class Robot extends TimedRobot
   //takes the left encoder value
   public double getLeftDriveDistance() 
   {
-    return backLeftT.getSelectedSensorPosition();
+    return backLeftT.getSelectedSensorPosition() - leftEncoderZero;
   }
 
   //takes the right encoder value
   public double getRightDriveDistance() 
   {
-    return backRightT.getSelectedSensorPosition();
+    return backRightT.getSelectedSensorPosition() - rightEncoderZero;
   }
 
   public void goStraight(double power)
