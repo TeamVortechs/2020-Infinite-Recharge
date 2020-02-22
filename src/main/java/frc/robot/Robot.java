@@ -258,7 +258,7 @@ public class Robot extends TimedRobot
 
   public void drive(double desiredSpeed, double direction, boolean tracON){ // Both desiredSpeed and direction should be sent as positive values as you would expect
     if(tracON){
-      double currentSpeedAvg = ((leftEncoder.getRate() + rightEncoder.getRate()) / 2) / topSpeed;
+      double currentSpeedAvg = getDriveSpeed() / topSpeed;
       if(desiredSpeed > (currentSpeedAvg + maxSpeedDiff)){
         desiredSpeed = (currentSpeedAvg + maxSpeedDiff);
       }else if(desiredSpeed < (currentSpeedAvg - minSpeedDiff)){
@@ -311,7 +311,25 @@ public class Robot extends TimedRobot
   //takes average of the encoder values
   public double getDriveDistance() 
   {
-    return (leftEncoder.getDistance() + rightEncoder.getDistance())/2;
+    return (getLeftDriveDistance() + getRightDriveDistance())/2;
+  }
+
+  //takes average of encoder rates
+  public double getDriveSpeed() 
+  {
+    return (leftEncoder.getRate() + rightEncoder.getRate())/2;
+  }
+
+  //takes the left encoder value
+  public double getLeftDriveDistance() 
+  {
+    return leftEncoder.getDistance();
+  }
+
+  //takes the right encoder value
+  public double getRightDriveDistance() 
+  {
+    return rightEncoder.getDistance();
   }
 
   public void goStraight(double power)
@@ -698,7 +716,7 @@ public class Robot extends TimedRobot
 
   public void go4Feet()
   {
-    System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
+    System.out.println("Left: " + getLeftDriveDistance() + " Right: " + getRightDriveDistance());
     if (getDriveDistance()  < 48)
       drive(0.3, 0.0, false);
     else
@@ -889,7 +907,7 @@ public void autoGoAround()
     if(true){
        double driverJoystickY = controllerdriver.getY(GenericHID.Hand.kLeft); // good luck future team members uwu :)
        double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
-       double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
+       double currentSpeedAvg = getDriveSpeed();
 
       drive(-driverJoystickY * 0.25, -driverJoystickX, false);
 
