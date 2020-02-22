@@ -301,6 +301,19 @@ public class Robot extends TimedRobot
   //   }
   // }
 
+  //resets the encoder values to 0
+  public void resetDistance() 
+  {
+    leftEncoder.reset();
+    rightEncoder.reset();
+  }
+
+  //takes average of the encoder values
+  public double getDriveDistance() 
+  {
+    return (leftEncoder.getDistance() + rightEncoder.getDistance())/2;
+  }
+
   public void goStraight(double power)
   {
     drive(power, -0.15, false);
@@ -479,47 +492,42 @@ public class Robot extends TimedRobot
     timer.start();
     navx.reset();
 
-    rightEncoder.reset();
-    leftEncoder.reset();
+    resetDistance();
   }
   //used if no positioning required (variables can change if you want)
   public void autonomousPos1() 
   {
     switch (state) {
       case 1:
-        approach();//sweetspot
+        align = true;//sweetspot
         break;
       case 2:
         shoot(0);//shoot
         break;
       case 3:
         drive(0.5, -0.5, false);//turn toward wall
-        if (leftEncoder.getDistance() >= 90) {
+        if (getDriveDistance()  >= 90) {
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
         break;
       case 4:
         drive(0.5, 0.5, false);//drive toward wall
-        if (leftEncoder.getDistance() >= 10) {
+        if (getDriveDistance()  >= 10) {
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
       case 5:
         drive(0.5, -0.5, false);//turn toward other balls
-        if (leftEncoder.getDistance() >= 90) {
+        if (getDriveDistance()  >= 90) {
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
       case 6:
         drive(0.5, 0.5, false);//get outa there toward balls
-        if (leftEncoder.getDistance() >= 30 || lidarDist <= 100) {
+        if (getDriveDistance()  >= 30 || lidarDist <= 100) {
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
       case 7:
         drive(0, 0, false);//stop
@@ -532,72 +540,64 @@ public class Robot extends TimedRobot
     switch (state) {
       case 1:
         drive(-0.5, -0.5, false);
-        if (leftEncoder.getDistance() <= -20) {//sweet spot y
+        if (getDriveDistance()  <= -20) {//sweet spot y
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
         break;
       case 2:
       drive(0.5, -0.5, false);
-        if (leftEncoder.getDistance() >= 90) {//turn 90
+        if (getDriveDistance()  >= 90) {//turn 90
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
         break;
       case 3:
         drive(0.5, 0.5, false);
-        if (leftEncoder.getDistance() >= 40 || lidarDist <= 100) {//sweet spot x
+        if (getDriveDistance()  >= 40 || lidarDist <= 100) {//sweet spot x
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
         break;
       case 4:
         drive(-0.5, 0.5, false);
-        if (leftEncoder.getDistance() <= -90 || (directionToTarget() == 0.0 && area != 0.0)) {//turn -90 or until seen the target
+        if (getDriveDistance()  <= -90 || (directionToTarget() == 0.0 && area != 0.0)) {//turn -90 or until seen the target
           state++;
-          offsetAngle = leftEncoder.getDistance();
-          leftEncoder.reset();
-          rightEncoder.reset();
+          offsetAngle = getDriveDistance();
+          resetDistance();
         }
         break;
       case 5:
-        approach();
+        align = true;
         break;
       case 6:
         shoot(0);
         break;
       case 7:
         drive(0.5, -0.5, false);
-        if (leftEncoder.getDistance() >= offsetAngle) {//return to angle
+        if (getDriveDistance()  >= offsetAngle) {//return to angle
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
         break;
       case 8:
         drive(0.5, 0.5, false);
-        if (leftEncoder.getDistance() >= 10) {//drive to wall
+        if (getDriveDistance()  >= 10) {//drive to wall
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
         break;
       case 9:
         drive(0.5, -0.5, false);
-        if (leftEncoder.getDistance() >= 90) {//turn toward balls
+        if (getDriveDistance()  >= 90) {//turn toward balls
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
       case 10:
         drive(0.5, 0.5, false);
-        if (leftEncoder.getDistance() >= 30 || lidarDist <= 100) {//drive toward balls
+        if (getDriveDistance()  >= 30 || lidarDist <= 100) {//drive toward balls
           state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
         }
       case 11:
         drive(0, 0, false);//stop
@@ -623,7 +623,7 @@ public class Robot extends TimedRobot
        case 1:
          // Go forward 36"
          goStraight(0.5);
-         if (leftEncoder.getDistance() >= 36)
+         if (getDriveDistance()  >= 36)
            state++;
          break;
  
@@ -631,8 +631,7 @@ public class Robot extends TimedRobot
          // Turn 180 degrees
          drive(0.0, -0.5, false);
          if (navx.getAngle() >= 170) {
-           leftEncoder.reset();
-           rightEncoder.reset();
+          resetDistance();
            state++;
          }
          break;
@@ -640,7 +639,7 @@ public class Robot extends TimedRobot
        case 3:
          // Go forward 36" again (return)
          goStraight(0.5);
-         if (leftEncoder.getDistance() >= 36) {
+         if (getDriveDistance()  >= 36) {
            navx.reset();
            state++;
          }
@@ -664,7 +663,7 @@ public class Robot extends TimedRobot
     switch (state) {
       case 1:
         drive(0.5, 0.0, false);
-        if (leftEncoder.getDistance() >= 36) {
+        if (getDriveDistance()  >= 36) {
           state++;
         }
         break;
@@ -672,15 +671,14 @@ public class Robot extends TimedRobot
       case 2:
         drive(-0.5, 0.0, false);
         if (navx.getAngle() <= 280) {
-          leftEncoder.reset();
-          rightEncoder.reset();
+          resetDistance();
           state++;
         }
         break;
 
       case 3:
         drive(0.5, 0.0, false);
-        if (leftEncoder.getDistance() >= 180) {
+        if (getDriveDistance()  >= 180) {
           navx.reset();
           state++;
         }
@@ -701,7 +699,7 @@ public class Robot extends TimedRobot
   public void go4Feet()
   {
     System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
-    if (leftEncoder.getDistance() < 48)
+    if (getDriveDistance()  < 48)
       drive(0.3, 0.0, false);
     else
       drive(0, 0, false);
@@ -712,21 +710,21 @@ public void autoGoAround()
   switch (state) {
     case 1: //drives forward 2 feet
       drive(0.5, 0.0, false);
-      if (leftEncoder.getDistance() >= 24)
+      if (getDriveDistance()  >= 24)
         state++;
       break;
       
     case 2: //turns right 90
       drive(0.0, 0.5, false);
       if (navx.getAngle() >= 90) {
-        leftEncoder.reset();
+        resetDistance();
         state++;
       }
       break;
 
     case 3: //drives forward 4 feet
       drive(0.5, 0.0, false);
-      if (leftEncoder.getDistance() >= 48) {
+      if (getDriveDistance()  >= 48) {
         navx.reset();
         state++;
       }
@@ -735,14 +733,14 @@ public void autoGoAround()
     case 4: //turns right 90
       drive(0.0, 0.5, false);
       if (navx.getAngle() >= 90) {
-        leftEncoder.reset();
+        resetDistance();
         state++;
       }
       break;
 
     case 5: //forward 2 feet
       drive(0.5, 0.0, false);
-      if (leftEncoder.getDistance() >= 24)
+      if (getDriveDistance()  >= 24)
         state++;
       break;
 
@@ -758,29 +756,32 @@ public void autoGoAround()
   @Override
   public void autonomousPeriodic() 
   {
-    switch (m_autoSelected) {
-      case autoTurn90:
-        turn90();
-        break;
-
-      case autoOutAndBack:
-        outAndBack();
-        break;
-        
-      case autoBackAndAround:
-        backAndAround();
-        break;
-
-      case autoGo4Feet:
-      default:
-        go4Feet();
-        break;
-
-      case autoGoAround:
-        autoGoAround();
-        break;
-        
+    if(align){
+      align();
     }
+    // switch (m_autoSelected) {
+    //   case autoTurn90:
+    //     turn90();
+    //     break;
+
+    //   case autoOutAndBack:
+    //     outAndBack();
+    //     break;
+        
+    //   case autoBackAndAround:
+    //     backAndAround();
+    //     break;
+
+    //   case autoGo4Feet:
+    //   default:
+    //     go4Feet();
+    //     break;
+
+    //   case autoGoAround:
+    //     autoGoAround();
+    //     break;
+        
+    // }
 
   }
   /**
