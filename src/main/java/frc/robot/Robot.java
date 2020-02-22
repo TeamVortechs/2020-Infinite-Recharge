@@ -63,11 +63,11 @@ public class Robot extends TimedRobot
   private AHRS navx;
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
-  private Spark backRightS, frontRightS, backLeftS, frontLeftS, intake, belt, colorMotor;
+  private Spark backRightS, frontRightS, backLeftS, frontLeftS, intake, shooterD, colorMotor;
   private Encoder leftEncoder, rightEncoder;
   private NetworkTable table;
   private NetworkTableEntry ta;
-  private PWMTalonSRX shooterP, shooterD, backRightT, frontRightT, backLeftT, frontLeftT;
+  private PWMTalonSRX shooterP, belt, backRightT, frontRightT, backLeftT, frontLeftT;
   private Timer timer;
   private int state;
 
@@ -89,10 +89,10 @@ public class Robot extends TimedRobot
   private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
 
   private boolean trac = true, intakeToggle, forward6, back6, left30, right30, intakeOnOff = false;
-  final boolean driveWheelsAreTalonsAndNotSparks = false; // If you change this to false it will try to run the wheels off something
+  final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
-  private DigitalSource lidarPort = new DigitalInput(0);
+  // private DigitalSource lidarPort = new DigitalInput(0); fix my port and all uses of lidar.
 
     /* The orchestra object that holds all the instruments */
   // private Orchestra _orchestra;
@@ -179,7 +179,7 @@ public class Robot extends TimedRobot
 
 
     // Drive motors
-    if(driveWheelsAreTalonsAndNotSparks){
+    if(true){
       backRightT = new PWMTalonSRX(0);
       frontRightT = new PWMTalonSRX(1);
       backLeftT = new PWMTalonSRX(2);
@@ -189,14 +189,14 @@ public class Robot extends TimedRobot
       backRightT.set(0);
       frontRightT.set(0);
     }else{
-      backRightS = new Spark(0);
-      frontRightS = new Spark(1);
-      backLeftS = new Spark(2);
-      frontLeftS = new Spark(3);
-      backLeftS.set(0);
-      frontLeftS.set(0);
-      backRightS.set(0);
-      frontRightS.set(0);
+      // backRightS = new Spark(0);
+      // frontRightS = new Spark(1);
+      // backLeftS = new Spark(2);
+      // frontLeftS = new Spark(3);
+      // backLeftS.set(0);
+      // frontLeftS.set(0);
+      // backRightS.set(0);
+      // frontRightS.set(0);
     }
 
     leftEncoder = new Encoder(5, 6, true, Encoder.EncodingType.k2X);
@@ -206,22 +206,22 @@ public class Robot extends TimedRobot
 
     table = NetworkTableInstance.getDefault().getTable("limelight");
 
-    lidar = new pulsedLightLIDAR(lidarPort);
-    lidar.getDistance();
+    // lidar = new pulsedLightLIDAR(lidarPort);
+    // lidar.getDistance();
 
     align = false;
     approach = false;
     shoot = false;
 
     // Intake motors
-    //intake = new Spark(4);
+    intake = new Spark(0);
 
     // Belt motor
-    belt = new Spark(5);
+    belt = new PWMTalonSRX(6);
 
     // Shooter motor
-    shooterD = new PWMTalonSRX(6); // Driver Side
-    //shooterP = new PWMTalonSRX(5); // Passenger Side
+    shooterD = new Spark(1);
+    shooterP = new PWMTalonSRX(5); // Passenger Side
 
     // Arm motor
     // arm = new PWMTalonSRX(0);
@@ -340,10 +340,9 @@ public class Robot extends TimedRobot
 
   public void shoot(double fixthislater)
   {
-    double lidarDist = lidar.getDistance();
+    // double lidarDist = lidar.getDistance();
     shooterD.set(-shooterSpeed);
     shooterP.set(shooterSpeed);
-
   }
   
   /**
@@ -366,7 +365,7 @@ public class Robot extends TimedRobot
 
   public void getDistances() 
   {
-    lidarDist = lidar.getDistance();
+    // lidarDist = lidar.getDistance();
     ta = table.getEntry("ta");
     area = ta.getDouble(0.0);
     ultrasonicLDistance = m_ultrasonicL.getValue() * kValueToInches;
@@ -513,11 +512,11 @@ public class Robot extends TimedRobot
         }
       case 6:
         drive(0.5, 0.5, false);//get outa there toward balls
-        if (leftEncoder.getDistance() >= 30 || lidarDist <= 100) {
-          state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
-        }
+        // if (leftEncoder.getDistance() >= 30 || lidarDist <= 100) {
+        //   state++;
+        //   leftEncoder.reset();
+        //   rightEncoder.reset();
+        // }
       case 7:
         drive(0, 0, false);//stop
         break;
@@ -545,11 +544,11 @@ public class Robot extends TimedRobot
         break;
       case 3:
         drive(0.5, 0.5, false);
-        if (leftEncoder.getDistance() >= 40 || lidarDist <= 100) {//sweet spot x
-          state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
-        }
+        // if (leftEncoder.getDistance() >= 40 || lidarDist <= 100) {//sweet spot x
+        //   state++;
+        //   leftEncoder.reset();
+        //   rightEncoder.reset();
+        // }
         break;
       case 4:
         drive(-0.5, 0.5, false);
@@ -591,11 +590,11 @@ public class Robot extends TimedRobot
         }
       case 10:
         drive(0.5, 0.5, false);
-        if (leftEncoder.getDistance() >= 30 || lidarDist <= 100) {//drive toward balls
-          state++;
-          leftEncoder.reset();
-          rightEncoder.reset();
-        }
+        // if (leftEncoder.getDistance() >= 30 || lidarDist <= 100) {//drive toward balls
+        //   state++;
+        //   leftEncoder.reset();
+        //   rightEncoder.reset();
+        // }
       case 11:
         drive(0, 0, false);//stop
         break;
