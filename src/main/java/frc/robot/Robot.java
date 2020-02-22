@@ -89,9 +89,9 @@ public class Robot extends TimedRobot
   private AnalogInput m_ultrasonicL, m_ultrasonicM, m_ultrasonicR;
   private static final double kValueToInches = 0.125, intakeSpeed = 0.4;
   
-  private double topSpeed = 100, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
+  private double topSpeed = 20857, maxSpeedDiff = 0.2, minSpeedDiff = 0.3, shooterSpeed = 0.3;
 
-  private boolean trac = true, intakeToggle, forward6, back6, left30, right30, intakeOnOff = false;
+  private boolean trac = true, intakeToggle, forward6, back6, left30, right30;
   final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
@@ -180,13 +180,14 @@ public class Robot extends TimedRobot
     //   Right Trigger: Shoot (Until Released) ::: TO-DO
     //   Left Trigger: N/A
 
-
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
       backRightT = new TalonFX(1);
       frontRightT = new TalonFX(2);
       backLeftT = new TalonFX(3);
       frontLeftT = new TalonFX(4);
+      backLeftT.setInverted(true);
+      frontLeftT.setInverted(true);
       backLeftT.set(ControlMode.PercentOutput, 0);
       frontLeftT.set(ControlMode.PercentOutput, 0);
       backRightT.set(ControlMode.PercentOutput, 0);
@@ -240,6 +241,8 @@ public class Robot extends TimedRobot
     m_ultrasonicM = new AnalogInput(ultrasonicMPort);
     m_ultrasonicR = new AnalogInput(ultrasonicRPort);
   
+    resetDistance();
+
     // isSpinningMult = false;
     // isSpinningToSpecific = false;
     // isCheckingColor = false;
@@ -270,8 +273,8 @@ public class Robot extends TimedRobot
     double rightSpeedFinal = desiredSpeed + direction;
 
     if(driveWheelsAreTalonsAndNotSparks){
-      backLeftT.set(ControlMode.PercentOutput, -leftSpeedFinal);
-      frontLeftT.set(ControlMode.PercentOutput, -leftSpeedFinal);
+      backLeftT.set(ControlMode.PercentOutput, leftSpeedFinal);
+      frontLeftT.set(ControlMode.PercentOutput, leftSpeedFinal);
       backRightT.set(ControlMode.PercentOutput, rightSpeedFinal);
       frontRightT.set(ControlMode.PercentOutput, rightSpeedFinal);
     }else{
@@ -379,7 +382,6 @@ public class Robot extends TimedRobot
     shooterP.set(fixthislater);
 
   }
-
   public void print(String toPrint){
     System.out.println(toPrint);
   }
@@ -913,10 +915,10 @@ public void autoGoAround()
        double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
        double currentSpeedAvg = getDriveSpeed();
 
-      drive(-driverJoystickY * 0.25, -driverJoystickX, false);
+      drive(-driverJoystickY, 0, false);
 
       if(currentSpeedAvg > topSpeed){
-        topSpeed = currentSpeedAvg * 4;
+        topSpeed = currentSpeedAvg;
       }
       System.out.println("Top Speed: " + topSpeed);
     }
