@@ -67,7 +67,7 @@ public class Robot extends TimedRobot
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
   private Spark shooterP, shooterD, backRightS, frontRightS, backLeftS, frontLeftS, intake, colorMotor;
-  private Encoder leftEncoder, rightEncoder;
+  //private Encoder leftEncoder, rightEncoder;
   private NetworkTable table;
   private NetworkTableEntry ta;
   private TalonFX belt, backRightT, frontRightT, backLeftT, frontLeftT;
@@ -89,7 +89,7 @@ public class Robot extends TimedRobot
   private AnalogInput m_ultrasonicL, m_ultrasonicM, m_ultrasonicR;
   private static final double kValueToInches = 0.125, intakeSpeed = 0.4;
   
-  private double topSpeed = 0, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
+  private double topSpeed = 100, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
 
   private boolean trac = true, intakeToggle, forward6, back6, left30, right30, intakeOnOff = false;
   final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
@@ -202,10 +202,10 @@ public class Robot extends TimedRobot
     //   frontRightS.set(0);
     }
 
-    leftEncoder = new Encoder(5, 6, true, Encoder.EncodingType.k2X);
-    rightEncoder = new Encoder(3, 4, false, Encoder.EncodingType.k2X);
-    leftEncoder.setDistancePerPulse(5.3/256);
-    rightEncoder.setDistancePerPulse(5.3/256);
+    // leftEncoder = new Encoder(5, 6, true, Encoder.EncodingType.k2X);
+    // rightEncoder = new Encoder(3, 4, false, Encoder.EncodingType.k2X);
+    // leftEncoder.setDistancePerPulse(5.3/256);
+    // rightEncoder.setDistancePerPulse(5.3/256);
 
     table = NetworkTableInstance.getDefault().getTable("limelight");
 
@@ -258,7 +258,7 @@ public class Robot extends TimedRobot
 
   public void drive(double desiredSpeed, double direction, boolean tracON){ // Both desiredSpeed and direction should be sent as positive values as you would expect
     if(tracON){
-      double currentSpeedAvg = ((leftEncoder.getRate() + rightEncoder.getRate()) / 2) / topSpeed;
+      double currentSpeedAvg = getDriveSpeed() / topSpeed;
       if(desiredSpeed > (currentSpeedAvg + maxSpeedDiff)){
         desiredSpeed = (currentSpeedAvg + maxSpeedDiff);
       }else if(desiredSpeed < (currentSpeedAvg - minSpeedDiff)){
@@ -304,14 +304,32 @@ public class Robot extends TimedRobot
   //resets the encoder values to 0
   public void resetDistance() 
   {
-    leftEncoder.reset();
-    rightEncoder.reset();
+    backLeftT.setSelectedSensorPosition(0, 0, 10);
+    backRightT.setSelectedSensorPosition(0, 0, 10);
   }
 
   //takes average of the encoder values
   public double getDriveDistance() 
   {
-    return (leftEncoder.getDistance() + rightEncoder.getDistance())/2;
+    return (getLeftDriveDistance() + getRightDriveDistance())/2;
+  }
+
+  //takes average of encoder rates
+  public double getDriveSpeed() 
+  {
+    return (backLeftT.getSelectedSensorVelocity() + backRightT.getSelectedSensorVelocity())/2;
+  }
+
+  //takes the left encoder value
+  public double getLeftDriveDistance() 
+  {
+    return backLeftT.getSelectedSensorPosition();
+  }
+
+  //takes the right encoder value
+  public double getRightDriveDistance() 
+  {
+    return backRightT.getSelectedSensorPosition();
   }
 
   public void goStraight(double power)
@@ -698,7 +716,7 @@ public class Robot extends TimedRobot
 
   public void go4Feet()
   {
-    System.out.println("Left: " + leftEncoder.getDistance() + " Right: " + rightEncoder.getDistance());
+    System.out.println("Left: " + getLeftDriveDistance() + " Right: " + getRightDriveDistance());
     if (getDriveDistance()  < 48)
       drive(0.3, 0.0, false);
     else
@@ -889,7 +907,7 @@ public void autoGoAround()
     if(true){
        double driverJoystickY = controllerdriver.getY(GenericHID.Hand.kLeft); // good luck future team members uwu :)
        double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
-       double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
+       double currentSpeedAvg = getDriveSpeed();
 
       drive(-driverJoystickY * 0.25, -driverJoystickX, false);
 
