@@ -67,7 +67,7 @@ public class Robot extends TimedRobot
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
   private Spark shooterP, shooterD, backRightS, frontRightS, backLeftS, frontLeftS, intake, colorMotor;
-  private Encoder leftEncoder, rightEncoder;
+  //private Encoder leftEncoder, rightEncoder;
   private NetworkTable table;
   private NetworkTableEntry ta;
   private TalonFX belt, backRightT, frontRightT, backLeftT, frontLeftT;
@@ -202,10 +202,10 @@ public class Robot extends TimedRobot
     //   frontRightS.set(0);
     }
 
-    leftEncoder = new Encoder(5, 6, true, Encoder.EncodingType.k2X);
-    rightEncoder = new Encoder(3, 4, false, Encoder.EncodingType.k2X);
-    leftEncoder.setDistancePerPulse(5.3/256);
-    rightEncoder.setDistancePerPulse(5.3/256);
+    // leftEncoder = new Encoder(5, 6, true, Encoder.EncodingType.k2X);
+    // rightEncoder = new Encoder(3, 4, false, Encoder.EncodingType.k2X);
+    // leftEncoder.setDistancePerPulse(5.3/256);
+    // rightEncoder.setDistancePerPulse(5.3/256);
 
     table = NetworkTableInstance.getDefault().getTable("limelight");
 
@@ -304,8 +304,8 @@ public class Robot extends TimedRobot
   //resets the encoder values to 0
   public void resetDistance() 
   {
-    leftEncoder.reset();
-    rightEncoder.reset();
+    backLeftT.setSelectedSensorPosition(0, 0, 10);
+    backRightT.setSelectedSensorPosition(0, 0, 10);
   }
 
   //takes average of the encoder values
@@ -317,19 +317,19 @@ public class Robot extends TimedRobot
   //takes average of encoder rates
   public double getDriveSpeed() 
   {
-    return (leftEncoder.getRate() + rightEncoder.getRate())/2;
+    return (backLeftT.getSelectedSensorVelocity() + backRightT.getSelectedSensorVelocity())/2;
   }
 
   //takes the left encoder value
   public double getLeftDriveDistance() 
   {
-    return leftEncoder.getDistance();
+    return backLeftT.getSelectedSensorPosition();
   }
 
   //takes the right encoder value
   public double getRightDriveDistance() 
   {
-    return rightEncoder.getDistance();
+    return backRightT.getSelectedSensorPosition();
   }
 
   public void goStraight(double power)
