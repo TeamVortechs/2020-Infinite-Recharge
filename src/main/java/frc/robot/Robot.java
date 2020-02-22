@@ -14,9 +14,12 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.SPI.Port;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
-import edu.wpi.first.wpilibj.PWMTalonSRX;
+
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.I2C;
+import edu.wpi.first.wpilibj.PWMTalonFX;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 //import edu.wpi.first.wpilibj.drive.DifferentialDrive;
@@ -63,11 +66,11 @@ public class Robot extends TimedRobot
   private AHRS navx;
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
-  private Spark backRight, frontRight, backLeft, frontLeft, intake, belt, shooter, colorMotor;
+  private Spark shooterP, shooterD, backRightS, frontRightS, backLeftS, frontLeftS, intake, colorMotor;
   private Encoder leftEncoder, rightEncoder;
   private NetworkTable table;
   private NetworkTableEntry ta;
-  private PWMTalonSRX arm, backRightT, frontRightT, backLeftT, frontLeftT;
+  private TalonFX belt, backRightT, frontRightT, backLeftT, frontLeftT;
   private Timer timer;
   private int state;
 
@@ -84,12 +87,12 @@ public class Robot extends TimedRobot
   private int ultrasonicLPort, ultrasonicMPort, ultrasonicRPort;
   private double ultrasonicLDistance, ultrasonicMDistance, ultrasonicRDistance;
   private AnalogInput m_ultrasonicL, m_ultrasonicM, m_ultrasonicR;
-  private static final double kValueToInches = 0.125;
+  private static final double kValueToInches = 0.125, intakeSpeed = 0.4;
   
-  private double topSpeed = 118, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
+  private double topSpeed = 0, maxSpeedDiff = 0.4, minSpeedDiff = 0.5, shooterSpeed = 0.3;
 
   private boolean trac = true, intakeToggle, forward6, back6, left30, right30, intakeOnOff = false;
-  final boolean driveWheelsAreTalonsAndNotSparks = false; // If you change this to false it will try to run the wheels off something
+  final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
   private DigitalSource lidarPort = new DigitalInput(0);
@@ -180,23 +183,23 @@ public class Robot extends TimedRobot
 
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
-      backRightT = new PWMTalonSRX(0);
-      frontRightT = new PWMTalonSRX(1);
-      backLeftT = new PWMTalonSRX(2);
-      frontLeftT = new PWMTalonSRX(3);
-      backLeftT.set(0);
-      frontLeftT.set(0);
-      backRightT.set(0);
-      frontRightT.set(0);
-    }else{
-      backRight = new Spark(0);
-      frontRight = new Spark(1);
-      backLeft = new Spark(2);
-      frontLeft = new Spark(3);
-      backLeft.set(0);
-      frontLeft.set(0);
-      backRight.set(0);
-      frontRight.set(0);
+      backRightT = new TalonFX(1);
+      frontRightT = new TalonFX(2);
+      backLeftT = new TalonFX(3);
+      frontLeftT = new TalonFX(4);
+      backLeftT.set(ControlMode.PercentOutput, 0);
+      frontLeftT.set(ControlMode.PercentOutput, 0);
+      backRightT.set(ControlMode.PercentOutput, 0);
+      frontRightT.set(ControlMode.PercentOutput, 0);
+    // }else{
+    //   backRightS = new Spark(0);
+    //   frontRightS = new Spark(1);
+    //   backLeftS = new Spark(2);
+    //   frontLeftS = new Spark(3);
+    //   backLeftS.set(0);
+    //   frontLeftS.set(0);
+    //   backRightS.set(0);
+    //   frontRightS.set(0);
     }
 
     leftEncoder = new Encoder(5, 6, true, Encoder.EncodingType.k2X);
@@ -214,13 +217,14 @@ public class Robot extends TimedRobot
     shoot = false;
 
     // Intake motors
-    intake = new Spark(4);
+    intake = new Spark(0);
 
     // Belt motor
-    belt = new Spark(5);
+    belt = new TalonFX(6);
 
     // Shooter motor
-    shooter = new Spark(6); 
+    shooterD = new Spark(1); // Driver Side
+    shooterP = new Spark(3); // Passenger Side
 
     // Arm motor
     // arm = new PWMTalonSRX(0);
@@ -246,7 +250,7 @@ public class Robot extends TimedRobot
     // m_colorMatcher.addColorMatch(kGreenTarget);
     // m_colorMatcher.addColorMatch(kRedTarget);
     // m_colorMatcher.addColorMatch(kYellowTarget);
-     colorMotor = new Spark(10); 
+     // colorMotor = new Spark(10); 
     //defining motor with spark
 
     /* Initialize the TalonFX's to be used */
@@ -266,17 +270,17 @@ public class Robot extends TimedRobot
     double rightSpeedFinal = desiredSpeed + direction;
 
     if(driveWheelsAreTalonsAndNotSparks){
-      backLeftT.set(-leftSpeedFinal);
-      frontLeftT.set(-leftSpeedFinal);
-      backRightT.set(rightSpeedFinal);
-      frontRightT.set(rightSpeedFinal);
+      backLeftT.set(ControlMode.PercentOutput, -leftSpeedFinal);
+      frontLeftT.set(ControlMode.PercentOutput, -leftSpeedFinal);
+      backRightT.set(ControlMode.PercentOutput, rightSpeedFinal);
+      frontRightT.set(ControlMode.PercentOutput, rightSpeedFinal);
     }else{
       // backLeft.set(-leftSpeedFinal * 0.7);
       // frontLeft.set(-leftSpeedFinal * 0.7);
-      backLeft.set(-leftSpeedFinal);
-      frontLeft.set(-leftSpeedFinal);
-      backRight.set(rightSpeedFinal);
-      frontRight.set(rightSpeedFinal);
+      backLeftS.set(-leftSpeedFinal);
+      frontLeftS.set(-leftSpeedFinal);
+      backRightS.set(rightSpeedFinal);
+      frontRightS.set(rightSpeedFinal);
     }
   }
 
@@ -339,8 +343,10 @@ public class Robot extends TimedRobot
 
   public void shoot(double fixthislater)
   {
-    double lidarDist = lidar.getDistance();
-    shooter.set(shooterSpeed);
+    //double lidarDist = lidar.getDistance();
+    shooterD.set(fixthislater);
+    shooterP.set(fixthislater);
+
   }
   
   /**
@@ -813,6 +819,11 @@ public void autoGoAround()
     if(controllerdriver.getPOV() == 270)
       left30 = !left30;
 
+    if(intakeToggle){
+      intake.set(-intakeSpeed);
+    }else{
+      intake.set(0);
+    }
 
     // System.out.println(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft));
     // Intense trigger algorithms
@@ -831,38 +842,32 @@ public void autoGoAround()
     // OPERATOR CONTROLLER
     //
 
-    double operatorJoystickYLeft = -controllerdriver.getY(GenericHID.Hand.kLeft);
-    double operatorJoystickYRight = -controllerdriver.getY(GenericHID.Hand.kRight);
+    double operatorJoystickYLeft = -controlleroperator.getY(GenericHID.Hand.kLeft);
+    double operatorJoystickYRight = -controlleroperator.getY(GenericHID.Hand.kRight);
 
     // YOU WOULD SET THESE JOYSTICK VALUES TO THE WINCH MOTOR(S) IF YOU KNEW ANYTHING ABOUT THEM BUT :(
 
-    if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) > 50) // Complicated algorithm to decide if the right trigger is being held
+    if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) > 0.5) // Complicated algorithm to decide if the right trigger is being held
       shoot = true;
-    else if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) < 50)
+    else if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) < 0.5)
       shoot = false;
 
-    // if(shoot){
-    //   shoot(0);
-    // }
-
-    double intakeSpeed = 0.3;
-
-    if(controlleroperator.getAButtonPressed()){
-      intakeOnOff = !intakeOnOff;
-    }
-    if(intakeOnOff){
-      intake.set(intakeSpeed);
-    }else{
-      intake.set(0);
-    }
-
-    belt.set(operatorJoystickYRight * 0.75);
+    belt.set(ControlMode.PercentOutput, operatorJoystickYRight * 0.75);
     if(controlleroperator.getPOV() == 0){
-      shooterSpeed += 0.1;
+      shooterSpeed += 0.01;
     }else if(controlleroperator.getPOV() == 180){
-      shooterSpeed -= 0.1;
+      shooterSpeed -= 0.01;
     }
-    shooter.set(shooterSpeed);
+
+    if(shoot){
+      shoot(shooterSpeed);
+    }
+    else{
+      shoot(0);
+    }
+    // shooterD.set(-shooterSpeed);
+    // shooterP.set(shooterSpeed);
+
 
     System.out.println("Belt Speed: " + operatorJoystickYRight + " and Shooter Speed: " + shooterSpeed + " and Intake Speed " + intakeSpeed);
 
@@ -888,10 +893,10 @@ public void autoGoAround()
        double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
        double currentSpeedAvg = (leftEncoder.getRate() + rightEncoder.getRate()) / 2;
 
-      drive(driverJoystickY, driverJoystickX, false);
+      drive(-driverJoystickY * 0.25, -driverJoystickX, false);
 
       if(currentSpeedAvg > topSpeed){
-        topSpeed = currentSpeedAvg;
+        topSpeed = currentSpeedAvg * 4;
       }
       System.out.println("Top Speed: " + topSpeed);
     }
