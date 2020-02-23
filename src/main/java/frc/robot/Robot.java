@@ -149,10 +149,10 @@ public class Robot extends TimedRobot
     // BUTTON LAYOUT FOR CONTROLLERS:
     //
     // Driver:
-    //   A: Intake in Toggle
+    //   A: N/A
     //   B: N/A
     //   X: tracON/tracOFF
-    //   Y: Intake eject 
+    //   Y: N/A
     //   Left Joystick X-Axis: N/A
     //   Left Joystick Y-Axis: Forward and Backward Desired Speeds
     //   Left Joystick press: slow mode ::: TO-DO
@@ -162,10 +162,10 @@ public class Robot extends TimedRobot
     //   D-Pad Down: N/A
     //   D-Pad Left: N/A
     //   D-Pad Right: N/A
-    //   Right Trigger: N/A
-    //   Right Bumper: N/A
-    //   Left Trigger: Limelight align
-    //   Left Bumper:  N/A
+    //   Right Trigger: Run the belt forward
+    //   Right Bumper: Run the belt backward
+    //   Left Trigger: Intake In
+    //   Left Bumper: Intake Out
     //   Start Button: Break from any loop
     
     // Operator:
@@ -183,8 +183,9 @@ public class Robot extends TimedRobot
     //   D-Pad Right: adjust slightly right
     //   Right Trigger: Shoot (Until Released)
     //   Right Bumper:  Shoot reverse
-    //   Left Trigger: Belt Forward
-    //   Left Bumper: Belt backward
+    //   Left Trigger: Align
+    //   Left Bumper: N/A
+    //   Start Button: Break from any loop
 
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
@@ -934,22 +935,13 @@ public void autoGoAround()
     // Toggle Swtiches for Driver
     if(controllerdriver.getXButtonPressed())
       trac = !trac;
-    if(controllerdriver.getAButtonPressed()){
-      intakeReverseToggle = false;
-      intakeToggle = !intakeToggle;
-    }
-    if(controllerdriver.getYButtonPressed()){
-      intakeToggle = false;
-      intakeReverseToggle = !intakeReverseToggle;
-    }
 
-    if(intakeToggle){
+    if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5) // Complicated algorithm to decide if the left trigger is being held
       intake.set(-intakeSpeed);
-    }else if(intakeReverseToggle){
+    else if(controllerdriver.getBumper(GenericHID.Hand.kLeft)) // reverse
       intake.set(intakeSpeed);
-    }else{
+    else
       intake.set(0);
-    }
 
     //
     //
@@ -979,10 +971,10 @@ public void autoGoAround()
       shoot(shootRate);
     }else{ // driver can only operate the belt manually when not trying to shoot to avoid stutter
       stopShooter();
-      if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5) // Complicated algorithm to decide if the left trigger is being held
-        runBelt(true, 1);
-      else if(controllerdriver.getBumper(GenericHID.Hand.kLeft))
+      if(controllerdriver.getTriggerAxis(GenericHID.Hand.kRight) > 0.5) // Complicated algorithm to decide if the left trigger is being held
         runBelt(true, beltSpeed);
+      else if(controllerdriver.getBumper(GenericHID.Hand.kRight))
+        runBelt(true, -beltSpeed);
       else
         // belt.set(ControlMode.PercentOutput, 0);
         runBelt(false, 0);
@@ -1003,7 +995,7 @@ public void autoGoAround()
     //
     //
 
-    if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5){ // Complicated algorithm to decide if the left trigger is being held
+    if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5){ // Complicated algorithm to decide if the left trigger is being held
       align();
     }else if(controlleroperator.getPOV() == 270){
       drive(0, -0.1, false);
