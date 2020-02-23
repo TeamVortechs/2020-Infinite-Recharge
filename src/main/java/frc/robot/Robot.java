@@ -65,7 +65,8 @@ public class Robot extends TimedRobot
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private boolean align, shoot;
   private AHRS navx;
-  private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
+  private DigitalInput ballbeam1, ballbeam2;
+  private AnalogInput ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
   private Spark shooterP, shooterD, backRightS, frontRightS, backLeftS, frontLeftS, intake, colorMotor;
   private Encoder shootEncoder;
@@ -133,11 +134,11 @@ public class Robot extends TimedRobot
     navx = new AHRS(I2C.Port.kMXP);
 
     // Magazine sensors
-    ballbeam1 = new AnalogInput(0);
-    ballbeam2 = new AnalogInput(1);
-    ballbeam3 = new AnalogInput(2);
-    ballbeam4 = new AnalogInput(3);
-    ballbeam5 = new AnalogInput(4);
+    ballbeam1 = new DigitalInput(7);
+    ballbeam2 = new DigitalInput(6);
+    // ballbeam3 = new AnalogInput(2);
+    // ballbeam4 = new AnalogInput(3);
+    // ballbeam5 = new AnalogInput(4);
     // ballbeam6 = new AnalogInput(5);
     // ballbeam7 = new AnalogInput(6);
     // ballbeam8 = new AnalogInput(7);
@@ -171,7 +172,7 @@ public class Robot extends TimedRobot
     //   Start Button: Break from any loop
     
     // Operator:
-    //   A: Color Wheel Stuff ::: TO-DO
+    //   A: Color Wheel Stuff ::: TO-DO all four being left as adjustments for belt and shooter speeds for time being
     //   B: Color Wheel Stuff ::: TO-DO
     //   X: Color Wheel Stuff ::: TO-DO
     //   Y: Color Wheel Stuff ::: TO-DO
@@ -181,7 +182,7 @@ public class Robot extends TimedRobot
     //   Right Joystick Y-Axis: Right Winch Up/Down ::: TO-DO
     //   D-Pad Up: Elevator Up Toggle ::: TO-DO also wait for last 30 to be able to use
     //   D-Pad Down: Elevator Down Toggle ::: TO-DO
-    //   D-Pad Left: adjust slightly left ::: TO-DO
+    //   D-Pad Left: adjust slightly left ::: TO-DO 0.5 speed ?
     //   D-Pad Right: adjust slightly right ::: TO-DO
     //   Right Trigger: Shoot (Until Released)
     //   Right Bumper:  Shoot reverse ::: TO-DO
@@ -284,6 +285,7 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
+    System.out.println("1: " + ballbeam1.get() + " 2: " + ballbeam2.get());
     // if(isCheckingColor) 
     // {
     //   colorCheck();
@@ -588,32 +590,33 @@ public void autoGoAround()
   @Override
   public void autonomousPeriodic() 
   {
-    if(align){
-      align();
-    }
-    switch (m_autoSelected) {
-      case autoTurn90:
-        turn90();
-        break;
+    // if(align){
+    //   align();
+    // }
+    // switch (m_autoSelected) {
+    //   case autoTurn90:
+    //     turn90();
+    //     break;
 
-      case autoOutAndBack:
-        outAndBack();
-        break;
+    //   case autoOutAndBack:
+    //     outAndBack();
+    //     break;
         
-      case autoBackAndAround:
-        backAndAround();
-        break;
+    //   case autoBackAndAround:
+    //     backAndAround();
+    //     break;
 
-      case autoGo4Feet:
-      default:
-        go4Feet();
-        break;
+    //   case autoGo4Feet:
+    //   default:
+    //     go4Feet();
+    //     break;
 
-      case autoGoAround:
-        autoGoAround();
-        break;
+    //   case autoGoAround:
+    //     autoGoAround();
+    //     break;
         
-    }
+    // }
+
 
   }
 
@@ -667,9 +670,7 @@ public void autoGoAround()
     double x = tx.getDouble(0.0);
     System.out.println("x: " + x);
     if(x > -1 && x < 1){              // Dead Zone
-      controllerdriver.setRumble(RumbleType.kLeftRumble, 1);
-      controllerdriver.setRumble(RumbleType.kRightRumble, 1);
-      controlleroperator.setRumble(RumbleType.kLeftRumble, 1);
+      controlleroperator.setRumble(RumbleType.kLeftRumble, 1); // Operator gets rumble so they know to shoot
       controlleroperator.setRumble(RumbleType.kRightRumble, 1);
       return 0.0;
     }else if(x > -15 && x < -1){      // Move from left to center
@@ -681,7 +682,6 @@ public void autoGoAround()
     }else if(x > 15){
       return 0.3;
     }else{                            // If it finds nothing it won't change direction
-      System.out.println("it is nothing");
       return 0.0;
     }
   }
@@ -693,7 +693,6 @@ public void autoGoAround()
   public void align()
   {
     double autoDirection = directionToTarget();
-    System.out.println("autdir: " + autoDirection);
     drive(0, -autoDirection, false);
   }
 
@@ -904,14 +903,6 @@ public void autoGoAround()
       intake.set(0);
     }
 
-    // Intense trigger algorithms
-    if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5){ // Complicated algorithm to decide if the left trigger is being held
-      align();
-    }
-    else{
-      drive(driverJoystickY, driverJoystickX, trac); // Actually calls the driving when not aligning to avoid stutter
-    }
-
     //
     //
     //                          OPERATOR CONTROLLER
@@ -950,6 +941,24 @@ public void autoGoAround()
       shootRate += 10;
     }else if(controlleroperator.getAButtonPressed()){
       shootRate -= 10;
+    }
+
+    //
+    //              Intense drive control algorithms
+    // This bit of code basically just checks some button presses to see if anyone
+    // else is trying to do anything with the drivetrain that is more important than
+    // just manually controlling the robot, such as small adjustments in rotation or
+    // the limelight is aligning to the target.
+    //
+
+    if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5){ // Complicated algorithm to decide if the left trigger is being held
+      align();
+    }else if(controlleroperator.getPOV() == 270){
+      drive(0, -0.1, false);
+    }else if(controlleroperator.getPOV() == 90){
+      drive(0, 0.1, false);
+    }else{
+      drive(driverJoystickY, driverJoystickX, trac); // Actually calls the driving when not aligning to avoid stutter
     }
 
     // double lidarDist = lidar.getDistance();
