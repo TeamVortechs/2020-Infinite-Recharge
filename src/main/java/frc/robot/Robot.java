@@ -30,8 +30,8 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.Ultrasonic;
-// import com.ctre.phoenix.music.Orchestra;
-// import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import com.ctre.phoenix.music.Orchestra;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import java.util.ArrayList;
 
 import javax.xml.transform.Source;
@@ -100,18 +100,20 @@ public class Robot extends TimedRobot
   // private DigitalSource lidarPort = new DigitalInput(0); fix my port and all uses of lidar.
 
     /* The orchestra object that holds all the instruments */
-  // private Orchestra _orchestra;
+   private Orchestra _orchestra;
+
   //   /* Talon FXs to play music through.  
   //   More complex music MIDIs will contain several tracks, requiring multiple instruments.  */
-  // private TalonFX [] _fxes =  { new TalonFX(1), new TalonFX(2), new TalonFX(3), new TalonFX(4) };
+   private TalonFX [] _fxes =  { new TalonFX(1), new TalonFX(2), new TalonFX(3), new TalonFX(4) };
 
   //   /* An array of songs that are available to be played, can you guess the song/artists? */
-  // String song = "crabRave.chrp";
+   String song = "crabRave.chrp";
   
 
   /* A list of TalonFX's that are to be used as instruments */
 
-  // ArrayList<TalonFX> _instruments = new ArrayList<TalonFX>();
+   ArrayList<TalonFX> _instruments = new ArrayList<TalonFX>();
+
 
   /**
    * This function is run when the robot is first started up and should be
@@ -260,6 +262,9 @@ public class Robot extends TimedRobot
     //defining motor with spark
 
     /* Initialize the TalonFX's to be used */
+
+    _orchestra = new Orchestra(_instruments);
+
   }
 
   public void drive(double desiredSpeed, double direction, boolean tracON){ // Both desiredSpeed and direction should be sent as positive values as you would expect
@@ -897,11 +902,11 @@ public void autoGoAround()
 
     System.out.println("Belt Speed: " + operatorJoystickYRight + " and Shooter Speed: " + shooterSpeed + " and Intake Speed " + intakeSpeed);
 
-    // if(controllerdriver.getBButtonPressed()){
-    //   playMusic();
+    if(controllerdriver.getBButtonPressed()){
+      playMusic();
 
-    //   System.out.println("I'm playing music!");
-    // }
+      System.out.println("I'm playing music!");
+    }
   }
 
   /**
@@ -929,11 +934,11 @@ public void autoGoAround()
     }
   }
 
-  // public void playMusic(){
-  //   /* load the chirp file */
-  //   _orchestra.loadMusic(song); 
-  //   _orchestra.play();
-  //  }
+  public void playMusic(){
+    /* load the chirp file */
+    _orchestra.loadMusic(song); 
+    _orchestra.play();
+   }
    
 }
 
