@@ -55,6 +55,7 @@ public class Robot extends TimedRobot
   private static final String autoBackAndAround = "autoBackAndAround";
   private static final String autoTurn90 = "autoTurn90";
   private static final String autoGoAround = "autoGoAround";
+  private static final String autoAlignAndShoot = "autoAlignAndShoot";
 
   private double shootPower = 0.0; // Motor current shoot power (adjusted in shoot() function)
   private double shootRate = 530; // Target RPM
@@ -65,7 +66,7 @@ public class Robot extends TimedRobot
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private boolean align, shoot;
   private AHRS navx;
-  private DigitalInput ballbeam1, ballbeam2;
+  private DigitalInput firstBallSensor, topBallSensor;
   private AnalogInput ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
   private Spark shooterP, shooterD, backRightS, frontRightS, backLeftS, frontLeftS, intake, colorMotor;
@@ -89,13 +90,14 @@ public class Robot extends TimedRobot
   private int ultrasonicLPort, ultrasonicMPort, ultrasonicRPort;
   private double ultrasonicLDistance, ultrasonicMDistance, ultrasonicRDistance;
   private AnalogInput m_ultrasonicL, m_ultrasonicM, m_ultrasonicR;
-  private static final double kValueToInches = 0.125, intakeSpeed = 0.4;
+  private static final double kValueToInches = 0.125;
+  private final double intakeSpeed = 0.4;
   
   private double topSpeed = 20857, maxSpeedDiff = 0.2, minSpeedDiff = 0.2, beltSpeed = 0.9;
 
   private double leftEncoderZero, rightEncoderZero;
 
-  private boolean trac = true, intakeToggle, forward6, back6, left30, right30;
+  private boolean trac = true, intakeToggle, intakeReverseToggle;
   final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
@@ -128,22 +130,15 @@ public class Robot extends TimedRobot
     m_chooser.addOption("Back and around", autoBackAndAround);
     m_chooser.addOption("Go 4 feet", autoGo4Feet);
     m_chooser.addOption("Go Around", autoGoAround);
+    m_chooser.addOption("Auto Align and Then Shoot and Back off the Line", autoAlignAndShoot);
     SmartDashboard.putData("Auto choices", m_chooser);
 
     // NavX sensor
     navx = new AHRS(I2C.Port.kMXP);
 
     // Magazine sensors
-    ballbeam1 = new DigitalInput(7);
-    ballbeam2 = new DigitalInput(6);
-    // ballbeam3 = new AnalogInput(2);
-    // ballbeam4 = new AnalogInput(3);
-    // ballbeam5 = new AnalogInput(4);
-    // ballbeam6 = new AnalogInput(5);
-    // ballbeam7 = new AnalogInput(6);
-    // ballbeam8 = new AnalogInput(7);
-    // ballbeam9 = new AnalogInput(8);
-    // ballbeam10 = new AnalogInput(9);
+    firstBallSensor = new DigitalInput(7);
+    topBallSensor = new DigitalInput(6);
 
     // Xbox Controllers
     controllerdriver = new XboxController(0);
@@ -155,7 +150,7 @@ public class Robot extends TimedRobot
     //   A: Intake in Toggle
     //   B: N/A
     //   X: tracON/tracOFF
-    //   Y: Intake eject ::: TO-DO
+    //   Y: Intake eject 
     //   Left Joystick X-Axis: N/A
     //   Left Joystick Y-Axis: Forward and Backward Desired Speeds
     //   Left Joystick press: slow mode ::: TO-DO
@@ -182,12 +177,12 @@ public class Robot extends TimedRobot
     //   Right Joystick Y-Axis: Right Winch Up/Down ::: TO-DO
     //   D-Pad Up: Elevator Up Toggle ::: TO-DO also wait for last 30 to be able to use
     //   D-Pad Down: Elevator Down Toggle ::: TO-DO
-    //   D-Pad Left: adjust slightly left ::: TO-DO 0.5 speed ?
-    //   D-Pad Right: adjust slightly right ::: TO-DO
+    //   D-Pad Left: adjust slightly left ::: or this could adjust the limelight offset value to change the alignment for the whole match
+    //   D-Pad Right: adjust slightly right
     //   Right Trigger: Shoot (Until Released)
-    //   Right Bumper:  Shoot reverse ::: TO-DO
+    //   Right Bumper:  Shoot reverse
     //   Left Trigger: Belt Forward
-    //   Left Bumper: Belt backward ::: TO-DO
+    //   Left Bumper: Belt backward
 
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
@@ -285,7 +280,7 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
-    System.out.println("1: " + ballbeam1.get() + " 2: " + ballbeam2.get());
+    System.out.println("First: " + firstBallSensor.get() + " Top: " + topBallSensor.get());
     // if(isCheckingColor) 
     // {
     //   colorCheck();
@@ -435,6 +430,39 @@ public class Robot extends TimedRobot
         }
       case 11:
         drive(0, 0, false);//stop
+        break;
+    }
+  }
+
+  // Assumes on line pointed relatively directly at goal
+  public void autoAlignAndShoot(){
+    switch (state){
+      case 1:
+        // Theoretically all it takes to align and shoot all 5 balls in autonomous
+        double aligning = autonomousAlign();
+        if(aligning == 0.0)
+          shoot(shootRate);
+        if(Timer.getMatchTime() > 9.0)
+          state++;
+        break;
+
+      case 2:
+        shoot(0);
+        if(Timer.getMatchTime() > 11.0){
+          drive(0, 0, false);
+          navx.reset();
+          state++;
+        }else{
+          drive(-0.2, 0, false);
+        }
+        break;
+
+      case 3:
+        if(navx.getAngle() < 90){
+          drive(0, 0.2, false);
+        }else{
+          drive(0, 0, false);
+        }
         break;
     }
   }
@@ -590,34 +618,39 @@ public void autoGoAround()
   @Override
   public void autonomousPeriodic() 
   {
-    // if(align){
-    //   align();
-    // }
-    // switch (m_autoSelected) {
-    //   case autoTurn90:
-    //     turn90();
-    //     break;
+    switch (m_autoSelected) {
+      case autoTurn90:
+        turn90();
+        break;
 
-    //   case autoOutAndBack:
-    //     outAndBack();
-    //     break;
+      case autoOutAndBack:
+        outAndBack();
+        break;
         
-    //   case autoBackAndAround:
-    //     backAndAround();
-    //     break;
+      case autoBackAndAround:
+        backAndAround();
+        break;
 
-    //   case autoGo4Feet:
-    //   default:
-    //     go4Feet();
-    //     break;
+      case autoGo4Feet:
+      default:
+        go4Feet();
+        break;
 
-    //   case autoGoAround:
-    //     autoGoAround();
-    //     break;
-        
-    // }
+      case autoGoAround:
+        autoGoAround();
+        break;
+      
+      case autoAlignAndShoot:
+        autoAlignAndShoot();
+        break;
+    }
+  }
 
-
+  public double autonomousAlign()
+  {
+    double autoDirection = directionToTarget();
+    drive(0, -autoDirection, false);
+    return autoDirection;
   }
 
   //
@@ -664,36 +697,17 @@ public void autoGoAround()
     drive(power, 0, false);
   }
 
-  public double directionToTarget()
-  {
-    NetworkTableEntry tx = table.getEntry("tx");
-    double x = tx.getDouble(0.0);
-    System.out.println("x: " + x);
-    if(x > -1 && x < 1){              // Dead Zone
-      controlleroperator.setRumble(RumbleType.kLeftRumble, 1); // Operator gets rumble so they know to shoot
-      controlleroperator.setRumble(RumbleType.kRightRumble, 1);
-      return 0.0;
-    }else if(x > -15 && x < -1){      // Move from left to center
-      return -0.1;
-    }else if(x < -15){
-      return -0.3;
-    }else if(x > 1 && x < 15){        // Move from right to center
-      return 0.1;
-    }else if(x > 15){
-      return 0.3;
-    }else{                            // If it finds nothing it won't change direction
-      return 0.0;
+  // Boolean determines if belt should be running
+  public void runBelt(boolean on, double speed){
+    if(on && topBallSensor.get()){
+      belt.set(ControlMode.PercentOutput, speed);
+    }else{
+      belt.set(ControlMode.PercentOutput, speed);
     }
   }
 
   public void print(String toPrint){
     System.out.println(toPrint);
-  }
-
-  public void align()
-  {
-    double autoDirection = directionToTarget();
-    drive(0, -autoDirection, false);
   }
 
   public void getDistances() 
@@ -794,6 +808,39 @@ public void autoGoAround()
 
   //
   //
+  //                  AUTO ALIGNING CODE
+  //
+  //
+
+  public double directionToTarget()
+  {
+    NetworkTableEntry tx = table.getEntry("tx");
+    double x = tx.getDouble(0.0);
+    if(x > -1 && x < 1){              // Dead Zone
+      controlleroperator.setRumble(RumbleType.kLeftRumble, 1); // Operator gets rumble so they know to shoot
+      controlleroperator.setRumble(RumbleType.kRightRumble, 1);
+      return 0.0;
+    }else if(x > -15 && x < -1){      // Move from left to center
+      return -0.1;
+    }else if(x < -15){
+      return -0.3;
+    }else if(x > 1 && x < 15){        // Move from right to center
+      return 0.1;
+    }else if(x > 15){
+      return 0.3;
+    }else{                            // If it finds nothing it won't change direction
+      return 0.0;
+    }
+  }
+
+  public void align()
+  {
+    double autoDirection = directionToTarget();
+    drive(0, -autoDirection, false);
+  }
+
+  //
+  //
   //                      DRIVE CODE
   //
   //
@@ -839,27 +886,15 @@ public void autoGoAround()
     if(targetRate == 0)
       shootPower = 0;
     if(rate < (targetRate + 15) && rate > (targetRate - 15)){
-      belt.set(ControlMode.PercentOutput, 0.9);
-      controllerdriver.setRumble(RumbleType.kLeftRumble, 1);
-      controllerdriver.setRumble(RumbleType.kRightRumble, 1);
-      controlleroperator.setRumble(RumbleType.kLeftRumble, 1);
-      controlleroperator.setRumble(RumbleType.kRightRumble, 1);
+      belt.set(ControlMode.PercentOutput, beltSpeed);
     }else{
       belt.set(ControlMode.PercentOutput, 0.0);
-      controllerdriver.setRumble(RumbleType.kLeftRumble, 0);
-      controllerdriver.setRumble(RumbleType.kRightRumble, 0);
-      controlleroperator.setRumble(RumbleType.kLeftRumble, 0);
-      controlleroperator.setRumble(RumbleType.kRightRumble, 0);
     }
     shooterD.set(shootPower);
     shooterP.set(shootPower);
   }
 
   public void stopShooter(){
-    controllerdriver.setRumble(RumbleType.kLeftRumble, 0);
-    controllerdriver.setRumble(RumbleType.kRightRumble, 0);
-    controlleroperator.setRumble(RumbleType.kLeftRumble, 0);
-    controlleroperator.setRumble(RumbleType.kRightRumble, 0);
     shooterD.set(0);
     shooterP.set(0);
   }
@@ -879,7 +914,7 @@ public void autoGoAround()
 
     //
     //
-    //                DRIVER CONTROLLER CODE
+    //                      DRIVER CONTROLLER CODE
     //
     //
 
@@ -894,18 +929,26 @@ public void autoGoAround()
     // Toggle Swtiches for Driver
     if(controllerdriver.getXButtonPressed())
       trac = !trac;
-    if(controllerdriver.getAButtonPressed())
+    if(controllerdriver.getAButtonPressed()){
+      intakeReverseToggle = false;
       intakeToggle = !intakeToggle;
+    }
+    if(controllerdriver.getYButtonPressed()){
+      intakeToggle = false;
+      intakeReverseToggle = !intakeReverseToggle;
+    }
 
     if(intakeToggle){
       intake.set(-intakeSpeed);
+    }else if(intakeReverseToggle){
+      intake.set(intakeSpeed);
     }else{
       intake.set(0);
     }
 
     //
     //
-    //                          OPERATOR CONTROLLER
+    //                       OPERATOR CONTROLLER
     //
     //
 
@@ -918,23 +961,26 @@ public void autoGoAround()
       beltSpeed -= 0.1;
     }
 
-    if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) > 0.5) // Complicated algorithm to decide if the right trigger is being held
+    if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) > 0.5){ // Complicated algorithm to decide if the right trigger is being held
       shoot = true;
-    else if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) < 0.5)
+    }else if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) < 0.5){
       shoot = false;
-
+    }
     if(lidar.getDistance() < 250){
       shoot = false;
     }
 
     if(shoot){
       shoot(shootRate);
-    }else{ // Can only operate the belt manually when not trying to shoot to avoid stutter
+    }else{ // driver can only operate the belt manually when not trying to shoot to avoid stutter
       stopShooter();
-      if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5) // Complicated algorithm to decide if the left trigger is being held
-        belt.set(ControlMode.PercentOutput, beltSpeed);
-      else if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) < 0.5)
-        belt.set(ControlMode.PercentOutput, 0);
+      if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5) // Complicated algorithm to decide if the left trigger is being held
+        runBelt(true, 1);
+      else if(controllerdriver.getBumper(GenericHID.Hand.kLeft))
+        runBelt(true, beltSpeed);
+      else
+        // belt.set(ControlMode.PercentOutput, 0);
+        runBelt(false, 0);
     }
 
     if(controlleroperator.getYButtonPressed()){
@@ -944,11 +990,12 @@ public void autoGoAround()
     }
 
     //
-    //              Intense drive control algorithms
+    //                Intense Drive Control Algorithms
     // This bit of code basically just checks some button presses to see if anyone
     // else is trying to do anything with the drivetrain that is more important than
     // just manually controlling the robot, such as small adjustments in rotation or
     // the limelight is aligning to the target.
+    //
     //
 
     if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5){ // Complicated algorithm to decide if the left trigger is being held
