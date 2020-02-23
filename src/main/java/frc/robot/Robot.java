@@ -352,30 +352,35 @@ public class Robot extends TimedRobot
     NetworkTableEntry tx = table.getEntry("tx");
     double x = tx.getDouble(0.0);
     System.out.println("x: " + x);
-    if(x > -3 && x < 3){              // Dead Zone
-      // controllerdriver.setRumble(RumbleType.kLeftRumble, 1);
-      // controllerdriver.setRumble(RumbleType.kRightRumble, 1);
-      // controlleroperator.setRumble(RumbleType.kLeftRumble, 1);
-      // controlleroperator.setRumble(RumbleType.kRightRumble, 1);
+    if(x > -1 && x < 1){              // Dead Zone
+      controllerdriver.setRumble(RumbleType.kLeftRumble, 1);
+      controllerdriver.setRumble(RumbleType.kRightRumble, 1);
+      controlleroperator.setRumble(RumbleType.kLeftRumble, 1);
+      controlleroperator.setRumble(RumbleType.kRightRumble, 1);
       return 0.0;
-    }else if(x > -15 && x < -3){      // Move from left to center
-      return -0.3;
+    }else if(x > -15 && x < -1){      // Move from left to center
+      return -0.1;
     }else if(x < -15){
-      return -0.5;
-    }else if(x > 3 && x < 15){        // Move from right to center
-      return 0.3;
+      return -0.3;
+    }else if(x > 1 && x < 15){        // Move from right to center
+      return 0.1;
     }else if(x > 15){
-      return 0.5;
+      return 0.3;
     }else{                            // If it finds nothing it won't change direction
       System.out.println("it is nothing");
       return 0.0;
     }
   }
 
+  public void print(String toPrint){
+    System.out.println(toPrint);
+  }
+
   public void align()
   {
     double autoDirection = directionToTarget();
-    drive(0, autoDirection, false);
+    System.out.println("autdir: " + autoDirection);
+    drive(0, -autoDirection, false);
   }
 
   public void approach()
@@ -882,13 +887,13 @@ public void autoGoAround()
       intake.set(0);
     }
 
-    // System.out.println(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft));
     // Intense trigger algorithms
-    if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5) // Complicated algorithm to decide if the left trigger is being held
-      System.out.println("alinging");
+    if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5){ // Complicated algorithm to decide if the left trigger is being held
       align();
-
-    drive(driverJoystickY, driverJoystickX, trac); // Actually calls the driving
+    }
+    else{
+      drive(driverJoystickY, driverJoystickX, trac); // Actually calls the driving when not aligning to avoid stutter
+    }
 
     //
     // OPERATOR CONTROLLER
@@ -910,13 +915,13 @@ public void autoGoAround()
     else if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) < 0.5)
       shoot = false;
 
-    // if(lidar.getDistance() < 250){
-    //   shoot = false;
-    // }
+    if(lidar.getDistance() < 250){
+      shoot = false;
+    }
 
     if(shoot){
       shoot(shootRate);
-    }else{
+    }else{ // Can only operate the belt manually when not trying to shoot to avoid stutter
       stopShooter();
       if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5) // Complicated algorithm to decide if the left trigger is being held
         belt.set(ControlMode.PercentOutput, beltSpeed);
@@ -930,12 +935,8 @@ public void autoGoAround()
       shootRate -= 10;
     }
 
-    double lidarDist = lidar.getDistance();
-
-    // shooterD.set(-shooterSpeed);
-    // shooterP.set(shooterSpeed);
-
-    System.out.println("Shooter Power: " + shootPower + " and Lidar Dist: " + lidarDist + " and Belt Speed: " + beltSpeed + " Shoot Rate: " + shootEncoder.getRate());
+    // double lidarDist = lidar.getDistance();
+    //System.out.println("Shooter Power: " + shootPower + " and Lidar Dist: " + lidarDist + " and Belt Speed: " + beltSpeed + " Shoot Rate: " + shootEncoder.getRate());
 
     // if(controllerdriver.getBButtonPressed()){
     //   playMusic();
