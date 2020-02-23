@@ -152,37 +152,42 @@ public class Robot extends TimedRobot
     // BUTTON LAYOUT FOR CONTROLLERS:
     //
     // Driver:
-    //   A: Intake Toggle ::: TO-DO
+    //   A: Intake in Toggle
     //   B: N/A
     //   X: tracON/tracOFF
-    //   Y: N/A
+    //   Y: Intake eject ::: TO-DO
     //   Left Joystick X-Axis: N/A
     //   Left Joystick Y-Axis: Forward and Backward Desired Speeds
+    //   Left Joystick press: slow mode ::: TO-DO
     //   Right Joystick X-Axis: Direction
     //   Right Joystick Y-Axis: N/A
-    //   D-Pad Up: Move forward 6 inches ::: TO-DO
-    //   D-Pad Down: Move backward 6 inches ::: TO-DO
-    //   D-Pad Left: Rotate -30 degrees ::: TO-DO
-    //   D-Pad Right: Rotate +30 degrees ::: TO-DO
+    //   D-Pad Up: N/A
+    //   D-Pad Down: N/A
+    //   D-Pad Left: N/A
+    //   D-Pad Right: N/A
     //   Right Trigger: N/A
-    //   Left Trigger: Limelight align and LIDAR approach ::: TO-DO
+    //   Right Bumper: N/A
+    //   Left Trigger: Limelight align
+    //   Left Bumper:  N/A
     //   Start Button: Break from any loop
     
     // Operator:
-    //   A: Start Color Wheel Turning (Toggle) ::: TO-DO
-    //   B: N/A
-    //   X: N/A
-    //   Y: N/A
+    //   A: Color Wheel Stuff ::: TO-DO
+    //   B: Color Wheel Stuff ::: TO-DO
+    //   X: Color Wheel Stuff ::: TO-DO
+    //   Y: Color Wheel Stuff ::: TO-DO
     //   Left Joystick X-Axis: N/A
     //   Left Joystick Y-Axis: Left Winch Up/Down ::: TO-DO
     //   Right Joystick X-Axis: N/A
     //   Right Joystick Y-Axis: Right Winch Up/Down ::: TO-DO
     //   D-Pad Up: Elevator Up Toggle ::: TO-DO also wait for last 30 to be able to use
     //   D-Pad Down: Elevator Down Toggle ::: TO-DO
-    //   D-Pad Left: Color Wheel Left One (1) Color ::: TO-DO
-    //   D-Pad Right: Color Wheel Right One (1) Color ::: TO-DO
-    //   Right Trigger: Shoot (Until Released) ::: TO-DO
-    //   Left Trigger: N/A
+    //   D-Pad Left: adjust slightly left ::: TO-DO
+    //   D-Pad Right: adjust slightly right ::: TO-DO
+    //   Right Trigger: Shoot (Until Released)
+    //   Right Bumper:  Shoot reverse ::: TO-DO
+    //   Left Trigger: Belt Forward
+    //   Left Bumper: Belt backward ::: TO-DO
 
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
