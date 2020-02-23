@@ -57,17 +57,19 @@ public class Robot extends TimedRobot
   private static final String autoGoAround = "autoGoAround";
 
   private static final double shootDistance = 30.0;
-  private static final double shootSpeed = 0.5;
+  private double shootPower = 0.0; // Motor current shoot power (adjusted in shoot() function)
+  private double shootRate = 530; // Target RPM
+  private static final double ticksPerInch = 1075.65;
   private double lidarDist, area, offsetAngle;
 
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
-  private boolean align, approach, shoot;
+  private boolean align, approach, shoot, beltToggle;
   private AHRS navx;
   private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
   private Spark shooterP, shooterD, backRightS, frontRightS, backLeftS, frontLeftS, intake, colorMotor;
-  //private Encoder leftEncoder, rightEncoder;
+  private Encoder shootEncoder;
   private NetworkTable table;
   private NetworkTableEntry ta;
   private TalonFX belt, backRightT, frontRightT, backLeftT, frontLeftT;
@@ -81,7 +83,7 @@ public class Robot extends TimedRobot
   private final Color kGreenTarget = ColorMatch.makeColor(0.197, 0.561, 0.240);
   private final Color kRedTarget = ColorMatch.makeColor(0.561, 0.232, 0.114);
   private final Color kYellowTarget = ColorMatch.makeColor(0.361, 0.524, 0.113);
-  private boolean isCheckingColor, isSpinningToSpecific, isSpinningMult, hasSeenColor; //color logic
+  private boolean beltOn, isCheckingColor, isSpinningToSpecific, isSpinningMult, hasSeenColor; //color logic
   private int totalSpins;
   private String requiredColor;
   private int ultrasonicLPort, ultrasonicMPort, ultrasonicRPort;
@@ -89,7 +91,7 @@ public class Robot extends TimedRobot
   private AnalogInput m_ultrasonicL, m_ultrasonicM, m_ultrasonicR;
   private static final double kValueToInches = 0.125, intakeSpeed = 0.4;
   
-  private double topSpeed = 20857, maxSpeedDiff = 0.2, minSpeedDiff = 0.3, shooterSpeed = 0.3;
+  private double topSpeed = 20857, maxSpeedDiff = 0.2, minSpeedDiff = 0.2, beltSpeed = 0.9;
 
   private double leftEncoderZero, rightEncoderZero;
 
@@ -97,7 +99,7 @@ public class Robot extends TimedRobot
   final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
-  // private DigitalSource lidarPort = new DigitalInput(0); fix my port and all uses of lidar.
+  private DigitalSource lidarPort = new DigitalInput(4); // fix my port and all uses of lidar.
 
     /* The orchestra object that holds all the instruments */
    private Orchestra _orchestra;
@@ -152,37 +154,42 @@ public class Robot extends TimedRobot
     // BUTTON LAYOUT FOR CONTROLLERS:
     //
     // Driver:
-    //   A: Intake Toggle ::: TO-DO
+    //   A: Intake in Toggle
     //   B: N/A
     //   X: tracON/tracOFF
-    //   Y: N/A
+    //   Y: Intake eject ::: TO-DO
     //   Left Joystick X-Axis: N/A
     //   Left Joystick Y-Axis: Forward and Backward Desired Speeds
+    //   Left Joystick press: slow mode ::: TO-DO
     //   Right Joystick X-Axis: Direction
     //   Right Joystick Y-Axis: N/A
-    //   D-Pad Up: Move forward 6 inches ::: TO-DO
-    //   D-Pad Down: Move backward 6 inches ::: TO-DO
-    //   D-Pad Left: Rotate -30 degrees ::: TO-DO
-    //   D-Pad Right: Rotate +30 degrees ::: TO-DO
+    //   D-Pad Up: N/A
+    //   D-Pad Down: N/A
+    //   D-Pad Left: N/A
+    //   D-Pad Right: N/A
     //   Right Trigger: N/A
-    //   Left Trigger: Limelight align and LIDAR approach ::: TO-DO
+    //   Right Bumper: N/A
+    //   Left Trigger: Limelight align
+    //   Left Bumper:  N/A
     //   Start Button: Break from any loop
     
     // Operator:
-    //   A: Start Color Wheel Turning (Toggle) ::: TO-DO
-    //   B: N/A
-    //   X: N/A
-    //   Y: N/A
+    //   A: Color Wheel Stuff ::: TO-DO
+    //   B: Color Wheel Stuff ::: TO-DO
+    //   X: Color Wheel Stuff ::: TO-DO
+    //   Y: Color Wheel Stuff ::: TO-DO
     //   Left Joystick X-Axis: N/A
     //   Left Joystick Y-Axis: Left Winch Up/Down ::: TO-DO
     //   Right Joystick X-Axis: N/A
     //   Right Joystick Y-Axis: Right Winch Up/Down ::: TO-DO
     //   D-Pad Up: Elevator Up Toggle ::: TO-DO also wait for last 30 to be able to use
     //   D-Pad Down: Elevator Down Toggle ::: TO-DO
-    //   D-Pad Left: Color Wheel Left One (1) Color ::: TO-DO
-    //   D-Pad Right: Color Wheel Right One (1) Color ::: TO-DO
-    //   Right Trigger: Shoot (Until Released) ::: TO-DO
-    //   Left Trigger: N/A
+    //   D-Pad Left: adjust slightly left ::: TO-DO
+    //   D-Pad Right: adjust slightly right ::: TO-DO
+    //   Right Trigger: Shoot (Until Released)
+    //   Right Bumper:  Shoot reverse ::: TO-DO
+    //   Left Trigger: Belt Forward
+    //   Left Bumper: Belt backward ::: TO-DO
 
     // Drive motors
     if(driveWheelsAreTalonsAndNotSparks){
@@ -207,15 +214,15 @@ public class Robot extends TimedRobot
     //   frontRightS.set(0);
     }
 
-    // leftEncoder = new Encoder(5, 6, true, Encoder.EncodingType.k2X);
+    shootEncoder = new Encoder(2, 3, true, Encoder.EncodingType.k2X); // ideal for 0.7 is +530
     // rightEncoder = new Encoder(3, 4, false, Encoder.EncodingType.k2X);
     // leftEncoder.setDistancePerPulse(5.3/256);
     // rightEncoder.setDistancePerPulse(5.3/256);
 
     table = NetworkTableInstance.getDefault().getTable("limelight");
 
-    // lidar = new pulsedLightLIDAR(lidarPort);
-    // lidar.getDistance();
+    lidar = new pulsedLightLIDAR(lidarPort);
+    lidar.getDistance();
 
     align = false;
     approach = false;
@@ -321,7 +328,7 @@ public class Robot extends TimedRobot
     rightEncoderZero = backRightT.getSelectedSensorPosition();
   }
 
-  //takes average of the encoder values
+  //takes average of the encoder values in inches
   public double getDriveDistance() 
   {
     return (getLeftDriveDistance() + getRightDriveDistance())/2;
@@ -333,42 +340,44 @@ public class Robot extends TimedRobot
     return (backLeftT.getSelectedSensorVelocity() + backRightT.getSelectedSensorVelocity())/2;
   }
 
-  //takes the left encoder value
+  //takes the left encoder value and returns distance in inches
   public double getLeftDriveDistance() 
   {
-    return backLeftT.getSelectedSensorPosition() - leftEncoderZero;
+    return (backLeftT.getSelectedSensorPosition() - leftEncoderZero) / ticksPerInch;
   }
 
-  //takes the right encoder value
+  //takes the right encoder value and returns distance in inches
   public double getRightDriveDistance() 
   {
-    return backRightT.getSelectedSensorPosition() - rightEncoderZero;
+    return (backRightT.getSelectedSensorPosition() - rightEncoderZero) / ticksPerInch;
   }
 
   public void goStraight(double power)
   {
-    drive(power, -0.15, false);
+    drive(power, 0, false);
   }
 
   public double directionToTarget()
   {
     NetworkTableEntry tx = table.getEntry("tx");
     double x = tx.getDouble(0.0);
+    System.out.println("x: " + x);
     if(x > -3 && x < 3){              // Dead Zone
-      controllerdriver.setRumble(RumbleType.kLeftRumble, 1);
-      controllerdriver.setRumble(RumbleType.kRightRumble, 1);
-      controlleroperator.setRumble(RumbleType.kLeftRumble, 1);
-      controlleroperator.setRumble(RumbleType.kRightRumble, 1);
+      // controllerdriver.setRumble(RumbleType.kLeftRumble, 1);
+      // controllerdriver.setRumble(RumbleType.kRightRumble, 1);
+      // controlleroperator.setRumble(RumbleType.kLeftRumble, 1);
+      // controlleroperator.setRumble(RumbleType.kRightRumble, 1);
       return 0.0;
     }else if(x > -15 && x < -3){      // Move from left to center
-      return -0.5;
+      return -0.3;
     }else if(x < -15){
-      return -0.8;
+      return -0.5;
     }else if(x > 3 && x < 15){        // Move from right to center
-      return 0.5;
+      return 0.3;
     }else if(x > 15){
-      return 0.8;
+      return 0.5;
     }else{                            // If it finds nothing it won't change direction
+      System.out.println("it is nothing");
       return 0.0;
     }
   }
@@ -376,8 +385,7 @@ public class Robot extends TimedRobot
   public void align()
   {
     double autoDirection = directionToTarget();
-    if(autoDirection != 0)
-      drive(0, -autoDirection, false);
+    drive(0, autoDirection, false);
   }
 
   public void approach()
@@ -385,15 +393,38 @@ public class Robot extends TimedRobot
     // Do later bc no sensor :(
   }
 
-  public void shoot(double fixthislater)
+  public void shoot(double targetRate)
   {
-    //double lidarDist = lidar.getDistance();
-    shooterD.set(fixthislater);
-    shooterP.set(fixthislater);
-
+    double rate = shootEncoder.getRate();
+    double speedChange = (targetRate - rate) * 0.0001;
+    shootPower += speedChange;
+    shootPower = Math.max(0.3, Math.min(0.8, shootPower));
+    if(targetRate == 0)
+      shootPower = 0;
+    if(rate < (targetRate + 15) && rate > (targetRate - 15)){
+      belt.set(ControlMode.PercentOutput, 0.9);
+      controllerdriver.setRumble(RumbleType.kLeftRumble, 1);
+      controllerdriver.setRumble(RumbleType.kRightRumble, 1);
+      controlleroperator.setRumble(RumbleType.kLeftRumble, 1);
+      controlleroperator.setRumble(RumbleType.kRightRumble, 1);
+    }else{
+      belt.set(ControlMode.PercentOutput, 0.0);
+      controllerdriver.setRumble(RumbleType.kLeftRumble, 0);
+      controllerdriver.setRumble(RumbleType.kRightRumble, 0);
+      controlleroperator.setRumble(RumbleType.kLeftRumble, 0);
+      controlleroperator.setRumble(RumbleType.kRightRumble, 0);
+    }
+    shooterD.set(shootPower);
+    shooterP.set(shootPower);
   }
-  public void print(String toPrint){
-    System.out.println(toPrint);
+
+  public void stopShooter(){
+    controllerdriver.setRumble(RumbleType.kLeftRumble, 0);
+    controllerdriver.setRumble(RumbleType.kRightRumble, 0);
+    controlleroperator.setRumble(RumbleType.kLeftRumble, 0);
+    controlleroperator.setRumble(RumbleType.kRightRumble, 0);
+    shooterD.set(0);
+    shooterP.set(0);
   }
   
   /**
@@ -415,7 +446,7 @@ public class Robot extends TimedRobot
 
   public void getDistances() 
   {
-    // lidarDist = lidar.getDistance();
+    lidarDist = lidar.getDistance();
     ta = table.getEntry("ta");
     area = ta.getDouble(0.0);
     ultrasonicLDistance = m_ultrasonicL.getValue() * kValueToInches;
@@ -525,6 +556,11 @@ public class Robot extends TimedRobot
     timer.start();
     navx.reset();
 
+    // backLeftT.enableBrakeMode(true);
+    // frontLeftT.enableBrakeMode(true);
+    // backRightT.set(ControlMode.PercentOutput, rightSpeedFinal);
+    // frontRightT.set(ControlMode.PercentOutput, rightSpeedFinal);
+
     resetDistance();
   }
   //used if no positioning required (variables can change if you want)
@@ -535,7 +571,7 @@ public class Robot extends TimedRobot
         align = true;//sweetspot
         break;
       case 2:
-        shoot(0);//shoot
+        shoot(shootRate);//shoot
         break;
       case 3:
         drive(0.5, -0.5, false);//turn toward wall
@@ -604,7 +640,7 @@ public class Robot extends TimedRobot
         align = true;
         break;
       case 6:
-        shoot(0);
+        shoot(shootRate);
         break;
       case 7:
         drive(0.5, -0.5, false);
@@ -655,14 +691,14 @@ public class Robot extends TimedRobot
      switch (state) {
        case 1:
          // Go forward 36"
-         goStraight(0.5);
+         goStraight(0.1);
          if (getDriveDistance()  >= 36)
            state++;
          break;
  
        case 2:
          // Turn 180 degrees
-         drive(0.0, -0.5, false);
+         drive(0.0, -0.1, false);
          if (navx.getAngle() >= 170) {
           resetDistance();
            state++;
@@ -671,7 +707,7 @@ public class Robot extends TimedRobot
  
        case 3:
          // Go forward 36" again (return)
-         goStraight(0.5);
+         goStraight(0.1);
          if (getDriveDistance()  >= 36) {
            navx.reset();
            state++;
@@ -680,7 +716,7 @@ public class Robot extends TimedRobot
  
        case 4:
          // Turns itself 180 degrees
-         drive(0.0, -0.5, false);
+         drive(0.0, -0.1, false);
          if (navx.getAngle() >= 170)
            state++;
            break;
@@ -733,7 +769,7 @@ public class Robot extends TimedRobot
   {
     System.out.println("Left: " + getLeftDriveDistance() + " Right: " + getRightDriveDistance());
     if (getDriveDistance()  < 48)
-      drive(0.3, 0.0, false);
+      drive(0.1, 0.0, false);
     else
       drive(0, 0, false);
   }
@@ -792,29 +828,29 @@ public void autoGoAround()
     if(align){
       align();
     }
-    // switch (m_autoSelected) {
-    //   case autoTurn90:
-    //     turn90();
-    //     break;
+    switch (m_autoSelected) {
+      case autoTurn90:
+        turn90();
+        break;
 
-    //   case autoOutAndBack:
-    //     outAndBack();
-    //     break;
+      case autoOutAndBack:
+        outAndBack();
+        break;
         
-    //   case autoBackAndAround:
-    //     backAndAround();
-    //     break;
+      case autoBackAndAround:
+        backAndAround();
+        break;
 
-    //   case autoGo4Feet:
-    //   default:
-    //     go4Feet();
-    //     break;
+      case autoGo4Feet:
+      default:
+        go4Feet();
+        break;
 
-    //   case autoGoAround:
-    //     autoGoAround();
-    //     break;
+      case autoGoAround:
+        autoGoAround();
+        break;
         
-    // }
+    }
 
   }
   /**
@@ -829,7 +865,7 @@ public void autoGoAround()
     //
 
     double driverJoystickY = -controllerdriver.getY(GenericHID.Hand.kLeft);
-    double driverJoystickX = -controllerdriver.getX(GenericHID.Hand.kRight);
+    double driverJoystickX = -controllerdriver.getX(GenericHID.Hand.kRight) * 0.5;
     if (Math.abs(driverJoystickY) < 0.1) // Zero joysticks
       driverJoystickY = 0;
     
@@ -859,13 +895,8 @@ public void autoGoAround()
     // System.out.println(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft));
     // Intense trigger algorithms
     if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5) // Complicated algorithm to decide if the left trigger is being held
-      align = true;
-    else if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) < 0.5)
-      align = false;
-    
-    if(align){
+      System.out.println("alinging");
       align();
-    }
 
     drive(driverJoystickY, driverJoystickX, trac); // Actually calls the driving
 
@@ -878,29 +909,43 @@ public void autoGoAround()
 
     // YOU WOULD SET THESE JOYSTICK VALUES TO THE WINCH MOTOR(S) IF YOU KNEW ANYTHING ABOUT THEM BUT :(
 
+    if(controlleroperator.getBButtonPressed()){
+      beltSpeed += 0.1;
+    }else if(controlleroperator.getXButtonPressed()){
+      beltSpeed -= 0.1;
+    }
+
     if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) > 0.5) // Complicated algorithm to decide if the right trigger is being held
       shoot = true;
     else if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) < 0.5)
       shoot = false;
 
-    belt.set(ControlMode.PercentOutput, operatorJoystickYRight * 0.75);
-    if(controlleroperator.getPOV() == 0){
-      shooterSpeed += 0.01;
-    }else if(controlleroperator.getPOV() == 180){
-      shooterSpeed -= 0.01;
-    }
+    // if(lidar.getDistance() < 250){
+    //   shoot = false;
+    // }
 
     if(shoot){
-      shoot(shooterSpeed);
+      shoot(shootRate);
+    }else{
+      stopShooter();
+      if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5) // Complicated algorithm to decide if the left trigger is being held
+        belt.set(ControlMode.PercentOutput, beltSpeed);
+      else if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) < 0.5)
+        belt.set(ControlMode.PercentOutput, 0);
     }
-    else{
-      shoot(0);
+
+    if(controlleroperator.getYButtonPressed()){
+      shootRate += 10;
+    }else if(controlleroperator.getAButtonPressed()){
+      shootRate -= 10;
     }
+
+    double lidarDist = lidar.getDistance();
+
     // shooterD.set(-shooterSpeed);
     // shooterP.set(shooterSpeed);
 
-
-    System.out.println("Belt Speed: " + operatorJoystickYRight + " and Shooter Speed: " + shooterSpeed + " and Intake Speed " + intakeSpeed);
+    System.out.println("Shooter Power: " + shootPower + " and Lidar Dist: " + lidarDist + " and Belt Speed: " + beltSpeed + " Shoot Rate: " + shootEncoder.getRate());
 
     if(controllerdriver.getBButtonPressed()){
       playMusic();
@@ -925,7 +970,7 @@ public void autoGoAround()
        double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
        double currentSpeedAvg = getDriveSpeed();
 
-      drive(-driverJoystickY, 0, false);
+      drive(0, 0, false);
 
       if(currentSpeedAvg > topSpeed){
         topSpeed = currentSpeedAvg;
