@@ -30,7 +30,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.Ultrasonic;
-import com.ctre.phoenix.music.Orchestra;
+//import com.ctre.phoenix.music.Orchestra;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import java.util.ArrayList;
 
@@ -71,7 +71,7 @@ public class Robot extends TimedRobot
   private XboxController controllerdriver, controlleroperator;
   private Spark shooterP, shooterD, backRightS, frontRightS, backLeftS, frontLeftS, intake, colorMotor;
   private Encoder shootEncoder;
-  private NetworkTable table;
+  private NetworkTable limelightTop, limelightBottom;
   private NetworkTableEntry ta;
   private TalonFX belt, backRightT, frontRightT, backLeftT, frontLeftT;
   private Timer timer;
@@ -93,30 +93,31 @@ public class Robot extends TimedRobot
   private static final double kValueToInches = 0.125;
   private final double intakeSpeed = 0.4;
   
-  private double topSpeed = 20857, maxSpeedDiff = 0.2, minSpeedDiff = 0.2, beltSpeed = 0.9;
+  private double topSpeed = 20857, maxSpeedDiff = 0.1, minSpeedDiff = 0.1, beltSpeed = -0.7, LLOffset = 2.5;
 
   private double leftEncoderZero, rightEncoderZero;
+  private double bottomLLOffset, topLLOffset;
 
-  private boolean trac = true, intakeToggle, intakeReverseToggle;
+  private boolean trac = false, intakeToggle, intakeReverseToggle;
   final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
-  private DigitalSource lidarPort = new DigitalInput(4); // fix my port and all uses of lidar.
+  private DigitalSource lidarPort = new DigitalInput(9); // fix my port and all uses of lidar.
 
     /* The orchestra object that holds all the instruments */
-   private Orchestra _orchestra;
+   //private Orchestra _orchestra;
 
   //   /* Talon FXs to play music through.  
   //   More complex music MIDIs will contain several tracks, requiring multiple instruments.  */
-   private TalonFX [] _fxes =  { new TalonFX(1), new TalonFX(2), new TalonFX(3), new TalonFX(4) };
+  //  private TalonFX [] _fxes =  { new TalonFX(1), new TalonFX(2), new TalonFX(3), new TalonFX(4) };
 
   //   /* An array of songs that are available to be played, can you guess the song/artists? */
-   String song = "crabRave.chrp";
+   //String song = "crabRave.chrp";
   
 
   /* A list of TalonFX's that are to be used as instruments */
 
-   ArrayList<TalonFX> _instruments = new ArrayList<TalonFX>();
+   //ArrayList<TalonFX> _instruments = new ArrayList<TalonFX>();
 
 
   /**
@@ -140,7 +141,7 @@ public class Robot extends TimedRobot
 
     // Magazine sensors
     firstBallSensor = new DigitalInput(7);
-    topBallSensor = new DigitalInput(6);
+    topBallSensor = new DigitalInput(4);
 
     // Xbox Controllers
     controllerdriver = new XboxController(0);
@@ -215,7 +216,8 @@ public class Robot extends TimedRobot
     // leftEncoder.setDistancePerPulse(5.3/256);
     // rightEncoder.setDistancePerPulse(5.3/256);
 
-    table = NetworkTableInstance.getDefault().getTable("limelight");
+    limelightTop = NetworkTableInstance.getDefault().getTable("limelight-top");
+    limelightBottom = NetworkTableInstance.getDefault().getTable("limelight-bottom");
 
     lidar = new pulsedLightLIDAR(lidarPort);
     lidar.getDistance();
@@ -265,7 +267,7 @@ public class Robot extends TimedRobot
 
     /* Initialize the TalonFX's to be used */
 
-    _orchestra = new Orchestra(_instruments);
+    // _orchestra = new Orchestra(_instruments);
 
   }
 
@@ -286,7 +288,6 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
-    System.out.println("First: " + firstBallSensor.get() + " Top: " + topBallSensor.get());
     // if(isCheckingColor) 
     // {
     //   colorCheck();
@@ -447,14 +448,20 @@ public class Robot extends TimedRobot
         // Theoretically all it takes to align and shoot all 5 balls in autonomous
         double aligning = autonomousAlign();
         if(aligning == 0.0)
-          shoot(shootRate);
-        if(Timer.getMatchTime() > 9.0)
           state++;
         break;
 
       case 2:
+        shoot(shootRate);
+        if(Timer.getMatchTime() < 10.0){
+          shoot(0);
+          state++;
+        }
+        break;
+
+      case 3:
         shoot(0);
-        if(Timer.getMatchTime() > 11.0){
+        if(getDriveDistance() < -23){
           drive(0, 0, false);
           navx.reset();
           state++;
@@ -463,13 +470,46 @@ public class Robot extends TimedRobot
         }
         break;
 
-      case 3:
-        if(navx.getAngle() < 90){
-          drive(0, 0.2, false);
-        }else{
-          drive(0, 0, false);
-        }
-        break;
+      // case 4:
+      //   if(navx.getAngle() > -90){
+      //     drive(0, 0.2, false);
+      //   }else{
+      //     drive(0, 0, false);
+      //     resetDistance();
+      //     state++;
+      //   }
+      //   break;
+
+      // case 5:
+      //   if(getDriveDistance() < 24){
+      //     intake.set(-intakeSpeed);
+      //     runBelt(true, 0.6);
+      //     drive(0.2, 0.0, false);
+      //   }else{
+      //     drive(0, 0, false);
+      //     state++;
+      //   }
+      // break;
+
+      // case 6:
+      //   if(navx.getAngle() > -180){
+      //     drive(0, -0.2, false);
+      //   }else{
+      //     drive(0, 0, false);
+      //     state++;
+      //   }
+      // break;
+
+      // case 7:
+      //   if(Timer.getMatchTime() > 1){// my auto
+      //     drive(0.2, directionToBalls(), false);
+      //   }else{
+      //     drive(0, 0, false);
+      //     intake.set(0);
+      //     runBelt(false, 0);
+      //     state++;
+      //   }
+      // break;
     }
   }
 
@@ -652,13 +692,6 @@ public void autoGoAround()
     }
   }
 
-  public double autonomousAlign()
-  {
-    double autoDirection = directionToTarget();
-    drive(0, -autoDirection, false);
-    return autoDirection;
-  }
-
   //
   //
   //                HELPFUL FUNCTIONS
@@ -719,7 +752,7 @@ public void autoGoAround()
   public void getDistances() 
   {
     lidarDist = lidar.getDistance();
-    ta = table.getEntry("ta");
+    ta = limelightTop.getEntry("ta");
     area = ta.getDouble(0.0);
     ultrasonicLDistance = m_ultrasonicL.getValue() * kValueToInches;
     ultrasonicMDistance = m_ultrasonicM.getValue() * kValueToInches;
@@ -818,31 +851,69 @@ public void autoGoAround()
   //
   //
 
-  public double directionToTarget()
-  {
-    NetworkTableEntry tx = table.getEntry("tx");
+  public double directionToBalls(){
+    NetworkTableEntry tx = limelightBottom.getEntry("tx");
     double x = tx.getDouble(0.0);
-    if(x > -1 && x < 1){              // Dead Zone
-      controlleroperator.setRumble(RumbleType.kLeftRumble, 1); // Operator gets rumble so they know to shoot
-      controlleroperator.setRumble(RumbleType.kRightRumble, 1);
+    if(x > -3 && x < 3){              // Dead Zone
+      controllerdriver.setRumble(RumbleType.kLeftRumble, 1); // Operator gets rumble so they know to shoot
+      controllerdriver.setRumble(RumbleType.kRightRumble, 1);
       return 0.0;
-    }else if(x > -15 && x < -1){      // Move from left to center
+    }else if(x > -15 && x < -3){      // Move from left to center
+      controllerdriver.setRumble(RumbleType.kLeftRumble, 0);
+      controllerdriver.setRumble(RumbleType.kRightRumble, 0);
       return -0.1;
     }else if(x < -15){
+      controllerdriver.setRumble(RumbleType.kLeftRumble, 0);
+      controllerdriver.setRumble(RumbleType.kRightRumble, 0);
       return -0.3;
-    }else if(x > 1 && x < 15){        // Move from right to center
+    }else if(x > 3 && x < 15){        // Move from right to center
+      controllerdriver.setRumble(RumbleType.kLeftRumble, 0);
+      controllerdriver.setRumble(RumbleType.kRightRumble, 0);
       return 0.1;
     }else if(x > 15){
+      controllerdriver.setRumble(RumbleType.kLeftRumble, 0);
+      controllerdriver.setRumble(RumbleType.kRightRumble, 0);
       return 0.3;
     }else{                            // If it finds nothing it won't change direction
+      controllerdriver.setRumble(RumbleType.kLeftRumble, 0);
+      controllerdriver.setRumble(RumbleType.kRightRumble, 0);
       return 0.0;
     }
   }
 
+  public double directionToTarget()
+  {
+    NetworkTableEntry tx = limelightTop.getEntry("tx");
+    double x = tx.getDouble(0.0);
+    x -= LLOffset; // slop, tuning center of target control
+    double prop = x / 45;
+    if(x > -1 && x < 1){
+      controlleroperator.setRumble(RumbleType.kLeftRumble, 1);
+      controlleroperator.setRumble(RumbleType.kRightRumble, 1);
+    }else{
+      controlleroperator.setRumble(RumbleType.kLeftRumble, 0);
+      controlleroperator.setRumble(RumbleType.kRightRumble, 0);   
+    }
+    return prop;
+  }
+
   public void align()
+  {
+    if(controlleroperator.getXButtonPressed()){
+      LLOffset -= 0.5;
+    }else if(controlleroperator.getBButtonPressed()){
+      LLOffset += 0.5;
+    }
+    System.out.println("Offset: " + LLOffset);
+    double autoDirection = directionToTarget();
+    drive(0, -autoDirection, false);
+  }
+
+  public double autonomousAlign()
   {
     double autoDirection = directionToTarget();
     drive(0, -autoDirection, false);
+    return autoDirection;
   }
 
   //
@@ -852,13 +923,17 @@ public void autoGoAround()
   //
 
   public void drive(double desiredSpeed, double direction, boolean tracON){ // Both desiredSpeed and direction should be sent as positive values as you would expect
-    if(tracON){
+    if(true){
       double currentSpeedAvg = getDriveSpeed() / topSpeed;
       if(desiredSpeed > (currentSpeedAvg + maxSpeedDiff)){
         desiredSpeed = (currentSpeedAvg + maxSpeedDiff);
       }else if(desiredSpeed < (currentSpeedAvg - minSpeedDiff)){
         desiredSpeed = (currentSpeedAvg - minSpeedDiff);
       }
+    }
+
+    if(trac){
+      direction -= directionToBalls();
     }
 
     double leftSpeedFinal = desiredSpeed - direction;
@@ -952,20 +1027,20 @@ public void autoGoAround()
     double operatorJoystickYLeft = -controlleroperator.getY(GenericHID.Hand.kLeft);
     double operatorJoystickYRight = -controlleroperator.getY(GenericHID.Hand.kRight);
 
-    if(controlleroperator.getBButtonPressed()){
-      beltSpeed += 0.1;
-    }else if(controlleroperator.getXButtonPressed()){
-      beltSpeed -= 0.1;
-    }
+    // if(controlleroperator.getBButtonPressed()){
+    //   beltSpeed += 0.1;
+    // }else if(controlleroperator.getXButtonPressed()){
+    //   beltSpeed -= 0.1;
+    // }
 
     if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) > 0.5){ // Complicated algorithm to decide if the right trigger is being held
       shoot = true;
     }else if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) < 0.5){
       shoot = false;
     }
-    if(lidar.getDistance() < 250){
-      shoot = false;
-    }
+    // if(lidar.getDistance() < 250){
+    //   shoot = false;
+    // }
 
     if(shoot){
       shoot(shootRate);
@@ -980,11 +1055,11 @@ public void autoGoAround()
         runBelt(false, 0);
     }
 
-    if(controlleroperator.getYButtonPressed()){
-      shootRate += 10;
-    }else if(controlleroperator.getAButtonPressed()){
-      shootRate -= 10;
-    }
+    // if(controlleroperator.getYButtonPressed()){
+    //   shootRate += 10;
+    // }else if(controlleroperator.getAButtonPressed()){
+    //   shootRate -= 10;
+    // }
 
     //
     //                Intense Drive Control Algorithms
@@ -997,22 +1072,18 @@ public void autoGoAround()
 
     if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5){ // Complicated algorithm to decide if the left trigger is being held
       align();
-    }else if(controlleroperator.getPOV() == 270){
-      drive(0, -0.1, false);
-    }else if(controlleroperator.getPOV() == 90){
-      drive(0, 0.1, false);
     }else{
       drive(driverJoystickY, driverJoystickX, trac); // Actually calls the driving when not aligning to avoid stutter
     }
 
-    // double lidarDist = lidar.getDistance();
-    //System.out.println("Shooter Power: " + shootPower + " and Lidar Dist: " + lidarDist + " and Belt Speed: " + beltSpeed + " Shoot Rate: " + shootEncoder.getRate());
+    double lidarDist = lidar.getDistance();
+    System.out.println("Shooter Power: " + shootPower + " and Lidar Dist: " + lidarDist + " and Belt Speed: " + beltSpeed + " Shoot Rate: " + shootEncoder.getRate());
 
-    if(controllerdriver.getBButtonPressed()){
-      playMusic();
+    // if(controllerdriver.getBButtonPressed()){
+    //   playMusic();
 
-      System.out.println("I'm playing music!");
-    }
+    //   System.out.println("I'm playing music!");
+    // }
   }
 
   /**
@@ -1040,11 +1111,11 @@ public void autoGoAround()
     }
   }
 
-  public void playMusic(){
-    /* load the chirp file */
-    _orchestra.loadMusic(song); 
-    _orchestra.play();
-   }
+  // public void playMusic(){
+  //   /* load the chirp file */
+  //   _orchestra.loadMusic(song); 
+  //   _orchestra.play();
+  //  }
    
 }
 
