@@ -128,7 +128,7 @@ public class Robot extends TimedRobot
   public void robotInit() 
   {
     // playMusic();
-    m_chooser.setDefaultOption("Turn 90", autoTurn90);
+    m_chooser.setDefaultOption("Turn 90", autoAlignAndShoot);
     m_chooser.addOption("Out and back", autoOutAndBack);
     m_chooser.addOption("Back and around", autoBackAndAround);
     m_chooser.addOption("Go 4 feet", autoGo4Feet);
@@ -447,13 +447,13 @@ public class Robot extends TimedRobot
       case 1:
         // Theoretically all it takes to align and shoot all 5 balls in autonomous
         double aligning = autonomousAlign();
-        if(aligning == 0.0)
+        if(Math.abs(aligning) < 0.5)
           state++;
         break;
 
       case 2:
         shoot(shootRate);
-        if(Timer.getMatchTime() < 10.0){
+        if(Timer.getMatchTime() < 9.0){
           shoot(0);
           state++;
         }
@@ -470,46 +470,46 @@ public class Robot extends TimedRobot
         }
         break;
 
-      // case 4:
-      //   if(navx.getAngle() > -90){
-      //     drive(0, 0.2, false);
-      //   }else{
-      //     drive(0, 0, false);
-      //     resetDistance();
-      //     state++;
-      //   }
-      //   break;
+      case 4:
+        if(navx.getAngle() < 90){
+          drive(0, -0.2, false);
+        }else{
+          drive(0, 0, false);
+          resetDistance();
+          state++;
+        }
+        break;
 
-      // case 5:
-      //   if(getDriveDistance() < 24){
-      //     intake.set(-intakeSpeed);
-      //     runBelt(true, 0.6);
-      //     drive(0.2, 0.0, false);
-      //   }else{
-      //     drive(0, 0, false);
-      //     state++;
-      //   }
-      // break;
+      case 5:
+        if(getDriveDistance() < 36){
+          intake.set(-intakeSpeed);
+          runBelt(true, 0.6);
+          drive(0.2, 0.0, false);
+        }else{
+          drive(0, 0, false);
+          state++;
+        }
+        break;
 
-      // case 6:
-      //   if(navx.getAngle() > -180){
-      //     drive(0, -0.2, false);
-      //   }else{
-      //     drive(0, 0, false);
-      //     state++;
-      //   }
-      // break;
+      case 6:
+        if(navx.getAngle() < 180){
+          drive(0, -0.2, false);
+        }else{
+          drive(0, 0, false);
+          state++;
+        }
+        break;
 
-      // case 7:
-      //   if(Timer.getMatchTime() > 1){// my auto
-      //     drive(0.2, directionToBalls(), false);
-      //   }else{
-      //     drive(0, 0, false);
-      //     intake.set(0);
-      //     runBelt(false, 0);
-      //     state++;
-      //   }
-      // break;
+      case 7:
+        if(Timer.getMatchTime() > 1){// my auto
+          drive(0.2, directionToBalls(), false);
+        }else{
+          drive(0, 0, false);
+          intake.set(0);
+          runBelt(false, 0);
+          state++;
+        }
+        break;
     }
   }
 
@@ -887,9 +887,10 @@ public void autoGoAround()
     double x = tx.getDouble(0.0);
     x -= LLOffset; // slop, tuning center of target control
     double prop = x / 45;
-    if(x > -1 && x < 1){
+    if(x > -0.5 && x < 0.5){
       controlleroperator.setRumble(RumbleType.kLeftRumble, 1);
       controlleroperator.setRumble(RumbleType.kRightRumble, 1);
+      return 0;
     }else{
       controlleroperator.setRumble(RumbleType.kLeftRumble, 0);
       controlleroperator.setRumble(RumbleType.kRightRumble, 0);   
