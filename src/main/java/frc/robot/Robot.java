@@ -240,17 +240,17 @@ public class Robot extends TimedRobot
     m_ultrasonicM = new AnalogInput(ultrasonicMPort);
     m_ultrasonicR = new AnalogInput(ultrasonicRPort);
   
-    // isSpinningMult = false;
-    // isSpinningToSpecific = false;
-    // isCheckingColor = false;
-    // hasSeenColor = false;
-    // requiredColor = "Blue";
-    // totalSpins = 0;
-    // m_colorMatcher.addColorMatch(kBlueTarget);
-    // m_colorMatcher.addColorMatch(kGreenTarget);
-    // m_colorMatcher.addColorMatch(kRedTarget);
-    // m_colorMatcher.addColorMatch(kYellowTarget);
-     // colorMotor = new Spark(10); 
+    isSpinningMult = false;
+    isSpinningToSpecific = false;
+    isCheckingColor = false;
+    hasSeenColor = false;
+    requiredColor = "Blue";
+    totalSpins = 0;
+    m_colorMatcher.addColorMatch(kBlueTarget);
+    m_colorMatcher.addColorMatch(kGreenTarget);
+    m_colorMatcher.addColorMatch(kRedTarget);
+    m_colorMatcher.addColorMatch(kYellowTarget);
+    //colorMotor = new Spark(10); 
     //defining motor with spark
 
     /* Initialize the TalonFX's to be used */
@@ -438,6 +438,8 @@ public class Robot extends TimedRobot
       System.out.println("Unknown");
     }
 
+    System.out.println("Confidence: " + match.confidence);
+
     SmartDashboard.putNumber("Red", detectedColor.red); //results pasted into shuffleboard & smart dash
     SmartDashboard.putNumber("Green", detectedColor.green);
     SmartDashboard.putNumber("Blue", detectedColor.blue);
@@ -446,7 +448,7 @@ public class Robot extends TimedRobot
 
     if(isSpinningToSpecific) 
     {
-      // colorMotor.set(0.05);
+      colorMotor.set(0.05);
       if(requiredColor == "Blue") {
         requiredColorActual = "Red";
       } else if (requiredColor == "Yellow") {
@@ -468,7 +470,7 @@ public class Robot extends TimedRobot
       }
     } else if (isSpinningMult) 
     {
-      // colorMotor.set(0.05);
+      colorMotor.set(0.05);
       //spins around the disk a total of 3.5 to 4 spins
       if(colorString == "Yellow" && !hasSeenColor) 
       {
@@ -904,6 +906,10 @@ public void autoGoAround()
 
     // double lidarDist = lidar.getDistance();
     // System.out.println("Cool lidar distance: " + lidarDist);
+    if(isCheckingColor) 
+    {
+      colorCheck();
+    }
     System.out.println("Left: " + getLeftDriveDistance() + " Right: " + getRightDriveDistance());
     if(true){
        double driverJoystickY = controllerdriver.getY(GenericHID.Hand.kLeft); // good luck future team members uwu :)
