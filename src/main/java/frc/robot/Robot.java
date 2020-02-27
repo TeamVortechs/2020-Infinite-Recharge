@@ -70,7 +70,7 @@ public class Robot extends TimedRobot
   private AnalogInput ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
   private Spark shooterP, shooterD, backRightS, frontRightS, backLeftS, frontLeftS, intake, colorMotor;
-  private Encoder shootEncoder;
+  private Encoder shootEncoder, beltEncoder;
   private NetworkTable limelightTop, limelightBottom;
   private NetworkTableEntry ta;
   private TalonFX belt, backRightT, frontRightT, backLeftT, frontLeftT;
@@ -127,6 +127,8 @@ public class Robot extends TimedRobot
   @Override
   public void robotInit() 
   {
+    //CameraServer.startAutomaticCapture();
+
     // playMusic();
     m_chooser.setDefaultOption("Turn 90", autoAlignAndShoot);
     m_chooser.addOption("Out and back", autoOutAndBack);
@@ -212,6 +214,7 @@ public class Robot extends TimedRobot
     }
 
     shootEncoder = new Encoder(2, 3, true, Encoder.EncodingType.k2X); // ideal for 0.7 is +530
+    beltEncoder = new Encoder(0, 1, true, Encoder.EncodingType.k2X);
     // rightEncoder = new Encoder(3, 4, false, Encoder.EncodingType.k2X);
     // leftEncoder.setDistancePerPulse(5.3/256);
     // rightEncoder.setDistancePerPulse(5.3/256);
@@ -452,8 +455,9 @@ public class Robot extends TimedRobot
         break;
 
       case 2:
+        drive(0, 0, false);
         shoot(shootRate);
-        if(Timer.getMatchTime() < 9.0){
+        if(Timer.getMatchTime() < 8.0){
           shoot(0);
           state++;
         }
@@ -471,8 +475,9 @@ public class Robot extends TimedRobot
         break;
 
       case 4:
-        if(navx.getAngle() < 90){
-          drive(0, -0.2, false);
+        if(navx.getAngle() < 150){
+          System.out.println("Navx: " + navx.getAngle());
+          drive(0, -0.25, false);
         }else{
           drive(0, 0, false);
           resetDistance();
@@ -481,27 +486,9 @@ public class Robot extends TimedRobot
         break;
 
       case 5:
-        if(getDriveDistance() < 36){
-          intake.set(-intakeSpeed);
-          runBelt(true, 0.6);
-          drive(0.2, 0.0, false);
-        }else{
-          drive(0, 0, false);
-          state++;
-        }
-        break;
-
-      case 6:
-        if(navx.getAngle() < 180){
-          drive(0, -0.2, false);
-        }else{
-          drive(0, 0, false);
-          state++;
-        }
-        break;
-
-      case 7:
-        if(Timer.getMatchTime() > 1){// my auto
+        if(Timer.getMatchTime() > 0){// my auto
+          intake.set(0.5);
+          runBelt(true, 0.7);
           drive(0.2, directionToBalls(), false);
         }else{
           drive(0, 0, false);
