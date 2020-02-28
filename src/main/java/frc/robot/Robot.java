@@ -70,7 +70,7 @@ public class Robot extends TimedRobot
   private AnalogInput ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
   private Spark shooterP, shooterD, backRightS, frontRightS, backLeftS, frontLeftS, intake, colorMotor;
-  private Encoder shootEncoder;
+  private Encoder shootEncoder, beltEncoder;
   private NetworkTable limelightTop, limelightBottom;
   private NetworkTableEntry ta;
   private TalonFX elevator, belt, backRightT, frontRightT, backLeftT, frontLeftT, winchL, winchR;
@@ -127,8 +127,10 @@ public class Robot extends TimedRobot
   @Override
   public void robotInit() 
   {
+    //CameraServer.startAutomaticCapture();
+
     // playMusic();
-    m_chooser.setDefaultOption("Turn 90", autoTurn90);
+    m_chooser.setDefaultOption("Turn 90", autoAlignAndShoot);
     m_chooser.addOption("Out and back", autoOutAndBack);
     m_chooser.addOption("Back and around", autoBackAndAround);
     m_chooser.addOption("Go 4 feet", autoGo4Feet);
@@ -212,12 +214,16 @@ public class Robot extends TimedRobot
     }
 
     shootEncoder = new Encoder(2, 3, true, Encoder.EncodingType.k2X); // ideal for 0.7 is +530
+    beltEncoder = new Encoder(0, 1, true, Encoder.EncodingType.k2X);
     // rightEncoder = new Encoder(3, 4, false, Encoder.EncodingType.k2X);
     // leftEncoder.setDistancePerPulse(5.3/256);
     // rightEncoder.setDistancePerPulse(5.3/256);
 
     limelightTop = NetworkTableInstance.getDefault().getTable("limelight-top");
     limelightBottom = NetworkTableInstance.getDefault().getTable("limelight-bottom");
+
+    limelightTop.getEntry("ledMode").setNumber(1);
+    limelightBottom.getEntry("ledMode").setNumber(1);
 
     lidar = new pulsedLightLIDAR(lidarPort);
     lidar.getDistance();
@@ -454,14 +460,17 @@ public class Robot extends TimedRobot
     switch (state){
       case 1:
         // Theoretically all it takes to align and shoot all 5 balls in autonomous
+        limelightTop.getEntry("ledMode").setNumber(3);
         double aligning = autonomousAlign();
-        if(aligning == 0.0)
+        if(Math.abs(aligning) < 0.5)
           state++;
         break;
 
       case 2:
+        limelightTop.getEntry("ledMode").setNumber(1);
+        drive(0, 0, false);
         shoot(shootRate);
-        if(Timer.getMatchTime() < 10.0){
+        if(Timer.getMatchTime() < 8.0){
           shoot(0);
           state++;
         }
@@ -478,46 +487,29 @@ public class Robot extends TimedRobot
         }
         break;
 
-      // case 4:
-      //   if(navx.getAngle() > -90){
-      //     drive(0, 0.2, false);
-      //   }else{
-      //     drive(0, 0, false);
-      //     resetDistance();
-      //     state++;
-      //   }
-      //   break;
+      case 4:
+        if(navx.getAngle() < 150){
+          System.out.println("Navx: " + navx.getAngle());
+          drive(0, -0.25, false);
+        }else{
+          drive(0, 0, false);
+          resetDistance();
+          state++;
+        }
+        break;
 
-      // case 5:
-      //   if(getDriveDistance() < 24){
-      //     intake.set(-intakeSpeed);
-      //     runBelt(true, 0.6);
-      //     drive(0.2, 0.0, false);
-      //   }else{
-      //     drive(0, 0, false);
-      //     state++;
-      //   }
-      // break;
-
-      // case 6:
-      //   if(navx.getAngle() > -180){
-      //     drive(0, -0.2, false);
-      //   }else{
-      //     drive(0, 0, false);
-      //     state++;
-      //   }
-      // break;
-
-      // case 7:
-      //   if(Timer.getMatchTime() > 1){// my auto
-      //     drive(0.2, directionToBalls(), false);
-      //   }else{
-      //     drive(0, 0, false);
-      //     intake.set(0);
-      //     runBelt(false, 0);
-      //     state++;
-      //   }
-      // break;
+      case 5:
+        if(Timer.getMatchTime() > 0){// my auto
+          intake.set(0.5);
+          runBelt(true, 0.7);
+          drive(0.2, directionToBalls(), false);
+        }else{
+          drive(0, 0, false);
+          intake.set(0);
+          runBelt(false, 0);
+          state++;
+        }
+        break;
     }
   }
 
@@ -895,9 +887,10 @@ public void autoGoAround()
     double x = tx.getDouble(0.0);
     x -= LLOffset; // slop, tuning center of target control
     double prop = x / 45;
-    if(x > -1 && x < 1){
+    if(x > -0.5 && x < 0.5){
       controlleroperator.setRumble(RumbleType.kLeftRumble, 1);
       controlleroperator.setRumble(RumbleType.kRightRumble, 1);
+      return 0;
     }else{
       controlleroperator.setRumble(RumbleType.kLeftRumble, 0);
       controlleroperator.setRumble(RumbleType.kRightRumble, 0);   
@@ -1096,8 +1089,10 @@ public void autoGoAround()
     //
 
     if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5){ // Complicated algorithm to decide if the left trigger is being held
+      limelightTop.getEntry("ledMode").setNumber(3);
       align();
     }else{
+      limelightTop.getEntry("ledMode").setNumber(1);
       drive(driverJoystickY, driverJoystickX, trac); // Actually calls the driving when not aligning to avoid stutter
     }
 
