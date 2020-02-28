@@ -73,7 +73,7 @@ public class Robot extends TimedRobot
   private Encoder shootEncoder, beltEncoder;
   private NetworkTable limelightTop, limelightBottom;
   private NetworkTableEntry ta;
-  private TalonFX belt, backRightT, frontRightT, backLeftT, frontLeftT;
+  private TalonFX elevator, belt, backRightT, frontRightT, backLeftT, frontLeftT, winchL, winchR;
   private Timer timer;
   private int state;
 
@@ -237,6 +237,13 @@ public class Robot extends TimedRobot
     // Belt motor
     belt = new TalonFX(6);
 
+    //Winches
+    winchL = new TalonFX(8);
+    winchR = new TalonFX(7);
+
+    //elevator
+    elevator = new TalonFX(9);
+
     // Shooter motor
     shooterD = new Spark(1); // Driver Side
     shooterP = new Spark(3); // Passenger Side
@@ -254,21 +261,22 @@ public class Robot extends TimedRobot
     m_ultrasonicL = new AnalogInput(ultrasonicLPort);
     m_ultrasonicM = new AnalogInput(ultrasonicMPort);
     m_ultrasonicR = new AnalogInput(ultrasonicRPort);
+  
     System.out.println("BEFORE left: " + getLeftDriveDistance() + " right: " + getRightDriveDistance());
     resetDistance();
     System.out.println("AFTER left: " + getLeftDriveDistance() + " right: " + getRightDriveDistance());
 
-    // isSpinningMult = false;
-    // isSpinningToSpecific = false;
-    // isCheckingColor = false;
-    // hasSeenColor = false;
-    // requiredColor = "Blue";
-    // totalSpins = 0;
-    // m_colorMatcher.addColorMatch(kBlueTarget);
-    // m_colorMatcher.addColorMatch(kGreenTarget);
-    // m_colorMatcher.addColorMatch(kRedTarget);
-    // m_colorMatcher.addColorMatch(kYellowTarget);
-     // colorMotor = new Spark(10); 
+    isSpinningMult = false;
+    isSpinningToSpecific = false;
+    isCheckingColor = false;
+    hasSeenColor = false;
+    requiredColor = "Blue";
+    totalSpins = 0;
+    m_colorMatcher.addColorMatch(kBlueTarget);
+    m_colorMatcher.addColorMatch(kGreenTarget);
+    m_colorMatcher.addColorMatch(kRedTarget);
+    m_colorMatcher.addColorMatch(kYellowTarget);
+    //colorMotor = new Spark(10); 
     //defining motor with spark
 
     /* Initialize the TalonFX's to be used */
@@ -795,7 +803,7 @@ public void autoGoAround()
 
     if(isSpinningToSpecific) 
     {
-      // colorMotor.set(0.05);
+      colorMotor.set(0.05);
       if(requiredColor == "Blue") {
         requiredColorActual = "Red";
       } else if (requiredColor == "Yellow") {
@@ -817,7 +825,7 @@ public void autoGoAround()
       }
     } else if (isSpinningMult) 
     {
-      // colorMotor.set(0.05);
+      colorMotor.set(0.05);
       //spins around the disk a total of 3.5 to 4 spins
       if(colorString == "Yellow" && !hasSeenColor) 
       {
@@ -1020,6 +1028,23 @@ public void autoGoAround()
     double operatorJoystickYLeft = -controlleroperator.getY(GenericHID.Hand.kLeft);
     double operatorJoystickYRight = -controlleroperator.getY(GenericHID.Hand.kRight);
 
+    if(Math.abs(operatorJoystickYLeft) < 0.1) {
+      operatorJoystickYLeft = 0;
+    }
+    winchL.set(operatorJoystickYLeft);
+    if(Math.abs(operatorJoystickYRight) < 0.1) {
+      operatorJoystickYRight = 0;
+    }
+    winchR.set(operatorJoystickYRight);
+
+    if(controlleroperator.getPOV() == 0) {
+      elevator.set(0.5);
+    } else if (controlleroperator.getPOV() == 180) {
+      elevator.set(-0.5);
+    } else {
+      elevator.set(0);
+    }
+    
     // if(controlleroperator.getBButtonPressed()){
     //   beltSpeed += 0.1;
     // }else if(controlleroperator.getXButtonPressed()){
@@ -1091,6 +1116,10 @@ public void autoGoAround()
 
     // double lidarDist = lidar.getDistance();
     // System.out.println("Cool lidar distance: " + lidarDist);
+    if(isCheckingColor) 
+    {
+      colorCheck();
+    }
     System.out.println("Left: " + getLeftDriveDistance() + " Right: " + getRightDriveDistance());
     if(true){
        double driverJoystickY = controllerdriver.getY(GenericHID.Hand.kLeft); // good luck future team members uwu :)
