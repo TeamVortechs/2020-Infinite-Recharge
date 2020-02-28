@@ -452,12 +452,14 @@ public class Robot extends TimedRobot
     switch (state){
       case 1:
         // Theoretically all it takes to align and shoot all 5 balls in autonomous
+        limelightTop.getEntry("ledMode").setNumber(3);
         double aligning = autonomousAlign();
         if(Math.abs(aligning) < 0.5)
           state++;
         break;
 
       case 2:
+        limelightTop.getEntry("ledMode").setNumber(1);
         drive(0, 0, false);
         shoot(shootRate);
         if(Timer.getMatchTime() < 8.0){
