@@ -222,6 +222,9 @@ public class Robot extends TimedRobot
     limelightTop = NetworkTableInstance.getDefault().getTable("limelight-top");
     limelightBottom = NetworkTableInstance.getDefault().getTable("limelight-bottom");
 
+    limelightTop.getEntry("ledMode").setNumber(1);
+    limelightBottom.getEntry("ledMode").setNumber(1);
+
     lidar = new pulsedLightLIDAR(lidarPort);
     lidar.getDistance();
 
@@ -1059,8 +1062,10 @@ public void autoGoAround()
     //
 
     if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5){ // Complicated algorithm to decide if the left trigger is being held
+      limelightTop.getEntry("ledMode").setNumber(3);
       align();
     }else{
+      limelightTop.getEntry("ledMode").setNumber(1);
       drive(driverJoystickY, driverJoystickX, trac); // Actually calls the driving when not aligning to avoid stutter
     }
 
