@@ -73,7 +73,7 @@ public class Robot extends TimedRobot
   private Encoder shootEncoder;
   private NetworkTable limelightTop, limelightBottom;
   private NetworkTableEntry ta;
-  private TalonFX belt, backRightT, frontRightT, backLeftT, frontLeftT;
+  private TalonFX elevator, belt, backRightT, frontRightT, backLeftT, frontLeftT, winchL, winchR;
   private Timer timer;
   private int state;
 
@@ -230,6 +230,13 @@ public class Robot extends TimedRobot
 
     // Belt motor
     belt = new TalonFX(6);
+
+    //Winches
+    winchL = new TalonFX(8);
+    winchR = new TalonFX(7);
+
+    //elevator
+    elevator = new TalonFX(9);
 
     // Shooter motor
     shooterD = new Spark(1); // Driver Side
@@ -1028,6 +1035,23 @@ public void autoGoAround()
     double operatorJoystickYLeft = -controlleroperator.getY(GenericHID.Hand.kLeft);
     double operatorJoystickYRight = -controlleroperator.getY(GenericHID.Hand.kRight);
 
+    if(Math.abs(operatorJoystickYLeft) < 0.1) {
+      operatorJoystickYLeft = 0;
+    }
+    winchL.set(operatorJoystickYLeft);
+    if(Math.abs(operatorJoystickYRight) < 0.1) {
+      operatorJoystickYRight = 0;
+    }
+    winchR.set(operatorJoystickYRight);
+
+    if(controlleroperator.getPOV() == 0) {
+      elevator.set(0.5);
+    } else if (controlleroperator.getPOV() == 180) {
+      elevator.set(-0.5);
+    } else {
+      elevator.set(0);
+    }
+    
     // if(controlleroperator.getBButtonPressed()){
     //   beltSpeed += 0.1;
     // }else if(controlleroperator.getXButtonPressed()){
