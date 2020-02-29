@@ -1039,18 +1039,18 @@ public void autoGoAround()
     if(Math.abs(operatorJoystickYLeft) < 0.1) {
       operatorJoystickYLeft = 0;
     }
-    winchL.set(operatorJoystickYLeft);
+    winchL.set(ControlMode.PercentOutput, operatorJoystickYLeft);
     if(Math.abs(operatorJoystickYRight) < 0.1) {
       operatorJoystickYRight = 0;
     }
-    winchR.set(operatorJoystickYRight);
+    winchR.set(ControlMode.PercentOutput, operatorJoystickYRight);
 
     if(controlleroperator.getPOV() == 0) {
-      elevator.set(0.5);
+      elevator.set(ControlMode.PercentOutput, 0.5);
     } else if (controlleroperator.getPOV() == 180) {
-      elevator.set(-0.5);
+      elevator.set(ControlMode.PercentOutput, -0.5);
     } else {
-      elevator.set(0);
+      elevator.set(ControlMode.PercentOutput, 0);
     }
     
     // if(controlleroperator.getBButtonPressed()){
