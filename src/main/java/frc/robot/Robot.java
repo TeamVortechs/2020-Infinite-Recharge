@@ -93,7 +93,7 @@ public class Robot extends TimedRobot
   private static final double kValueToInches = 0.125;
   private final double intakeSpeed = 0.4;
   
-  private double topSpeed = 20857, maxSpeedDiff = 0.1, minSpeedDiff = 0.1, beltSpeed = -0.7, LLOffset = 2.5;
+  private double topSpeed = 20857, maxSpeedDiff = 0.2, minSpeedDiff = 0.2, beltSpeed = -0.7, LLOffset = 2.5;
 
   private double leftEncoderZero, rightEncoderZero;
   private double bottomLLOffset, topLLOffset;
@@ -223,7 +223,7 @@ public class Robot extends TimedRobot
     limelightBottom = NetworkTableInstance.getDefault().getTable("limelight-bottom");
 
     limelightTop.getEntry("ledMode").setNumber(3);
-    limelightBottom.getEntry("ledMode").setNumber(1);
+    limelightBottom.getEntry("ledMode").setNumber(3);
 
     lidar = new pulsedLightLIDAR(lidarPort);
     lidar.getDistance();
@@ -968,7 +968,9 @@ public void autoGoAround()
     if(targetRate == 0)
       shootPower = 0;
     if(rate < (targetRate + 15) && rate > (targetRate - 15)){
-      belt.set(ControlMode.PercentOutput, beltSpeed + 0.2);
+      belt.set(ControlMode.PercentOutput, beltSpeed - 0.2);
+    }else if(controllerdriver.getTriggerAxis(GenericHID.Hand.kRight) > 0.5){
+      belt.set(ControlMode.PercentOutput, beltSpeed - 0.2);
     }else{
       belt.set(ControlMode.PercentOutput, 0.0);
     }
@@ -1019,13 +1021,14 @@ public void autoGoAround()
       intake.set(-intakeSpeed);
     }
 
-    if(controllerdriver.getAButtonPressed())
-      intakeToggle = !intakeToggle;
+    // sorry for the surprise but i got rid of the intake reverse or even disable because 
+    // if(controllerdriver.getAButtonPressed()) 
+    //   intakeToggle = !intakeToggle;
 
-    if(intakeToggle)
+    if(true)
       intake.set(-intakeSpeed);
-    else
-      intake.set(0);
+    // else
+    //   intake.set(0);
 
     //
     //
@@ -1092,14 +1095,22 @@ public void autoGoAround()
     // This bit of code basically just checks some button presses to see if anyone
     // else is trying to do anything with the drivetrain that is more important than
     // just manually controlling the robot, such as small adjustments in rotation or
-    // the limelight is aligning to the target.
+    // the limelight is aligning to the target. It also manages the limelight's led state
+    // as FIRST did not appreciate their power. Also fun note because this block of
+    // comments has existed for a while and I doubt no one will ever read it, Noah is a loser.
+    // Not the one from 2019 that was one of the two Project Managers, the programming
+    // one that has been declared a loser. Not for any reason, he just thinks he is cooler than me
+    // because he has the side protectors on his sunglasses and I did not get any. I find this
+    // unfair but I will continue living life to its fullest. Also to end this comment so it looks real
+    // the limelight can be weird to work with so maybe play with ignoring the
+    // index in the web browser a bit.
     //
     //
 
     if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) > 0.1){
       limelightTop.getEntry("ledMode").setNumber(3);
     }
-    if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5){ // Complicated algorithm to decide if the left trigger is being held
+    if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) > 0.9){ // Complicated algorithm to decide if the left trigger is being held
       limelightTop.getEntry("ledMode").setNumber(3);
       align();
     }else{
