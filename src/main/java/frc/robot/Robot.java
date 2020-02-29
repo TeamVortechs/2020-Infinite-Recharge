@@ -837,7 +837,7 @@ public void autoGoAround()
     {
       colorMotor.set(0.05);
       //spins around the disk a total of 3.5 to 4 spins
-      if(colorString == requiredColorActual && !hasSeenColor && match.confidence > 0.7) 
+      if(colorString == requiredColor && !hasSeenColor && match.confidence > 0.7) 
       {
         hasSeenColor = true;
         totalSpins++;
