@@ -1060,6 +1060,8 @@ public void autoGoAround()
 
     if(controlleroperator.getPOV() == 0) {
       elevator.set(ControlMode.PercentOutput, 0.5);
+      winchR.set(ControlMode.PercentOutput, -0.5);
+      winchL.set(ControlMode.PercentOutput, -0.5);
     } else if (controlleroperator.getPOV() == 180) {
       elevator.set(ControlMode.PercentOutput, -0.5);
     } else {
