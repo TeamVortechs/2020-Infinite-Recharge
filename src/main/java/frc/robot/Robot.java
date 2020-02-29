@@ -98,7 +98,7 @@ public class Robot extends TimedRobot
   private double leftEncoderZero, rightEncoderZero;
   private double bottomLLOffset, topLLOffset;
 
-  private boolean trac = false, intakeToggle, intakeReverseToggle;
+  private boolean trac = false, intakeToggle = false, intakeReverseToggle;
   final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
@@ -222,7 +222,7 @@ public class Robot extends TimedRobot
     limelightTop = NetworkTableInstance.getDefault().getTable("limelight-top");
     limelightBottom = NetworkTableInstance.getDefault().getTable("limelight-bottom");
 
-    limelightTop.getEntry("ledMode").setNumber(1);
+    limelightTop.getEntry("ledMode").setNumber(3);
     limelightBottom.getEntry("ledMode").setNumber(1);
 
     lidar = new pulsedLightLIDAR(lidarPort);
@@ -458,15 +458,15 @@ public class Robot extends TimedRobot
   // Assumes on line pointed relatively directly at goal
   public void autoAlignAndShoot(){
     switch (state){
-      case 1:
-        // Theoretically all it takes to align and shoot all 5 balls in autonomous
-        limelightTop.getEntry("ledMode").setNumber(3);
-        double aligning = autonomousAlign();
-        if(Math.abs(aligning) < 0.5)
-          state++;
-        break;
+      // case 1:
+      //   // Theoretically all it takes to align and shoot all 5 balls in autonomous
+      //   limelightTop.getEntry("ledMode").setNumber(3);
+      //   double aligning = autonomousAlign();
+      //   if(Math.abs(aligning) < 0.5)
+      //     state++;
+      //   break;
 
-      case 2:
+      case 1:
         limelightTop.getEntry("ledMode").setNumber(1);
         drive(0, 0, false);
         shoot(shootRate);
@@ -476,7 +476,7 @@ public class Robot extends TimedRobot
         }
         break;
 
-      case 3:
+      case 2:
         shoot(0);
         if(getDriveDistance() < -23){
           drive(0, 0, false);
@@ -487,29 +487,29 @@ public class Robot extends TimedRobot
         }
         break;
 
-      case 4:
-        if(navx.getAngle() < 150){
-          System.out.println("Navx: " + navx.getAngle());
-          drive(0, -0.25, false);
-        }else{
-          drive(0, 0, false);
-          resetDistance();
-          state++;
-        }
-        break;
+      // case 4:
+      //   if(navx.getAngle() < 150){
+      //     System.out.println("Navx: " + navx.getAngle());
+      //     drive(0, -0.25, false);
+      //   }else{
+      //     drive(0, 0, false);
+      //     resetDistance();
+      //     state++;
+      //   }
+      //   break;
 
-      case 5:
-        if(Timer.getMatchTime() > 0){// my auto
-          intake.set(0.5);
-          runBelt(true, 0.7);
-          drive(0.2, directionToBalls(), false);
-        }else{
-          drive(0, 0, false);
-          intake.set(0);
-          runBelt(false, 0);
-          state++;
-        }
-        break;
+      // case 5:
+      //   if(Timer.getMatchTime() > 0){// my auto
+      //     intake.set(0.5);
+      //     runBelt(true, 0.7);
+      //     drive(0.2, directionToBalls(), false);
+      //   }else{
+      //     drive(0, 0, false);
+      //     intake.set(0);
+      //     runBelt(false, 0);
+      //     state++;
+      //   }
+      //   break;
     }
   }
 
@@ -978,7 +978,7 @@ public void autoGoAround()
     if(targetRate == 0)
       shootPower = 0;
     if(rate < (targetRate + 15) && rate > (targetRate - 15)){
-      belt.set(ControlMode.PercentOutput, beltSpeed);
+      belt.set(ControlMode.PercentOutput, beltSpeed + 0.2);
     }else{
       belt.set(ControlMode.PercentOutput, 0.0);
     }
@@ -1022,10 +1022,18 @@ public void autoGoAround()
     if(controllerdriver.getXButtonPressed())
       trac = !trac;
 
-    if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5) // Complicated algorithm to decide if the left trigger is being held
+
+    NetworkTableEntry llx = limelightBottom.getEntry("tx");
+    double deltaX = llx.getDouble(0.0);
+    if(Math.abs(deltaX) > 1){
       intake.set(-intakeSpeed);
-    else if(controllerdriver.getBumper(GenericHID.Hand.kLeft)) // reverse
-      intake.set(intakeSpeed);
+    }
+
+    if(controllerdriver.getAButtonPressed())
+      intakeToggle = !intakeToggle;
+
+    if(intakeToggle)
+      intake.set(-intakeSpeed);
     else
       intake.set(0);
 
@@ -1041,18 +1049,18 @@ public void autoGoAround()
     if(Math.abs(operatorJoystickYLeft) < 0.1) {
       operatorJoystickYLeft = 0;
     }
-    winchL.set(operatorJoystickYLeft);
+    winchL.set(ControlMode.PercentOutput, operatorJoystickYLeft);
     if(Math.abs(operatorJoystickYRight) < 0.1) {
       operatorJoystickYRight = 0;
     }
-    winchR.set(operatorJoystickYRight);
+    winchR.set(ControlMode.PercentOutput, operatorJoystickYRight);
 
     if(controlleroperator.getPOV() == 0) {
-      elevator.set(0.5);
+      elevator.set(ControlMode.PercentOutput, 0.5);
     } else if (controlleroperator.getPOV() == 180) {
-      elevator.set(-0.5);
+      elevator.set(ControlMode.PercentOutput, -0.5);
     } else {
-      elevator.set(0);
+      elevator.set(ControlMode.PercentOutput, 0);
     }
     
     // if(controlleroperator.getBButtonPressed()){
@@ -1115,6 +1123,9 @@ public void autoGoAround()
     //
     //
 
+    if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) > 0.1){
+      limelightTop.getEntry("ledMode").setNumber(3);
+    }
     if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5){ // Complicated algorithm to decide if the left trigger is being held
       limelightTop.getEntry("ledMode").setNumber(3);
       align();
