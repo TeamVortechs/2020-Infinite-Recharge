@@ -14,6 +14,10 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.SPI.Port;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
+import edu.wpi.first.wpilibj.CameraServer;
+import edu.wpi.cscore.MjpegServer;
+import edu.wpi.cscore.VideoMode;
+import edu.wpi.cscore.UsbCamera;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
@@ -98,7 +102,7 @@ public class Robot extends TimedRobot
   private double leftEncoderZero, rightEncoderZero;
   private double bottomLLOffset, topLLOffset;
 
-  private boolean trac = false, intakeToggle = false, intakeReverseToggle;
+  private boolean trac = false, longshot = false, intakeReverseToggle, autoisbeingdumb = false;
   final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
@@ -127,7 +131,10 @@ public class Robot extends TimedRobot
   @Override
   public void robotInit() 
   {
-    //CameraServer.startAutomaticCapture();
+   UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+   camera.setVideoMode(VideoMode.PixelFormat.kMJPEG, 320, 240, 15);
+   MjpegServer camServer = new MjpegServer("serve_USB camera 0", 5810);
+   camServer.setSource(camera);
 
     // playMusic();
     m_chooser.setDefaultOption("Turn 90", autoAlignAndShoot);
@@ -470,7 +477,14 @@ public class Robot extends TimedRobot
         limelightTop.getEntry("ledMode").setNumber(1);
         drive(0, 0, false);
         shoot(shootRate);
-        if(Timer.getMatchTime() < 8.0){
+        if(Timer.getMatchTime() < 13 && shootRate == 0.0){
+          autoisbeingdumb = true;
+        }
+        else{
+          autoisbeingdumb = false;
+        }
+        if(Timer.getMatchTime() < 5.0){
+          autoisbeingdumb = false;
           shoot(0);
           state++;
         }
@@ -977,10 +991,25 @@ public void autoGoAround()
     shootPower = Math.max(0.3, Math.min(0.8, shootPower));
     if(targetRate == 0)
       shootPower = 0;
-    if(rate < (targetRate + 15) && rate > (targetRate - 15)){
-      belt.set(ControlMode.PercentOutput, beltSpeed - 0.2);
+
+    //                         Epic shoot belt deciding algorithm code
+    // An epic algorithm designed by a genius with intelligence sometimes believed to be superior
+    // to Albert Einstein himself. Or Steven ? Stephen ? Stefan ? Hawking. Whomsoever you would like
+    // to compare the dude who wrote this to. So it just decdides who gets control of the belt because
+    // like four toddlers playing Minecraft, not everyone can be in creative mode, or someone will go 
+    // home crying. In this case it would be team 3257 from Roseville, CA.
+    //
+
+
+    if(autoisbeingdumb){
+      belt.set(ControlMode.PercentOutput, beltSpeed);
+    }else if(rate < (targetRate + 15) && rate > (targetRate - 15)){
+      if(longshot)
+        belt.set(ControlMode.PercentOutput, 1.0); // Long shot gets full power. yee haw
+      else
+        belt.set(ControlMode.PercentOutput, beltSpeed - 0.2);
     }else if(controllerdriver.getTriggerAxis(GenericHID.Hand.kRight) > 0.5){
-      belt.set(ControlMode.PercentOutput, beltSpeed - 0.2);
+      belt.set(ControlMode.PercentOutput, beltSpeed);
     }else{
       belt.set(ControlMode.PercentOutput, 0.0);
     }
@@ -1006,6 +1035,8 @@ public void autoGoAround()
   public void teleopPeriodic() 
   {
 
+    autoisbeingdumb = false; //resets because we aren't in auto anymore silly goose
+
     //
     //
     //                      DRIVER CONTROLLER CODE
@@ -1028,7 +1059,7 @@ public void autoGoAround()
     NetworkTableEntry llx = limelightBottom.getEntry("tx");
     double deltaX = llx.getDouble(0.0);
     if(Math.abs(deltaX) > 1){
-      intake.set(-intakeSpeed);
+      intake.set(-0.5);
     }
 
     // sorry for the surprise but i got rid of the intake reverse or even disable because 
@@ -1085,7 +1116,12 @@ public void autoGoAround()
 
     if(shoot){
       shoot(shootRate);
+      longshot = false;
+    }else if(controlleroperator.getBumper(GenericHID.Hand.kRight)){
+      longshot = true;
+      shoot(810);
     }else{ // driver can only operate the belt manually when not trying to shoot to avoid stutter
+      longshot = false;
       stopShooter();
       if(controllerdriver.getTriggerAxis(GenericHID.Hand.kRight) > 0.5) // Complicated algorithm to decide if the left trigger is being held
         runBelt(true, beltSpeed);
@@ -1163,27 +1199,30 @@ public void autoGoAround()
   @Override
   public void testPeriodic() 
   {
+    shooterD.set(1);
+    shooterP.set(1);
+    System.out.println(shootEncoder.getRate());
     // For testing lidar distance
 
     // double lidarDist = lidar.getDistance();
     // System.out.println("Cool lidar distance: " + lidarDist);
-    if(isCheckingColor) 
-    {
-      colorCheck();
-    }
-    System.out.println("Left: " + getLeftDriveDistance() + " Right: " + getRightDriveDistance());
-    if(true){
-       double driverJoystickY = controllerdriver.getY(GenericHID.Hand.kLeft); // good luck future team members uwu :)
-       double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
-       double currentSpeedAvg = getDriveSpeed();
+    // if(isCheckingColor) 
+    // {
+    //   colorCheck();
+    // }
+    // System.out.println("Left: " + getLeftDriveDistance() + " Right: " + getRightDriveDistance());
+    // if(true){
+    //    double driverJoystickY = controllerdriver.getY(GenericHID.Hand.kLeft); // good luck future team members uwu :)
+    //    double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
+    //    double currentSpeedAvg = getDriveSpeed();
 
-      drive(0, 0, false);
+    //   drive(0, 0, false);
 
-      if(currentSpeedAvg > topSpeed){
-        topSpeed = currentSpeedAvg;
-      }
-      System.out.println("Top Speed: " + topSpeed);
-    }
+    //   if(currentSpeedAvg > topSpeed){
+    //     topSpeed = currentSpeedAvg;
+    //   }
+    //   System.out.println("Top Speed: " + topSpeed);
+    // }
   }
 
   // public void playMusic(){
@@ -1193,10 +1232,3 @@ public void autoGoAround()
   //  }
    
 }
-
-
-
-
-
-
-
