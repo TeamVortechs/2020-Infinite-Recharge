@@ -804,30 +804,40 @@ public void autoGoAround()
     if(isSpinningToSpecific) 
     {
       colorMotor.set(0.05);
-      if(requiredColor == "Blue") {
-        requiredColorActual = "Red";
-      } else if (requiredColor == "Yellow") {
-        requiredColorActual = "Green";
-      } else if(requiredColor == "Red") {
-        requiredColorActual = "Blue";
-      } else if(requiredColor == "Green") {
-        requiredColorActual = "Yellow";
+      if(match.confidence > 0.85) {
+        if(requiredColor == "Blue") {
+          requiredColorActual = "Red";
+        } else if (requiredColor == "Yellow") {
+          requiredColorActual = "Green";
+        } else if(requiredColor == "Red") {
+          requiredColorActual = "Blue";
+        } else if(requiredColor == "Green") {
+          requiredColorActual = "Yellow";
+        } else {
+          requiredColorActual = "Unknown";
+        } //translates the color we need to the color the sensor needs to stop on
+        if(colorString == requiredColorActual) 
+        {
+          if(!(controlleroperator.getBButton() || controlleroperator.getAButton() || controlleroperator.getYButton() || controlleroperator.getXButton()))
+          {
+            //stops checking colors after required color found
+            isSpinningToSpecific = false;
+            isCheckingColor = false;
+            colorMotor.set(0);
+          } else {
+            isSpinningMult = true;
+            isSpinningToSpecific = false;
+            totalSpins = 1;
+          }
+        }
       } else {
         requiredColorActual = "Unknown";
-      } //translates the color we need to the color the sensor needs to stop on
-
-      if(colorString == requiredColorActual) 
-      {
-        //stops checking colors after required color found
-        isSpinningToSpecific = false;
-        isCheckingColor = false;
-        colorMotor.set(0);
       }
     } else if (isSpinningMult) 
     {
       colorMotor.set(0.05);
       //spins around the disk a total of 3.5 to 4 spins
-      if(colorString == "Yellow" && !hasSeenColor) 
+      if(colorString == requiredColor && !hasSeenColor && match.confidence > 0.7) 
       {
         hasSeenColor = true;
         totalSpins++;
@@ -900,11 +910,11 @@ public void autoGoAround()
 
   public void align()
   {
-    if(controlleroperator.getXButtonPressed()){
-      LLOffset -= 0.5;
-    }else if(controlleroperator.getBButtonPressed()){
-      LLOffset += 0.5;
-    }
+    // if(controlleroperator.getXButtonPressed()){
+    //   LLOffset -= 0.5;
+    // }else if(controlleroperator.getBButtonPressed()){
+    //   LLOffset += 0.5;
+    // }
     System.out.println("Offset: " + LLOffset);
     double autoDirection = directionToTarget();
     drive(0, -autoDirection, false);
@@ -1082,6 +1092,23 @@ public void autoGoAround()
       else
         // belt.set(ControlMode.PercentOutput, 0);
         runBelt(false, 0);
+    }
+    if(controllerdriver.getXButtonPressed()) {
+      requiredColor = "Blue";
+      isCheckingColor = true;
+      isSpinningToSpecific = true;
+    } else if(controllerdriver.getYButtonPressed()) {
+      requiredColor = "Yellow";
+      isCheckingColor = true;
+      isSpinningToSpecific = true;
+    } else if(controllerdriver.getAButtonPressed()) {
+      requiredColor = "Green";
+      isCheckingColor = true;
+      isSpinningToSpecific = true;
+    } else if(controllerdriver.getBButtonPressed()) {
+      requiredColor = "Red";
+      isCheckingColor = true;
+      isSpinningToSpecific = true;
     }
 
     // if(controlleroperator.getYButtonPressed()){
