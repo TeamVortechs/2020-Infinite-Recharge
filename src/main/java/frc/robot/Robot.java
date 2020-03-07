@@ -14,6 +14,10 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.SPI.Port;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
+import edu.wpi.first.wpilibj.CameraServer;
+import edu.wpi.cscore.MjpegServer;
+import edu.wpi.cscore.VideoMode;
+import edu.wpi.cscore.UsbCamera;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
@@ -73,7 +77,7 @@ public class Robot extends TimedRobot
   private Encoder shootEncoder, beltEncoder;
   private NetworkTable limelightTop, limelightBottom;
   private NetworkTableEntry ta;
-  private TalonFX belt, backRightT, frontRightT, backLeftT, frontLeftT;
+  private TalonFX elevator, belt, backRightT, frontRightT, backLeftT, frontLeftT, winchL, winchR;
   private Timer timer;
   private int state;
 
@@ -93,12 +97,12 @@ public class Robot extends TimedRobot
   private static final double kValueToInches = 0.125;
   private final double intakeSpeed = 0.4;
   
-  private double topSpeed = 20857, maxSpeedDiff = 0.1, minSpeedDiff = 0.1, beltSpeed = -0.7, LLOffset = 2.5;
+  private double topSpeed = 20857, maxSpeedDiff = 0.2, minSpeedDiff = 0.2, beltSpeed = -0.7, LLOffset = 2.5;
 
   private double leftEncoderZero, rightEncoderZero;
   private double bottomLLOffset, topLLOffset;
 
-  private boolean trac = false, intakeToggle, intakeReverseToggle;
+  private boolean trac = false, longshot = false, intakeReverseToggle, autoisbeingdumb = false;
   final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
@@ -127,7 +131,10 @@ public class Robot extends TimedRobot
   @Override
   public void robotInit() 
   {
-    //CameraServer.startAutomaticCapture();
+   UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+   camera.setVideoMode(VideoMode.PixelFormat.kMJPEG, 320, 240, 15);
+   MjpegServer camServer = new MjpegServer("serve_USB camera 0", 5810);
+   camServer.setSource(camera);
 
     // playMusic();
     m_chooser.setDefaultOption("Turn 90", autoAlignAndShoot);
@@ -222,6 +229,9 @@ public class Robot extends TimedRobot
     limelightTop = NetworkTableInstance.getDefault().getTable("limelight-top");
     limelightBottom = NetworkTableInstance.getDefault().getTable("limelight-bottom");
 
+    limelightTop.getEntry("ledMode").setNumber(3);
+    limelightBottom.getEntry("ledMode").setNumber(3);
+
     lidar = new pulsedLightLIDAR(lidarPort);
     lidar.getDistance();
 
@@ -233,6 +243,13 @@ public class Robot extends TimedRobot
 
     // Belt motor
     belt = new TalonFX(6);
+
+    //Winches
+    winchL = new TalonFX(8);
+    winchR = new TalonFX(7);
+
+    //elevator
+    elevator = new TalonFX(9);
 
     // Shooter motor
     shooterD = new Spark(1); // Driver Side
@@ -251,21 +268,22 @@ public class Robot extends TimedRobot
     m_ultrasonicL = new AnalogInput(ultrasonicLPort);
     m_ultrasonicM = new AnalogInput(ultrasonicMPort);
     m_ultrasonicR = new AnalogInput(ultrasonicRPort);
+  
     System.out.println("BEFORE left: " + getLeftDriveDistance() + " right: " + getRightDriveDistance());
     resetDistance();
     System.out.println("AFTER left: " + getLeftDriveDistance() + " right: " + getRightDriveDistance());
 
-    // isSpinningMult = false;
-    // isSpinningToSpecific = false;
-    // isCheckingColor = false;
-    // hasSeenColor = false;
-    // requiredColor = "Blue";
-    // totalSpins = 0;
-    // m_colorMatcher.addColorMatch(kBlueTarget);
-    // m_colorMatcher.addColorMatch(kGreenTarget);
-    // m_colorMatcher.addColorMatch(kRedTarget);
-    // m_colorMatcher.addColorMatch(kYellowTarget);
-     // colorMotor = new Spark(10); 
+    isSpinningMult = false;
+    isSpinningToSpecific = false;
+    isCheckingColor = false;
+    hasSeenColor = false;
+    requiredColor = "Blue";
+    totalSpins = 0;
+    m_colorMatcher.addColorMatch(kBlueTarget);
+    m_colorMatcher.addColorMatch(kGreenTarget);
+    m_colorMatcher.addColorMatch(kRedTarget);
+    m_colorMatcher.addColorMatch(kYellowTarget);
+    //colorMotor = new Spark(10); 
     //defining motor with spark
 
     /* Initialize the TalonFX's to be used */
@@ -447,25 +465,32 @@ public class Robot extends TimedRobot
   // Assumes on line pointed relatively directly at goal
   public void autoAlignAndShoot(){
     switch (state){
-      case 1:
-        // Theoretically all it takes to align and shoot all 5 balls in autonomous
-        limelightTop.getEntry("ledMode").setNumber(3);
-        double aligning = autonomousAlign();
-        if(Math.abs(aligning) < 0.5)
-          state++;
-        break;
+      // case 1:
+      //   // Theoretically all it takes to align and shoot all 5 balls in autonomous
+      //   limelightTop.getEntry("ledMode").setNumber(3);
+      //   double aligning = autonomousAlign();
+      //   if(Math.abs(aligning) < 0.5)
+      //     state++;
+      //   break;
 
-      case 2:
+      case 1:
         limelightTop.getEntry("ledMode").setNumber(1);
         drive(0, 0, false);
         shoot(shootRate);
-        if(Timer.getMatchTime() < 8.0){
+        if(Timer.getMatchTime() < 13 && shootRate == 0.0){
+          autoisbeingdumb = true;
+        }
+        else{
+          autoisbeingdumb = false;
+        }
+        if(Timer.getMatchTime() < 5.0){
+          autoisbeingdumb = false;
           shoot(0);
           state++;
         }
         break;
 
-      case 3:
+      case 2:
         shoot(0);
         if(getDriveDistance() < -23){
           drive(0, 0, false);
@@ -476,29 +501,29 @@ public class Robot extends TimedRobot
         }
         break;
 
-      case 4:
-        if(navx.getAngle() < 150){
-          System.out.println("Navx: " + navx.getAngle());
-          drive(0, -0.25, false);
-        }else{
-          drive(0, 0, false);
-          resetDistance();
-          state++;
-        }
-        break;
+      // case 4:
+      //   if(navx.getAngle() < 150){
+      //     System.out.println("Navx: " + navx.getAngle());
+      //     drive(0, -0.25, false);
+      //   }else{
+      //     drive(0, 0, false);
+      //     resetDistance();
+      //     state++;
+      //   }
+      //   break;
 
-      case 5:
-        if(Timer.getMatchTime() > 0){// my auto
-          intake.set(0.5);
-          runBelt(true, 0.7);
-          drive(0.2, directionToBalls(), false);
-        }else{
-          drive(0, 0, false);
-          intake.set(0);
-          runBelt(false, 0);
-          state++;
-        }
-        break;
+      // case 5:
+      //   if(Timer.getMatchTime() > 0){// my auto
+      //     intake.set(0.5);
+      //     runBelt(true, 0.7);
+      //     drive(0.2, directionToBalls(), false);
+      //   }else{
+      //     drive(0, 0, false);
+      //     intake.set(0);
+      //     runBelt(false, 0);
+      //     state++;
+      //   }
+      //   break;
     }
   }
 
@@ -792,31 +817,41 @@ public void autoGoAround()
 
     if(isSpinningToSpecific) 
     {
-      // colorMotor.set(0.05);
-      if(requiredColor == "Blue") {
-        requiredColorActual = "Red";
-      } else if (requiredColor == "Yellow") {
-        requiredColorActual = "Green";
-      } else if(requiredColor == "Red") {
-        requiredColorActual = "Blue";
-      } else if(requiredColor == "Green") {
-        requiredColorActual = "Yellow";
+      colorMotor.set(0.05);
+      if(match.confidence > 0.85) {
+        if(requiredColor == "Blue") {
+          requiredColorActual = "Red";
+        } else if (requiredColor == "Yellow") {
+          requiredColorActual = "Green";
+        } else if(requiredColor == "Red") {
+          requiredColorActual = "Blue";
+        } else if(requiredColor == "Green") {
+          requiredColorActual = "Yellow";
+        } else {
+          requiredColorActual = "Unknown";
+        } //translates the color we need to the color the sensor needs to stop on
+        if(colorString == requiredColorActual) 
+        {
+          if(!(controlleroperator.getBButton() || controlleroperator.getAButton() || controlleroperator.getYButton() || controlleroperator.getXButton()))
+          {
+            //stops checking colors after required color found
+            isSpinningToSpecific = false;
+            isCheckingColor = false;
+            colorMotor.set(0);
+          } else {
+            isSpinningMult = true;
+            isSpinningToSpecific = false;
+            totalSpins = 1;
+          }
+        }
       } else {
         requiredColorActual = "Unknown";
-      } //translates the color we need to the color the sensor needs to stop on
-
-      if(colorString == requiredColorActual) 
-      {
-        //stops checking colors after required color found
-        isSpinningToSpecific = false;
-        isCheckingColor = false;
-        colorMotor.set(0);
       }
     } else if (isSpinningMult) 
     {
-      // colorMotor.set(0.05);
+      colorMotor.set(0.05);
       //spins around the disk a total of 3.5 to 4 spins
-      if(colorString == "Yellow" && !hasSeenColor) 
+      if(colorString == requiredColor && !hasSeenColor && match.confidence > 0.7) 
       {
         hasSeenColor = true;
         totalSpins++;
@@ -889,11 +924,11 @@ public void autoGoAround()
 
   public void align()
   {
-    if(controlleroperator.getXButtonPressed()){
-      LLOffset -= 0.5;
-    }else if(controlleroperator.getBButtonPressed()){
-      LLOffset += 0.5;
-    }
+    // if(controlleroperator.getXButtonPressed()){
+    //   LLOffset -= 0.5;
+    // }else if(controlleroperator.getBButtonPressed()){
+    //   LLOffset += 0.5;
+    // }
     System.out.println("Offset: " + LLOffset);
     double autoDirection = directionToTarget();
     drive(0, -autoDirection, false);
@@ -956,7 +991,24 @@ public void autoGoAround()
     shootPower = Math.max(0.3, Math.min(0.8, shootPower));
     if(targetRate == 0)
       shootPower = 0;
-    if(rate < (targetRate + 15) && rate > (targetRate - 15)){
+
+    //                         Epic shoot belt deciding algorithm code
+    // An epic algorithm designed by a genius with intelligence sometimes believed to be superior
+    // to Albert Einstein himself. Or Steven ? Stephen ? Stefan ? Hawking. Whomsoever you would like
+    // to compare the dude who wrote this to. So it just decdides who gets control of the belt because
+    // like four toddlers playing Minecraft, not everyone can be in creative mode, or someone will go 
+    // home crying. In this case it would be team 3257 from Roseville, CA.
+    //
+
+
+    if(autoisbeingdumb){
+      belt.set(ControlMode.PercentOutput, beltSpeed);
+    }else if(rate < (targetRate + 15) && rate > (targetRate - 15)){
+      if(longshot)
+        belt.set(ControlMode.PercentOutput, 1.0); // Long shot gets full power. yee haw
+      else
+        belt.set(ControlMode.PercentOutput, beltSpeed - 0.2);
+    }else if(controllerdriver.getTriggerAxis(GenericHID.Hand.kRight) > 0.5){
       belt.set(ControlMode.PercentOutput, beltSpeed);
     }else{
       belt.set(ControlMode.PercentOutput, 0.0);
@@ -983,6 +1035,8 @@ public void autoGoAround()
   public void teleopPeriodic() 
   {
 
+    autoisbeingdumb = false; //resets because we aren't in auto anymore silly goose
+
     //
     //
     //                      DRIVER CONTROLLER CODE
@@ -1001,12 +1055,21 @@ public void autoGoAround()
     if(controllerdriver.getXButtonPressed())
       trac = !trac;
 
-    if(controllerdriver.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5) // Complicated algorithm to decide if the left trigger is being held
+
+    NetworkTableEntry llx = limelightBottom.getEntry("tx");
+    double deltaX = llx.getDouble(0.0);
+    if(Math.abs(deltaX) > 1){
+      intake.set(-0.5);
+    }
+
+    // sorry for the surprise but i got rid of the intake reverse or even disable because 
+    // if(controllerdriver.getAButtonPressed()) 
+    //   intakeToggle = !intakeToggle;
+
+    if(true)
       intake.set(-intakeSpeed);
-    else if(controllerdriver.getBumper(GenericHID.Hand.kLeft)) // reverse
-      intake.set(intakeSpeed);
-    else
-      intake.set(0);
+    // else
+    //   intake.set(0);
 
     //
     //
@@ -1017,6 +1080,25 @@ public void autoGoAround()
     double operatorJoystickYLeft = -controlleroperator.getY(GenericHID.Hand.kLeft);
     double operatorJoystickYRight = -controlleroperator.getY(GenericHID.Hand.kRight);
 
+    if(Math.abs(operatorJoystickYLeft) < 0.1) {
+      operatorJoystickYLeft = 0;
+    }
+    winchL.set(ControlMode.PercentOutput, operatorJoystickYLeft);
+    if(Math.abs(operatorJoystickYRight) < 0.1) {
+      operatorJoystickYRight = 0;
+    }
+    winchR.set(ControlMode.PercentOutput, operatorJoystickYRight);
+
+    if(controlleroperator.getPOV() == 0) {
+      elevator.set(ControlMode.PercentOutput, 0.5);
+      winchR.set(ControlMode.PercentOutput, -0.5);
+      winchL.set(ControlMode.PercentOutput, -0.5);
+    } else if (controlleroperator.getPOV() == 180) {
+      elevator.set(ControlMode.PercentOutput, -0.5);
+    } else {
+      elevator.set(ControlMode.PercentOutput, 0);
+    }
+    
     // if(controlleroperator.getBButtonPressed()){
     //   beltSpeed += 0.1;
     // }else if(controlleroperator.getXButtonPressed()){
@@ -1034,7 +1116,12 @@ public void autoGoAround()
 
     if(shoot){
       shoot(shootRate);
+      longshot = false;
+    }else if(controlleroperator.getBumper(GenericHID.Hand.kRight)){
+      longshot = true;
+      shoot(810);
     }else{ // driver can only operate the belt manually when not trying to shoot to avoid stutter
+      longshot = false;
       stopShooter();
       if(controllerdriver.getTriggerAxis(GenericHID.Hand.kRight) > 0.5) // Complicated algorithm to decide if the left trigger is being held
         runBelt(true, beltSpeed);
@@ -1043,6 +1130,23 @@ public void autoGoAround()
       else
         // belt.set(ControlMode.PercentOutput, 0);
         runBelt(false, 0);
+    }
+    if(controllerdriver.getXButtonPressed()) {
+      requiredColor = "Blue";
+      isCheckingColor = true;
+      isSpinningToSpecific = true;
+    } else if(controllerdriver.getYButtonPressed()) {
+      requiredColor = "Yellow";
+      isCheckingColor = true;
+      isSpinningToSpecific = true;
+    } else if(controllerdriver.getAButtonPressed()) {
+      requiredColor = "Green";
+      isCheckingColor = true;
+      isSpinningToSpecific = true;
+    } else if(controllerdriver.getBButtonPressed()) {
+      requiredColor = "Red";
+      isCheckingColor = true;
+      isSpinningToSpecific = true;
     }
 
     // if(controlleroperator.getYButtonPressed()){
@@ -1056,15 +1160,26 @@ public void autoGoAround()
     // This bit of code basically just checks some button presses to see if anyone
     // else is trying to do anything with the drivetrain that is more important than
     // just manually controlling the robot, such as small adjustments in rotation or
-    // the limelight is aligning to the target.
+    // the limelight is aligning to the target. It also manages the limelight's led state
+    // as FIRST did not appreciate their power. Also fun note because this block of
+    // comments has existed for a while and I doubt no one will ever read it, Noah is a loser.
+    // Not the one from 2019 that was one of the two Project Managers, the programming
+    // one that has been declared a loser. Not for any reason, he just thinks he is cooler than me
+    // because he has the side protectors on his sunglasses and I did not get any. I find this
+    // unfair but I will continue living life to its fullest. Also to end this comment so it looks real
+    // the limelight can be weird to work with so maybe play with ignoring the
+    // index in the web browser a bit.
     //
     //
 
-    if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) > 0.5){ // Complicated algorithm to decide if the left trigger is being held
-
+    if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) > 0.1){
+      limelightTop.getEntry("ledMode").setNumber(3);
+    }
+    if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) > 0.9){ // Complicated algorithm to decide if the left trigger is being held
+      limelightTop.getEntry("ledMode").setNumber(3);
       align();
     }else{
-      
+      limelightTop.getEntry("ledMode").setNumber(1);
       drive(driverJoystickY, driverJoystickX, trac); // Actually calls the driving when not aligning to avoid stutter
     }
 
@@ -1084,10 +1199,17 @@ public void autoGoAround()
   @Override
   public void testPeriodic() 
   {
-    // // For testing lidar distance
+    shooterD.set(1);
+    shooterP.set(1);
+    System.out.println(shootEncoder.getRate());
+    // For testing lidar distance
 
-    // // double lidarDist = lidar.getDistance();
-    // // System.out.println("Cool lidar distance: " + lidarDist);
+    // double lidarDist = lidar.getDistance();
+    // System.out.println("Cool lidar distance: " + lidarDist);
+    // if(isCheckingColor) 
+    // {
+    //   colorCheck();
+    // }
     // System.out.println("Left: " + getLeftDriveDistance() + " Right: " + getRightDriveDistance());
     // if(true){
     //    double driverJoystickY = controllerdriver.getY(GenericHID.Hand.kLeft); // good luck future team members uwu :)
@@ -1103,19 +1225,8 @@ public void autoGoAround()
 
     System.out.println(firstBallSensor.get());
     }
-  }
 
   // public void playMusic(){
   //   /* load the chirp file */
-  //   _orchestra.loadMusic(song); 
-  //   _orchestra.play();
-  //  }
    
-
-
-
-
-
-
-
-
+}
