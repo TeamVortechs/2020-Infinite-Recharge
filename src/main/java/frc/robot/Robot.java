@@ -242,8 +242,8 @@ public class Robot extends TimedRobot
     limelightTop = NetworkTableInstance.getDefault().getTable("limelight-top");
     limelightBottom = NetworkTableInstance.getDefault().getTable("limelight-bottom");
 
-    limelightTop.getEntry("ledMode").setNumber(3);
-    limelightBottom.getEntry("ledMode").setNumber(3);
+    limelightTop.getEntry("ledMode").setNumber(2); // setNumber(2) makes the limelights blink for targeting
+    limelightBottom.getEntry("ledMode").setNumber(2);
 
     lidar = new pulsedLightLIDAR(lidarPort);
     lidar.getDistance();
@@ -1127,6 +1127,9 @@ public void autoGoAround()
       intake.set(-intakeSpeed);
     // else
     //   intake.set(0);
+    
+
+
 
     //
     //
@@ -1222,11 +1225,11 @@ public void autoGoAround()
     // comments has existed for a while and I doubt no one will ever read it, Noah is a loser.
     // Not the one from 2019 that was one of the two Project Managers, the programming
     // one that has been declared a loser. Not for any reason, he just thinks he is cooler than me
-    // because he has the side protectors on his sunglasses and I did not get any. I find this
+    // because he has the side protectors on his sunglasses and I did not get any. (IS THIS STILL TRUE JIMMY?!?!)
+    // I find this
     // unfair but I will continue living life to its fullest. Also to end this comment so it looks real
     // the limelight can be weird to work with so maybe play with ignoring the
     // index in the web browser a bit.
-    //
     //
 
     if(controlleroperator.getTriggerAxis(GenericHID.Hand.kLeft) > 0.1){
@@ -1241,7 +1244,7 @@ public void autoGoAround()
     }
 
     double lidarDist = lidar.getDistance();
-    System.out.println("Shooter Power: " + shootPower + " and Lidar Dist: " + lidarDist + " and Belt Speed: " + beltSpeed + " Shoot Rate: " + shootEncoder.getRate());
+    // System.out.println("Shooter Power: " + shootPower + " and Lidar Dist: " + lidarDist + " and Belt Speed: " + beltSpeed + " Shoot Rate: " + shootEncoder.getRate());
 
     // if(controllerdriver.getBButtonPressed()){
     //   playMusic();
@@ -1279,13 +1282,11 @@ public void autoGoAround()
     //     topSpeed = currentSpeedAvg;
     //   }
     //   System.out.println("Top Speed: " + topSpeed);
-    // }
-  }
+
+    System.out.println(firstBallSensor.get());
+    }
 
   // public void playMusic(){
   //   /* load the chirp file */
-  //   _orchestra.loadMusic(song); 
-  //   _orchestra.play();
-  //  }
    
 }
