@@ -21,6 +21,7 @@ import edu.wpi.cscore.UsbCamera;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.PWMTalonFX;
@@ -53,13 +54,10 @@ import edu.wpi.first.wpilibj.DigitalSource;
  */
 public class Robot extends TimedRobot 
 {
+  private static final String shootAndSit = "shootAndSit";
+  private static final String shootAndForward = "shootAndForward";
+  private static final String shootAndBackward = "shootAndBackward";
 
-  private static final String autoGo4Feet = "autoGo4Feet";
-  private static final String autoOutAndBack = "autoOutAndBack";
-  private static final String autoBackAndAround = "autoBackAndAround";
-  private static final String autoTurn90 = "autoTurn90";
-  private static final String autoGoAround = "autoGoAround";
-  private static final String autoAlignAndShoot = "autoAlignAndShoot";
 
   private double shootPower = 0.0; // Motor current shoot power (adjusted in shoot() function)
   private double shootRate = 530; // Target RPM
@@ -78,6 +76,7 @@ public class Robot extends TimedRobot
   private NetworkTable limelightTop, limelightBottom;
   private NetworkTableEntry ta;
   private TalonFX elevator, belt, backRightT, frontRightT, backLeftT, frontLeftT, winchL, winchR;
+  // private TalonSRX winchL, winchR;
   private Timer timer;
   private int state;
 
@@ -97,7 +96,7 @@ public class Robot extends TimedRobot
   private static final double kValueToInches = 0.125;
   private final double intakeSpeed = 0.4;
   
-  private double topSpeed = 20857, maxSpeedDiff = 0.2, minSpeedDiff = 0.2, beltSpeed = -0.7, LLOffset = 2.5;
+  private double topSpeed = 20857, maxSpeedDiff = 0.1, minSpeedDiff = 0.1, beltSpeed = -0.7, LLOffset = 2.5;
 
   private double leftEncoderZero, rightEncoderZero;
   private double bottomLLOffset, topLLOffset;
@@ -106,7 +105,7 @@ public class Robot extends TimedRobot
   final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
-  private DigitalSource lidarPort = new DigitalInput(9); // fix my port and all uses of lidar.
+  private DigitalSource lidarPort = new DigitalInput(9);
 
     /* The orchestra object that holds all the instruments */
    //private Orchestra _orchestra;
@@ -137,12 +136,9 @@ public class Robot extends TimedRobot
    camServer.setSource(camera);
 
     // playMusic();
-    m_chooser.setDefaultOption("Turn 90", autoAlignAndShoot);
-    m_chooser.addOption("Out and back", autoOutAndBack);
-    m_chooser.addOption("Back and around", autoBackAndAround);
-    m_chooser.addOption("Go 4 feet", autoGo4Feet);
-    m_chooser.addOption("Go Around", autoGoAround);
-    m_chooser.addOption("Auto Align and Then Shoot and Back off the Line", autoAlignAndShoot);
+    m_chooser.setDefaultOption("Shoot and Back off Line", shootAndBackward); // change me back :)
+    m_chooser.addOption("Shoot and Forward off Line", shootAndForward);
+    m_chooser.addOption("Shoot and Sit Motionless but dont choose this one because you would give up 5 points so throw a fit well before even considering this option", shootAndSit);
     SmartDashboard.putData("Auto choices", m_chooser);
 
     // NavX sensor
@@ -247,6 +243,8 @@ public class Robot extends TimedRobot
     //Winches
     winchL = new TalonFX(8);
     winchR = new TalonFX(7);
+    // winchL.setBrakeMode(true);
+    // winchR.setBrakeMode(true);
 
     //elevator
     elevator = new TalonFX(9);
@@ -309,10 +307,7 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
-    // if(isCheckingColor) 
-    // {
-    //   colorCheck();
-    // }
+    m_autoSelected = m_chooser.getSelected();
   }
 
   //
@@ -332,6 +327,23 @@ public class Robot extends TimedRobot
    * the switch structure below with additional strings. If using the
    * SendableChooser make sure to add them to the chooser code above as well.
    */
+
+  @Override
+  public void autonomousPeriodic()
+  {
+    switch(m_autoSelected) {
+      case shootAndBackward:
+        shootAndBackward();
+        break;
+      case shootAndForward:
+        shootAndForward();
+        break;
+      case shootAndSit:
+        shootAndSit();
+        break;
+    }
+  }
+
   @Override
   public void autonomousInit() 
   {
@@ -344,135 +356,12 @@ public class Robot extends TimedRobot
     timer.start();
     navx.reset();
 
-    // backLeftT.enableBrakeMode(true);
-    // frontLeftT.enableBrakeMode(true);
-    // backRightT.set(ControlMode.PercentOutput, rightSpeedFinal);
-    // frontRightT.set(ControlMode.PercentOutput, rightSpeedFinal);
-
     resetDistance();
-  }
-  //used if no positioning required (variables can change if you want)
-  public void autonomousPos1() 
-  {
-    switch (state) {
-      case 1:
-        align = true;//sweetspot
-        break;
-      case 2:
-        shoot(shootRate);//shoot
-        break;
-      case 3:
-        drive(0.5, -0.5, false);//turn toward wall
-        if (getDriveDistance()  >= 90) {
-          state++;
-          resetDistance();
-        }
-        break;
-      case 4:
-        drive(0.5, 0.5, false);//drive toward wall
-        if (getDriveDistance()  >= 10) {
-          state++;
-          resetDistance();
-        }
-      case 5:
-        drive(0.5, -0.5, false);//turn toward other balls
-        if (getDriveDistance()  >= 90) {
-          state++;
-          resetDistance();
-        }
-      case 6:
-        drive(0.5, 0.5, false);//get outa there toward balls
-        if (getDriveDistance()  >= 30 || lidarDist <= 100) {
-          state++;
-          resetDistance();
-        }
-      case 7:
-        drive(0, 0, false);//stop
-        break;
-    }
-  }
-  //used if positioning required (variables can change if you want)
-  public void autonomousPos2() 
-  {
-    switch (state) {
-      case 1:
-        drive(-0.5, -0.5, false);
-        if (getDriveDistance()  <= -20) {//sweet spot y
-          state++;
-          resetDistance();
-        }
-        break;
-      case 2:
-      drive(0.5, -0.5, false);
-        if (getDriveDistance()  >= 90) {//turn 90
-          state++;
-          resetDistance();
-        }
-        break;
-      case 3:
-        drive(0.5, 0.5, false);
-        if (getDriveDistance()  >= 40 || lidarDist <= 100) {//sweet spot x
-          state++;
-          resetDistance();
-        }
-        break;
-      case 4:
-        drive(-0.5, 0.5, false);
-        if (getDriveDistance()  <= -90 || (directionToTarget() == 0.0 && area != 0.0)) {//turn -90 or until seen the target
-          state++;
-          offsetAngle = getDriveDistance();
-          resetDistance();
-        }
-        break;
-      case 5:
-        align = true;
-        break;
-      case 6:
-        shoot(shootRate);
-        break;
-      case 7:
-        drive(0.5, -0.5, false);
-        if (getDriveDistance()  >= offsetAngle) {//return to angle
-          state++;
-          resetDistance();
-        }
-        break;
-      case 8:
-        drive(0.5, 0.5, false);
-        if (getDriveDistance()  >= 10) {//drive to wall
-          state++;
-          resetDistance();
-        }
-        break;
-      case 9:
-        drive(0.5, -0.5, false);
-        if (getDriveDistance()  >= 90) {//turn toward balls
-          state++;
-          resetDistance();
-        }
-      case 10:
-        drive(0.5, 0.5, false);
-        if (getDriveDistance()  >= 30 || lidarDist <= 100) {//drive toward balls
-          state++;
-          resetDistance();
-        }
-      case 11:
-        drive(0, 0, false);//stop
-        break;
-    }
   }
 
   // Assumes on line pointed relatively directly at goal
-  public void autoAlignAndShoot(){
+  public void shootAndBackward(){
     switch (state){
-      // case 1:
-      //   // Theoretically all it takes to align and shoot all 5 balls in autonomous
-      //   limelightTop.getEntry("ledMode").setNumber(3);
-      //   double aligning = autonomousAlign();
-      //   if(Math.abs(aligning) < 0.5)
-      //     state++;
-      //   break;
-
       case 1:
         limelightTop.getEntry("ledMode").setNumber(1);
         drive(0, 0, false);
@@ -500,208 +389,58 @@ public class Robot extends TimedRobot
           drive(-0.2, 0, false);
         }
         break;
-
-      // case 4:
-      //   if(navx.getAngle() < 150){
-      //     System.out.println("Navx: " + navx.getAngle());
-      //     drive(0, -0.25, false);
-      //   }else{
-      //     drive(0, 0, false);
-      //     resetDistance();
-      //     state++;
-      //   }
-      //   break;
-
-      // case 5:
-      //   if(Timer.getMatchTime() > 0){// my auto
-      //     intake.set(0.5);
-      //     runBelt(true, 0.7);
-      //     drive(0.2, directionToBalls(), false);
-      //   }else{
-      //     drive(0, 0, false);
-      //     intake.set(0);
-      //     runBelt(false, 0);
-      //     state++;
-      //   }
-      //   break;
     }
   }
 
-  public void turn90()
-  {
-    System.out.println(navx.getAngle());
-
-    if (navx.getAngle() < 75)         //Until 75 degrees, the robot turns at half power 
-      drive(0.0, 0.5, false);
-    else if (navx.getAngle() < 90)    // For the last 15 degrees, the robot turns at third power
-      drive(0.0, 0.3, false);
-    else
-      drive(0, 0, false);
-  }
-
-  public void outAndBack()
-  {
-     switch (state) {
-       case 1:
-         // Go forward 36"
-         goStraight(0.1);
-         if (getDriveDistance()  >= 36)
-           state++;
-         break;
- 
-       case 2:
-         // Turn 180 degrees
-         drive(0.0, -0.1, false);
-         if (navx.getAngle() >= 170) {
-          resetDistance();
-           state++;
-         }
-         break;
- 
-       case 3:
-         // Go forward 36" again (return)
-         goStraight(0.1);
-         if (getDriveDistance()  >= 36) {
-           navx.reset();
-           state++;
-         }
-         break;
- 
-       case 4:
-         // Turns itself 180 degrees
-         drive(0.0, -0.1, false);
-         if (navx.getAngle() >= 170)
-           state++;
-           break;
- 
-       case 5:
-         // Stops the robot
-         drive(0, 0, false);
-         break;
-    }
-  }
-
-  public void backAndAround() {
-    switch (state) {
+  public void shootAndForward(){
+    switch (state){
       case 1:
-        drive(0.5, 0.0, false);
-        if (getDriveDistance()  >= 36) {
+        limelightTop.getEntry("ledMode").setNumber(1);
+        drive(0, 0, false);
+        shoot(shootRate);
+        if(Timer.getMatchTime() < 13 && shootRate == 0.0){
+          autoisbeingdumb = true;
+        }
+        else{
+          autoisbeingdumb = false;
+        }
+        if(Timer.getMatchTime() < 5.0){
+          autoisbeingdumb = false;
+          shoot(0);
           state++;
         }
         break;
 
       case 2:
-        drive(-0.5, 0.0, false);
-        if (navx.getAngle() <= 280) {
-          resetDistance();
-          state++;
-        }
-        break;
-
-      case 3:
-        drive(0.5, 0.0, false);
-        if (getDriveDistance()  >= 180) {
+        shoot(0);
+        if(getDriveDistance() < 23){
+          drive(0, 0, false);
           navx.reset();
           state++;
+        }else{
+          drive(0.2, 0, false);
         }
-        break;
-      
-      case 4:
-        drive(-0.5, 0.0, false);
-        if (navx.getAngle() <= 280) {
-          state++;
-        }
-      
-      case 5:
-        drive(0, 0, false);
         break;
     }
   }
 
-  public void go4Feet()
-  {
-    System.out.println("Left: " + getLeftDriveDistance() + " Right: " + getRightDriveDistance());
-    if (getDriveDistance()  < 48)
-      drive(0.1, 0.0, false);
-    else
-      drive(0, 0, false);
-  }
-
-public void autoGoAround()
-{
-  switch (state) {
-    case 1: //drives forward 2 feet
-      drive(0.5, 0.0, false);
-      if (getDriveDistance()  >= 24)
-        state++;
-      break;
-      
-    case 2: //turns right 90
-      drive(0.0, 0.5, false);
-      if (navx.getAngle() >= 90) {
-        resetDistance();
-        state++;
-      }
-      break;
-
-    case 3: //drives forward 4 feet
-      drive(0.5, 0.0, false);
-      if (getDriveDistance()  >= 48) {
-        navx.reset();
-        state++;
-      }
-      break;
-
-    case 4: //turns right 90
-      drive(0.0, 0.5, false);
-      if (navx.getAngle() >= 90) {
-        resetDistance();
-        state++;
-      }
-      break;
-
-    case 5: //forward 2 feet
-      drive(0.5, 0.0, false);
-      if (getDriveDistance()  >= 24)
-        state++;
-      break;
-
-    case 6:
-      drive(0, 0, false);
-      break;
-  }
-}
-
-  /**
-   * This function is called periodically during autonomous.
-   */
-  @Override
-  public void autonomousPeriodic() 
-  {
-    switch (m_autoSelected) {
-      case autoTurn90:
-        turn90();
-        break;
-
-      case autoOutAndBack:
-        outAndBack();
-        break;
-        
-      case autoBackAndAround:
-        backAndAround();
-        break;
-
-      case autoGo4Feet:
-      default:
-        go4Feet();
-        break;
-
-      case autoGoAround:
-        autoGoAround();
-        break;
-      
-      case autoAlignAndShoot:
-        autoAlignAndShoot();
+  public void shootAndSit(){
+    switch (state){
+      case 1:
+        limelightTop.getEntry("ledMode").setNumber(1);
+        drive(0, 0, false);
+        shoot(shootRate);
+        if(Timer.getMatchTime() < 13 && shootRate == 0.0){
+          autoisbeingdumb = true;
+        }
+        else{
+          autoisbeingdumb = false;
+        }
+        if(Timer.getMatchTime() < 5.0){
+          autoisbeingdumb = false;
+          shoot(0);
+          state++;
+        }
         break;
     }
   }
@@ -988,7 +727,7 @@ public void autoGoAround()
     double rate = shootEncoder.getRate();
     double speedChange = (targetRate - rate) * 0.0001;
     shootPower += speedChange;
-    shootPower = Math.max(0.3, Math.min(0.8, shootPower));
+    shootPower = Math.max(0.3, Math.min(1.0, shootPower));
     if(targetRate == 0)
       shootPower = 0;
 
@@ -1005,7 +744,7 @@ public void autoGoAround()
       belt.set(ControlMode.PercentOutput, beltSpeed);
     }else if(rate < (targetRate + 15) && rate > (targetRate - 15)){
       if(longshot)
-        belt.set(ControlMode.PercentOutput, 1.0); // Long shot gets full power. yee haw
+        belt.set(ControlMode.PercentOutput, -1.0); // Long shot gets full power. yee haw
       else
         belt.set(ControlMode.PercentOutput, beltSpeed - 0.2);
     }else if(controllerdriver.getTriggerAxis(GenericHID.Hand.kRight) > 0.5){
@@ -1044,7 +783,7 @@ public void autoGoAround()
     //
 
     double driverJoystickY = -controllerdriver.getY(GenericHID.Hand.kLeft);
-    double driverJoystickX = -controllerdriver.getX(GenericHID.Hand.kRight) * 0.5;
+    double driverJoystickX = -controllerdriver.getX(GenericHID.Hand.kRight) * 0.4;
     if (Math.abs(driverJoystickY) < 0.1) // Zero joysticks
       driverJoystickY = 0;
     
