@@ -1084,22 +1084,24 @@ public void autoGoAround()
   @Override
   public void testPeriodic() 
   {
-    // For testing lidar distance
+    // // For testing lidar distance
 
-    // double lidarDist = lidar.getDistance();
-    // System.out.println("Cool lidar distance: " + lidarDist);
-    System.out.println("Left: " + getLeftDriveDistance() + " Right: " + getRightDriveDistance());
-    if(true){
-       double driverJoystickY = controllerdriver.getY(GenericHID.Hand.kLeft); // good luck future team members uwu :)
-       double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
-       double currentSpeedAvg = getDriveSpeed();
+    // // double lidarDist = lidar.getDistance();
+    // // System.out.println("Cool lidar distance: " + lidarDist);
+    // System.out.println("Left: " + getLeftDriveDistance() + " Right: " + getRightDriveDistance());
+    // if(true){
+    //    double driverJoystickY = controllerdriver.getY(GenericHID.Hand.kLeft); // good luck future team members uwu :)
+    //    double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
+    //    double currentSpeedAvg = getDriveSpeed();
 
-      drive(0, 0, false);
+    //   drive(0, 0, false);
 
-      if(currentSpeedAvg > topSpeed){
-        topSpeed = currentSpeedAvg;
-      }
-      System.out.println("Top Speed: " + topSpeed);
+    //   if(currentSpeedAvg > topSpeed){
+    //     topSpeed = currentSpeedAvg;
+    //   }
+    //   System.out.println("Top Speed: " + topSpeed);
+
+    System.out.println(firstBallSensor.get());
     }
   }
 
@@ -1109,7 +1111,7 @@ public void autoGoAround()
   //   _orchestra.play();
   //  }
    
-}
+
 
 
 
