@@ -68,12 +68,8 @@ public class Robot extends TimedRobot
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private boolean align, shoot;
   private AHRS navx;
-<<<<<<< HEAD
-  private AnalogInput ballbeam1, ballbeam2, ballbeam3, ballbeam4, ballbeam5;
-=======
   private DigitalInput firstBallSensor, topBallSensor;
   private AnalogInput ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
->>>>>>> master
   private XboxController controllerdriver, controlleroperator;
   private Spark shooterP, shooterD, backRightS, frontRightS, backLeftS, frontLeftS, intake, colorMotor;
   private Encoder shootEncoder, beltEncoder;
@@ -135,17 +131,8 @@ public class Robot extends TimedRobot
     navx = new AHRS(I2C.Port.kMXP);
 
     // Magazine sensors
-<<<<<<< HEAD
-    ballbeam1 = new DigitalInput(1);
-    ballbeam2 = new DigitalInput(2);
-    ballbeam3 = new DigitalInput(3);
-    ballbeam4 = new DigitalInput(4);
-    ballbeam5 = new DigitalInput(5);
-  
-=======
     firstBallSensor = new DigitalInput(7);
     topBallSensor = new DigitalInput(4);
->>>>>>> master
 
     // Xbox Controllers
     controllerdriver = new XboxController(0);
@@ -276,51 +263,11 @@ public class Robot extends TimedRobot
     m_autoSelected = m_chooser.getSelected();
   }
 
-<<<<<<< HEAD
-  public void checkBallBeams() {
-    if (ballbeam1.get() == "high") {
-      System.out.println ("Ball 1 found");
-    }
-    if (ballbeam2.get() == "high") {
-      System.out.println ("Ball 2 found");
-    }
-    if (ballbeam3.get() == "high") {
-      System.out.println ("Ball 3 found");
-    }
-    if (ballbeam4.get() == "high") {
-      System.out.println ("Ball 4 found");
-    }
-    if (ballbeam5.get() == "high") {
-      System.out.println ("Ball 5 found");
-    }
-  }
-
-  public void getDistances() 
-  {
-    lidarDist = lidar.getDistance();
-    ta = table.getEntry("ta");
-    area = ta.getDouble(0.0);
-    ultrasonicLDistance = m_ultrasonicL.getValue() * kValueToInches;
-    ultrasonicMDistance = m_ultrasonicM.getValue() * kValueToInches;
-    ultrasonicRDistance = m_ultrasonicR.getValue() * kValueToInches;
-    SmartDashboard.putNumber("Distance Left", ultrasonicLDistance);
-    SmartDashboard.putNumber("Distance Middle", ultrasonicMDistance);
-    SmartDashboard.putNumber("Distance Right", ultrasonicRDistance);
-    // System.out.println("Distance Left: " + ultrasonicLDistance);
-    // System.out.println("Distance Middle: " + ultrasonicMDistance);
-    // System.out.println("Distance Right: " + ultrasonicRDistance);
-   }
-
-  public void colorCheck() 
-  {
-    Color detectedColor = m_colorSensor.getColor(); // the color that was detected from the sensor
-=======
   //
   //
   //                         AUTONOMOUS CODE 
   //
   //
->>>>>>> master
 
   /**
    * This autonomous (along with the chooser code above) shows how to select
@@ -674,15 +621,11 @@ public class Robot extends TimedRobot
   public void teleopPeriodic() 
   {
 
-<<<<<<< HEAD
-    checkBallBeams();
-=======
     autoisbeingdumb = false; //resets because we aren't in auto anymore silly goose
 
     //
     //
     //                      DRIVER CONTROLLER CODE
->>>>>>> master
     //
     //
 
