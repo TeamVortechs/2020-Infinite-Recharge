@@ -76,24 +76,8 @@ public class Robot extends TimedRobot
   private NetworkTable limelightTop, limelightBottom;
   private NetworkTableEntry ta;
   private TalonFX elevator, belt, backRightT, frontRightT, backLeftT, frontLeftT, winchL, winchR;
-  // private TalonSRX winchL, winchR;
   private Timer timer;
   private int state;
-
-  private final I2C.Port i2cPort = I2C.Port.kOnboard; //this is the i2c port
-  private final ColorSensorV3 m_colorSensor = new ColorSensorV3(i2cPort); //uses the i2c parameter
-  private final ColorMatch m_colorMatcher = new ColorMatch(); //detects out of predetermained colors
-  private final Color kBlueTarget = ColorMatch.makeColor(0.143, 0.427, 0.429); // these targets can be configured
-  private final Color kGreenTarget = ColorMatch.makeColor(0.197, 0.561, 0.240);
-  private final Color kRedTarget = ColorMatch.makeColor(0.561, 0.232, 0.114);
-  private final Color kYellowTarget = ColorMatch.makeColor(0.361, 0.524, 0.113);
-  private boolean isCheckingColor, isSpinningToSpecific, isSpinningMult, hasSeenColor; //color logic
-  private int totalSpins;
-  private String requiredColor;
-  private int ultrasonicLPort, ultrasonicMPort, ultrasonicRPort;
-  private double ultrasonicLDistance, ultrasonicMDistance, ultrasonicRDistance;
-  private AnalogInput m_ultrasonicL, m_ultrasonicM, m_ultrasonicR;
-  private static final double kValueToInches = 0.125;
   private final double intakeSpeed = 0.4;
   
   private double topSpeed = 20857, maxSpeedDiff = 0.1, minSpeedDiff = 0.1, beltSpeed = -0.7, LLOffset = 2.5;
@@ -101,7 +85,7 @@ public class Robot extends TimedRobot
   private double leftEncoderZero, rightEncoderZero;
   private double bottomLLOffset, topLLOffset;
 
-  private boolean trac = false, longshot = false, intakeReverseToggle, autoisbeingdumb = false;
+  private boolean trac = false, longshot = false, intakeToggle = false, autoisbeingdumb = false;
   final boolean driveWheelsAreTalonsAndNotSparks = true; // If you change this to false it will try to run the wheels off something
 
   private pulsedLightLIDAR lidar;
@@ -130,13 +114,15 @@ public class Robot extends TimedRobot
   @Override
   public void robotInit() 
   {
+
+   // For USB Camera, 1678 gave us this code so play nice with it
    UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
    camera.setVideoMode(VideoMode.PixelFormat.kMJPEG, 320, 240, 15);
    MjpegServer camServer = new MjpegServer("serve_USB camera 0", 5810);
    camServer.setSource(camera);
 
     // playMusic();
-    m_chooser.setDefaultOption("Shoot and Back off Line", shootAndBackward); // change me back :)
+    m_chooser.setDefaultOption("Shoot and Back off Line", shootAndBackward);
     m_chooser.addOption("Shoot and Forward off Line", shootAndForward);
     m_chooser.addOption("Shoot and Sit Motionless but dont choose this one because you would give up 5 points so throw a fit well before even considering this option", shootAndSit);
     SmartDashboard.putData("Auto choices", m_chooser);
@@ -218,9 +204,6 @@ public class Robot extends TimedRobot
 
     shootEncoder = new Encoder(2, 3, true, Encoder.EncodingType.k2X); // ideal for 0.7 is +530
     beltEncoder = new Encoder(0, 1, true, Encoder.EncodingType.k2X);
-    // rightEncoder = new Encoder(3, 4, false, Encoder.EncodingType.k2X);
-    // leftEncoder.setDistancePerPulse(5.3/256);
-    // rightEncoder.setDistancePerPulse(5.3/256);
 
     limelightTop = NetworkTableInstance.getDefault().getTable("limelight-top");
     limelightBottom = NetworkTableInstance.getDefault().getTable("limelight-bottom");
@@ -229,7 +212,6 @@ public class Robot extends TimedRobot
     limelightBottom.getEntry("ledMode").setNumber(2);
 
     lidar = new pulsedLightLIDAR(lidarPort);
-    lidar.getDistance();
 
     align = false;
     shoot = false;
@@ -258,35 +240,6 @@ public class Robot extends TimedRobot
 
     //Timer
     timer = new Timer();
-
-    ultrasonicLPort = 0;
-    ultrasonicMPort = 1;
-    ultrasonicRPort = 2; //Ultrasonic(int pingChannel, int echoChannel)
-
-    m_ultrasonicL = new AnalogInput(ultrasonicLPort);
-    m_ultrasonicM = new AnalogInput(ultrasonicMPort);
-    m_ultrasonicR = new AnalogInput(ultrasonicRPort);
-  
-    System.out.println("BEFORE left: " + getLeftDriveDistance() + " right: " + getRightDriveDistance());
-    resetDistance();
-    System.out.println("AFTER left: " + getLeftDriveDistance() + " right: " + getRightDriveDistance());
-
-    isSpinningMult = false;
-    isSpinningToSpecific = false;
-    isCheckingColor = false;
-    hasSeenColor = false;
-    requiredColor = "Blue";
-    totalSpins = 0;
-    m_colorMatcher.addColorMatch(kBlueTarget);
-    m_colorMatcher.addColorMatch(kGreenTarget);
-    m_colorMatcher.addColorMatch(kRedTarget);
-    m_colorMatcher.addColorMatch(kYellowTarget);
-    //colorMotor = new Spark(10); 
-    //defining motor with spark
-
-    /* Initialize the TalonFX's to be used */
-
-    // _orchestra = new Orchestra(_instruments);
 
   }
 
@@ -502,112 +455,6 @@ public class Robot extends TimedRobot
     System.out.println(toPrint);
   }
 
-  public void getDistances() 
-  {
-    lidarDist = lidar.getDistance();
-    ta = limelightTop.getEntry("ta");
-    area = ta.getDouble(0.0);
-    ultrasonicLDistance = m_ultrasonicL.getValue() * kValueToInches;
-    ultrasonicMDistance = m_ultrasonicM.getValue() * kValueToInches;
-    ultrasonicRDistance = m_ultrasonicR.getValue() * kValueToInches;
-    SmartDashboard.putNumber("Distance Left", ultrasonicLDistance);
-    SmartDashboard.putNumber("Distance Middle", ultrasonicMDistance);
-    SmartDashboard.putNumber("Distance Right", ultrasonicRDistance);
-    // System.out.println("Distance Left: " + ultrasonicLDistance);
-    // System.out.println("Distance Middle: " + ultrasonicMDistance);
-    // System.out.println("Distance Right: " + ultrasonicRDistance);
-   }
-
-  //
-  //
-  //                  COLOR WHEEL CODE
-  //
-  //
-
-  public void colorCheck() 
-  {
-    Color detectedColor = m_colorSensor.getColor(); // the color that was detected from the sensor
-
-    //checks if the color seen matches the colors
-    String colorString, requiredColorActual; 
-    ColorMatchResult match = m_colorMatcher.matchClosestColor(detectedColor);
-    if (match.color == kBlueTarget) {
-      colorString = "Blue";
-      System.out.println("Blue");
-    } else if (match.color == kRedTarget) {
-      colorString = "Red";
-      System.out.println("Red");
-    } else if (match.color == kGreenTarget) {
-      colorString = "Green";
-      System.out.println("Green");
-    } else if (match.color == kYellowTarget) {
-      colorString = "Yellow";
-      System.out.println("Yellow");
-    } else {
-      colorString = "Unknown";
-      System.out.println("Unknown");
-    }
-
-    SmartDashboard.putNumber("Red", detectedColor.red); //results pasted into shuffleboard & smart dash
-    SmartDashboard.putNumber("Green", detectedColor.green);
-    SmartDashboard.putNumber("Blue", detectedColor.blue);
-    SmartDashboard.putNumber("Confidence", match.confidence);
-    SmartDashboard.putString("Detected Color", colorString);
-
-    if(isSpinningToSpecific) 
-    {
-      colorMotor.set(0.05);
-      if(match.confidence > 0.85) {
-        if(requiredColor == "Blue") {
-          requiredColorActual = "Red";
-        } else if (requiredColor == "Yellow") {
-          requiredColorActual = "Green";
-        } else if(requiredColor == "Red") {
-          requiredColorActual = "Blue";
-        } else if(requiredColor == "Green") {
-          requiredColorActual = "Yellow";
-        } else {
-          requiredColorActual = "Unknown";
-        } //translates the color we need to the color the sensor needs to stop on
-        if(colorString == requiredColorActual) 
-        {
-          if(!(controlleroperator.getBButton() || controlleroperator.getAButton() || controlleroperator.getYButton() || controlleroperator.getXButton()))
-          {
-            //stops checking colors after required color found
-            isSpinningToSpecific = false;
-            isCheckingColor = false;
-            colorMotor.set(0);
-          } else {
-            isSpinningMult = true;
-            isSpinningToSpecific = false;
-            totalSpins = 1;
-          }
-        }
-      } else {
-        requiredColorActual = "Unknown";
-      }
-    } else if (isSpinningMult) 
-    {
-      colorMotor.set(0.05);
-      //spins around the disk a total of 3.5 to 4 spins
-      if(colorString == requiredColor && !hasSeenColor && match.confidence > 0.7) 
-      {
-        hasSeenColor = true;
-        totalSpins++;
-      } else {
-        hasSeenColor = false;
-      }
-      
-      if(totalSpins >= 7) {
-        //stops checking colors after spins
-        isSpinningMult = false;
-        isCheckingColor = false;
-        totalSpins = 0;
-        colorMotor.set(0);
-      }
-    }
-  }
-
   //
   //
   //                  AUTO ALIGNING CODE
@@ -801,14 +648,13 @@ public class Robot extends TimedRobot
       intake.set(-0.5);
     }
 
-    // sorry for the surprise but i got rid of the intake reverse or even disable because 
-    // if(controllerdriver.getAButtonPressed()) 
-    //   intakeToggle = !intakeToggle;
+    if(controllerdriver.getAButtonPressed()) 
+      intakeToggle = !intakeToggle;
 
-    if(true)
+    if(intakeToggle)
       intake.set(-intakeSpeed);
-    // else
-    //   intake.set(0);
+    else
+      intake.set(0);
     
 
 
@@ -840,21 +686,15 @@ public class Robot extends TimedRobot
     } else {
       elevator.set(ControlMode.PercentOutput, 0);
     }
-    
-    // if(controlleroperator.getBButtonPressed()){
-    //   beltSpeed += 0.1;
-    // }else if(controlleroperator.getXButtonPressed()){
-    //   beltSpeed -= 0.1;
-    // }
 
     if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) > 0.5){ // Complicated algorithm to decide if the right trigger is being held
       shoot = true;
     }else if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) < 0.5){
       shoot = false;
     }
-    // if(lidar.getDistance() < 250){
-    //   shoot = false;
-    // }
+    if(lidar.getDistance() < 150 && lidar.getDistance() > 0.0){
+      shoot = false;
+    }
 
     if(shoot){
       shoot(shootRate);
@@ -873,29 +713,6 @@ public class Robot extends TimedRobot
         // belt.set(ControlMode.PercentOutput, 0);
         runBelt(false, 0);
     }
-    if(controllerdriver.getXButtonPressed()) {
-      requiredColor = "Blue";
-      isCheckingColor = true;
-      isSpinningToSpecific = true;
-    } else if(controllerdriver.getYButtonPressed()) {
-      requiredColor = "Yellow";
-      isCheckingColor = true;
-      isSpinningToSpecific = true;
-    } else if(controllerdriver.getAButtonPressed()) {
-      requiredColor = "Green";
-      isCheckingColor = true;
-      isSpinningToSpecific = true;
-    } else if(controllerdriver.getBButtonPressed()) {
-      requiredColor = "Red";
-      isCheckingColor = true;
-      isSpinningToSpecific = true;
-    }
-
-    // if(controlleroperator.getYButtonPressed()){
-    //   shootRate += 10;
-    // }else if(controlleroperator.getAButtonPressed()){
-    //   shootRate -= 10;
-    // }
 
     //
     //                Intense Drive Control Algorithms
@@ -925,14 +742,9 @@ public class Robot extends TimedRobot
       drive(driverJoystickY, driverJoystickX, trac); // Actually calls the driving when not aligning to avoid stutter
     }
 
-    double lidarDist = lidar.getDistance();
+    // Following lines print out helpful data to drive station
+    // double lidarDist = lidar.getDistance();
     // System.out.println("Shooter Power: " + shootPower + " and Lidar Dist: " + lidarDist + " and Belt Speed: " + beltSpeed + " Shoot Rate: " + shootEncoder.getRate());
-
-    // if(controllerdriver.getBButtonPressed()){
-    //   playMusic();
-
-    //   System.out.println("I'm playing music!");
-    // }
   }
 
   /**
@@ -941,34 +753,7 @@ public class Robot extends TimedRobot
   @Override
   public void testPeriodic() 
   {
-    shooterD.set(1);
-    shooterP.set(1);
-    System.out.println(shootEncoder.getRate());
-    // For testing lidar distance
-
-    // double lidarDist = lidar.getDistance();
-    // System.out.println("Cool lidar distance: " + lidarDist);
-    // if(isCheckingColor) 
-    // {
-    //   colorCheck();
-    // }
-    // System.out.println("Left: " + getLeftDriveDistance() + " Right: " + getRightDriveDistance());
-    // if(true){
-    //    double driverJoystickY = controllerdriver.getY(GenericHID.Hand.kLeft); // good luck future team members uwu :)
-    //    double driverJoystickX = controllerdriver.getX(GenericHID.Hand.kRight);
-    //    double currentSpeedAvg = getDriveSpeed();
-
-    //   drive(0, 0, false);
-
-    //   if(currentSpeedAvg > topSpeed){
-    //     topSpeed = currentSpeedAvg;
-    //   }
-    //   System.out.println("Top Speed: " + topSpeed);
-
-    System.out.println(firstBallSensor.get());
-    }
-
-  // public void playMusic(){
-  //   /* load the chirp file */
+    // Test code would go here
+  }
    
 }
