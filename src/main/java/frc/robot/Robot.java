@@ -72,7 +72,8 @@ public class Robot extends TimedRobot
   private AnalogInput ballbeam3, ballbeam4, ballbeam5, ballbeam6, ballbeam7, ballbeam8, ballbeam9, ballbeam10;
   private XboxController controllerdriver, controlleroperator;
   private Spark shooterP, shooterD, backRightS, frontRightS, backLeftS, frontLeftS, intake, colorMotor;
-  private Encoder shootEncoder, beltEncoder;
+  private Encoder shootEncoder, beltEncoder; 
+  private int hexBoreMagTPR = 8192; //Ticks per revolution
   private NetworkTable limelightTop, limelightBottom;
   private NetworkTableEntry ta;
   private TalonFX elevator, belt, backRightT, frontRightT, backLeftT, frontLeftT, winchL, winchR;
