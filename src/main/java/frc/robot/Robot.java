@@ -61,7 +61,7 @@ public class Robot extends TimedRobot
 
   private double shootPower = 0.0; // Motor current shoot power (adjusted in shoot() function)
   private double shootRate = 530; // Target RPM
-  private static final double ticksPerInch = 1075.65;
+  private static final double ticksPerInch = 1075.65; //only for the embeded falcon encoder
   private double lidarDist, area, offsetAngle;
 
   private String m_autoSelected;
@@ -73,7 +73,7 @@ public class Robot extends TimedRobot
   private XboxController controllerdriver, controlleroperator;
   private Spark shooterP, shooterD, backRightS, frontRightS, backLeftS, frontLeftS, intake, colorMotor;
   private Encoder shootEncoder, beltEncoder; 
-  private int hexBoreMagTPR = 8192; //Ticks per revolution
+  private int magazineTPR = 8192; //Ticks per revolution
   private NetworkTable limelightTop, limelightBottom;
   private NetworkTableEntry ta;
   private TalonFX elevator, belt, backRightT, frontRightT, backLeftT, frontLeftT, winchL, winchR;
@@ -181,30 +181,20 @@ public class Robot extends TimedRobot
     //   Start Button: Break from any loop
 
     // Drive motors
-    if(driveWheelsAreTalonsAndNotSparks){
-      backRightT = new TalonFX(1);
-      frontRightT = new TalonFX(2);
-      backLeftT = new TalonFX(3);
-      frontLeftT = new TalonFX(4);
-      backLeftT.setInverted(true);
-      frontLeftT.setInverted(true);
-      backLeftT.set(talonFXMode, 0);
-      frontLeftT.set(talonFXMode, 0);
-      backRightT.set(talonFXMode, 0);
-      frontRightT.set(talonFXMode, 0);
-    }else{
-      backRightS = new Spark(0);
-      frontRightS = new Spark(1);
-      backLeftS = new Spark(2);
-      frontLeftS = new Spark(3);
-      backLeftS.set(0);
-      frontLeftS.set(0);
-      backRightS.set(0);
-      frontRightS.set(0);
-    }
-
+    backRightT = new TalonFX(1);
+    frontRightT = new TalonFX(2);
+    backLeftT = new TalonFX(3);
+    frontLeftT = new TalonFX(4);
+    backLeftT.setInverted(true);
+    frontLeftT.setInverted(true);
+    backLeftT.set(talonFXMode, 0);
+    frontLeftT.set(talonFXMode, 0);
+    backRightT.set(talonFXMode, 0);
+    frontRightT.set(talonFXMode, 0);
+    
+    //asuming these are karmabot(cheap plastic) encoders
     shootEncoder = new Encoder(2, 3, true, Encoder.EncodingType.k2X); // ideal for 0.7 is +530
-    beltEncoder = new Encoder(0, 1, true, Encoder.EncodingType.k2X);
+    beltEncoder = new Encoder(0, 1, true, Encoder.EncodingType.k2X); 
 
     limelightTop = NetworkTableInstance.getDefault().getTable("limelight-top");
     limelightBottom = NetworkTableInstance.getDefault().getTable("limelight-bottom");
