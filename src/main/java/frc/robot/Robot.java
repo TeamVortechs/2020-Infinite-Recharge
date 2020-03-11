@@ -77,7 +77,7 @@ public class Robot extends TimedRobot
   private NetworkTableEntry ta;
   private TalonFX elevator, belt, backRightT, frontRightT, backLeftT, frontLeftT, winchL, winchR;
   private Timer timer;
-  private int state;
+  private int state, talonFXMode = ControlMode.PercentOutput;
   private final double intakeSpeed = 0.4;
   
   private double topSpeed = 20857, maxSpeedDiff = 0.1, minSpeedDiff = 0.1, beltSpeed = -0.7, LLOffset = 2.5;
@@ -187,10 +187,10 @@ public class Robot extends TimedRobot
       frontLeftT = new TalonFX(4);
       backLeftT.setInverted(true);
       frontLeftT.setInverted(true);
-      backLeftT.set(ControlMode.PercentOutput, 0);
-      frontLeftT.set(ControlMode.PercentOutput, 0);
-      backRightT.set(ControlMode.PercentOutput, 0);
-      frontRightT.set(ControlMode.PercentOutput, 0);
+      backLeftT.set(talonFXMode, 0);
+      frontLeftT.set(talonFXMode, 0);
+      backRightT.set(talonFXMode, 0);
+      frontRightT.set(talonFXMode, 0);
     }else{
       backRightS = new Spark(0);
       frontRightS = new Spark(1);
@@ -445,9 +445,9 @@ public class Robot extends TimedRobot
   // Boolean determines if belt should be running
   public void runBelt(boolean on, double speed){
     if(on && topBallSensor.get()){
-      belt.set(ControlMode.PercentOutput, speed);
+      belt.set(talonFXMode, speed);
     }else{
-      belt.set(ControlMode.PercentOutput, speed);
+      belt.set(talonFXMode, speed);
     }
   }
 
@@ -551,10 +551,10 @@ public class Robot extends TimedRobot
     double rightSpeedFinal = desiredSpeed + direction;
 
     if(driveWheelsAreTalonsAndNotSparks){
-      backLeftT.set(ControlMode.PercentOutput, leftSpeedFinal);
-      frontLeftT.set(ControlMode.PercentOutput, leftSpeedFinal);
-      backRightT.set(ControlMode.PercentOutput, rightSpeedFinal);
-      frontRightT.set(ControlMode.PercentOutput, rightSpeedFinal);
+      backLeftT.set(talonFXMode, leftSpeedFinal);
+      frontLeftT.set(talonFXMode, leftSpeedFinal);
+      backRightT.set(talonFXMode, rightSpeedFinal);
+      frontRightT.set(talonFXMode, rightSpeedFinal);
     }else{
       backLeftS.set(-leftSpeedFinal);
       frontLeftS.set(-leftSpeedFinal);
@@ -588,16 +588,16 @@ public class Robot extends TimedRobot
 
 
     if(autoisbeingdumb){
-      belt.set(ControlMode.PercentOutput, beltSpeed);
+      belt.set(talonFXMode, beltSpeed);
     }else if(rate < (targetRate + 15) && rate > (targetRate - 15)){
       if(longshot)
-        belt.set(ControlMode.PercentOutput, -1.0); // Long shot gets full power. yee haw
+        belt.set(talonFXMode, -1.0); // Long shot gets full power. yee haw
       else
-        belt.set(ControlMode.PercentOutput, beltSpeed - 0.2);
+        belt.set(talonFXMode, beltSpeed - 0.2);
     }else if(controllerdriver.getTriggerAxis(GenericHID.Hand.kRight) > 0.5){
-      belt.set(ControlMode.PercentOutput, beltSpeed);
+      belt.set(talonFXMode, beltSpeed);
     }else{
-      belt.set(ControlMode.PercentOutput, 0.0);
+      belt.set(talonFXMode, 0.0);
     }
     shooterD.set(shootPower);
     shooterP.set(shootPower);
@@ -671,20 +671,20 @@ public class Robot extends TimedRobot
     if(Math.abs(operatorJoystickYLeft) < 0.1) {
       operatorJoystickYLeft = 0;
     }
-    winchL.set(ControlMode.PercentOutput, operatorJoystickYLeft);
+    winchL.set(talonFXMode, operatorJoystickYLeft);
     if(Math.abs(operatorJoystickYRight) < 0.1) {
       operatorJoystickYRight = 0;
     }
-    winchR.set(ControlMode.PercentOutput, operatorJoystickYRight);
+    winchR.set(talonFXMode, operatorJoystickYRight);
 
     if(controlleroperator.getPOV() == 0) {
-      elevator.set(ControlMode.PercentOutput, 0.5);
-      winchR.set(ControlMode.PercentOutput, -0.5);
-      winchL.set(ControlMode.PercentOutput, -0.5);
+      elevator.set(talonFXMode, 0.5);
+      winchR.set(talonFXMode, -0.5);
+      winchL.set(talonFXMode, -0.5);
     } else if (controlleroperator.getPOV() == 180) {
-      elevator.set(ControlMode.PercentOutput, -0.5);
+      elevator.set(talonFXMode, -0.5);
     } else {
-      elevator.set(ControlMode.PercentOutput, 0);
+      elevator.set(talonFXMode, 0);
     }
 
     if(controlleroperator.getTriggerAxis(GenericHID.Hand.kRight) > 0.5){ // Complicated algorithm to decide if the right trigger is being held
